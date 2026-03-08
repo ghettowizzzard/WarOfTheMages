@@ -1521,6 +1521,40 @@
         </div>
     </div>
 
+    <div id="save-slot-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.62);z-index:2147483645;align-items:center;justify-content:center;padding:20px;">
+        <div class="inventory-window" style="width:min(980px,92vw);height:min(760px,88vh);display:flex;flex-direction:column;">
+            <div class="inventory-topbar">
+                <div>
+                    <div id="save-slot-title" class="inventory-title">Chronicle Archive</div>
+                    <div id="save-slot-subtitle" class="inventory-subtitle">Load or preserve your wizard's journey</div>
+                </div>
+                <button id="save-slot-close-btn" class="inventory-close-btn" type="button">✕</button>
+            </div>
+            <div style="padding:16px 20px 10px;color:#e5d3a1;font-weight:700;letter-spacing:1px;">
+                <span id="save-slot-hint">Choose a slot.</span>
+            </div>
+            <div id="save-slot-list" class="inventory-list" style="padding:0 18px 18px;overflow:auto;flex:1;"></div>
+        </div>
+    </div>
+
+    <div id="pause-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.38);z-index:2147483644;align-items:center;justify-content:center;padding:20px;">
+        <div class="inventory-window" style="width:min(520px,92vw);height:auto;display:flex;flex-direction:column;">
+            <div class="inventory-topbar">
+                <div>
+                    <div class="inventory-title">Pause Menu</div>
+                    <div class="inventory-subtitle">The realm continues while this menu is open</div>
+                </div>
+                <button id="pause-close-btn" class="inventory-close-btn" type="button">✕</button>
+            </div>
+            <div style="padding:22px;display:flex;flex-direction:column;gap:14px;">
+                <button id="pause-resume-btn" class="inventory-use-btn" type="button" style="width:100%;">Resume</button>
+                <button id="pause-save-btn" class="inventory-use-btn" type="button" style="width:100%;">Save</button>
+                <button id="pause-settings-btn" class="inventory-use-btn" type="button" style="width:100%;">Settings</button>
+                <button id="pause-mainmenu-btn" class="inventory-use-btn" type="button" style="width:100%;background:linear-gradient(180deg,#7f1d1d,#450a0a);">Main Menu</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Spell Slot Bar — body-level so position:fixed is never blocked by a parent display:none -->
     <div id="spell-bar"></div>
 
@@ -1646,20 +1680,21 @@
     }
     fireLoop();
 
-    // Start Game button → hide menu, show customization
+    // Start Game button → begin a new character path in customization
     document.getElementById('mm-start').addEventListener('click', () => {
         menuAnimating = false;
-        const menu = document.getElementById('main-menu');
-        menu.style.transition = 'opacity 0.8s ease';
-        menu.style.opacity = '0';
-        setTimeout(() => {
-            menu.style.display = 'none';
-            document.getElementById('ui-layer').style.display = 'block';
-        }, 800);
+        if (typeof startNewCharacterPath === 'function') {
+            startNewCharacterPath();
+        }
     });
 
-    // Placeholder buttons
-    document.getElementById('mm-load').addEventListener('click', () => alert('No saves found.'));
+    document.getElementById('mm-load').addEventListener('click', () => {
+        menuAnimating = false;
+        if (typeof openSaveLoadOverlay === 'function') {
+            openSaveLoadOverlay('load', 'menu');
+        }
+    });
+
     document.getElementById('mm-settings').addEventListener('click', () => alert('Settings coming soon.'));
     document.getElementById('mm-quit').addEventListener('click', () => alert('Close the browser tab to quit.'));
 })();
@@ -2207,6 +2242,35 @@ function _vec3FromNet(v) {
     return new THREE.Vector3(v?.x ?? 0, v?.y ?? 0, v?.z ?? 0);
 }
 
+function _cloneAppearanceForNet(source) {
+    return JSON.parse(JSON.stringify({
+        name: source.name,
+        gender: source.gender,
+        handedness: source.handedness,
+        alignment: source.alignment,
+        magic: source.magic,
+        height: source.height,
+        stomach: source.stomach,
+        muscle: source.muscle,
+        bust: source.bust,
+        headSize: source.headSize,
+        showHat: source.showHat,
+        showRobe: source.showRobe,
+        facialHair: source.facialHair,
+        showNecklace: source.showNecklace,
+        showBelt: source.showBelt,
+        showHairpin: source.showHairpin,
+        faceAccessory: source.faceAccessory,
+        hairStyle: source.hairStyle,
+        faceType: source.faceType,
+        eyeStyle: source.eyeStyle,
+        browStyle: source.browStyle,
+        browExpression: source.browExpression,
+        nametagColor: source.nametagColor,
+        colors: source.colors || {}
+    }));
+}
+
 function _buildLocalPlayerSnapshot() {
     const p = GAME_STATE.player;
     const pos = characterModel ? characterModel.position : new THREE.Vector3();
@@ -2221,6 +2285,9 @@ function _buildLocalPlayerSnapshot() {
         energy: Math.round(p.energy ?? 0),
         maxEnergy: Math.round(p.maxEnergy ?? 0),
         dead: !!p.dead,
+        aiming: !!isAiming,
+        castActive: !!GAME_STATE.cast.active,
+        appearance: _cloneAppearanceForNet(GAME_STATE.char),
         position: _serializeVec3(pos),
         velocity: _serializeVec3(p.velocity),
         rotationY: Number(((characterModel?.rotation.y) ?? 0).toFixed(4)),
@@ -2232,27 +2299,53 @@ function _buildLocalPlayerSnapshot() {
     };
 }
 
+function _getRemoteAppearance(snapshot) {
+    const raw = snapshot?.appearance || {};
+    return {
+        name: raw.name || snapshot?.name || 'Wizard',
+        gender: raw.gender || 'boy',
+        handedness: raw.handedness || 'right',
+        alignment: raw.alignment || snapshot?.alignment || 'light',
+        magic: raw.magic || snapshot?.magic || 'storm',
+        height: raw.height ?? 1.0,
+        stomach: raw.stomach ?? 1.0,
+        muscle: raw.muscle ?? 1.0,
+        bust: raw.bust ?? 1.0,
+        headSize: raw.headSize ?? 1.0,
+        showHat: raw.showHat ?? true,
+        showRobe: raw.showRobe ?? false,
+        facialHair: raw.facialHair || 'none',
+        hairStyle: raw.hairStyle || 'short',
+        nametagColor: raw.nametagColor || '#ffe066',
+        colors: {
+            skin: '#f1c27d',
+            hair: '#3b2f2f',
+            eyes: '#2b5f3d',
+            hat1: '#2a1b4d',
+            hat2: '#d4af37',
+            robe: '#3a2569',
+            shirt: '#ffffff',
+            pants: '#1a1a1a',
+            shoes: '#4d3319',
+            wandWood: '#5c4033',
+            wandCore: MAGIC_COLORS[raw.magic || snapshot?.magic || 'storm'] || 0xa855f7,
+            ...(raw.colors || {})
+        }
+    };
+}
+
 function _getRemoteWizardColors(snapshot) {
-    const base = MAGIC_COLORS[snapshot?.magic] || 0xa855f7;
-    const aura = snapshot?.alignment === 'light' ? 0xfde68a : 0x4338ca;
+    const appearance = _getRemoteAppearance(snapshot);
+    const base = MAGIC_COLORS[appearance.magic] || 0xa855f7;
+    const aura = appearance.alignment === 'light' ? 0xfde68a : 0x4338ca;
     return { base, aura };
 }
 
-function _makeRemoteNameSprite(name = 'Wizard', color = '#ffffff') {
+function _makeRemoteNameSprite() {
     const canvas = document.createElement('canvas');
-    canvas.width = 256;
-    canvas.height = 80;
+    canvas.width = 384;
+    canvas.height = 120;
     const ctx = canvas.getContext('2d');
-
-    ctx.clearRect(0, 0, 256, 80);
-    ctx.font = '700 26px Rajdhani';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.lineWidth = 6;
-    ctx.strokeStyle = 'rgba(0,0,0,0.75)';
-    ctx.strokeText(name, 128, 40);
-    ctx.fillStyle = color;
-    ctx.fillText(name, 128, 40);
 
     const texture = new THREE.CanvasTexture(canvas);
     const material = new THREE.SpriteMaterial({
@@ -2260,120 +2353,377 @@ function _makeRemoteNameSprite(name = 'Wizard', color = '#ffffff') {
         transparent: true,
         depthWrite: false,
     });
+
     const sprite = new THREE.Sprite(material);
-    sprite.scale.set(2.8, 0.9, 1);
-    sprite.position.set(0, 3.0, 0);
-    sprite.userData._nameCanvas = canvas;
-    sprite.userData._nameTexture = texture;
+    sprite.scale.set(3.1, 0.95, 1);
+    sprite.position.set(0, 3.25, 0);
+    sprite.userData._canvas = canvas;
+    sprite.userData._ctx = ctx;
+    sprite.userData._texture = texture;
     return sprite;
 }
 
+function _refreshRemoteNameSprite(sprite, snapshot) {
+    if (!sprite || !snapshot) return;
+
+    const ctx = sprite.userData._ctx;
+    const canvas = sprite.userData._canvas;
+    const texture = sprite.userData._texture;
+    if (!ctx || !canvas || !texture) return;
+
+    const appearance = _getRemoteAppearance(snapshot);
+    const hpPct = Math.max(0, Math.min(1, (snapshot.hp || 0) / Math.max(1, snapshot.maxHP || 1)));
+
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    ctx.fillStyle = 'rgba(0,0,0,0.58)';
+    ctx.beginPath();
+    const x = 12, y = 12, w = 360, h = 96, r = 26;
+    ctx.moveTo(x + r, y);
+    ctx.lineTo(x + w - r, y);
+    ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+    ctx.lineTo(x + w, y + h - r);
+    ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+    ctx.lineTo(x + r, y + h);
+    ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+    ctx.lineTo(x, y + r);
+    ctx.quadraticCurveTo(x, y, x + r, y);
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.font = '700 34px Rajdhani';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.lineWidth = 7;
+    ctx.strokeStyle = 'rgba(0,0,0,0.9)';
+    ctx.strokeText(snapshot.name || appearance.name || 'Wizard', 192, 38);
+    ctx.fillStyle = appearance.nametagColor || '#ffe066';
+    ctx.fillText(snapshot.name || appearance.name || 'Wizard', 192, 38);
+
+    ctx.fillStyle = 'rgba(20,20,24,0.92)';
+    ctx.fillRect(78, 64, 228, 16);
+
+    ctx.fillStyle = hpPct > 0.45 ? '#22c55e' : (hpPct > 0.18 ? '#f59e0b' : '#ef4444');
+    ctx.fillRect(78, 64, 228 * hpPct, 16);
+
+    ctx.strokeStyle = 'rgba(255,255,255,0.22)';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(78, 64, 228, 16);
+
+    ctx.font = '700 18px Rajdhani';
+    ctx.fillStyle = '#ffffff';
+    ctx.fillText(`${Math.round(snapshot.hp || 0)} / ${Math.round(snapshot.maxHP || 0)} HP${snapshot.dead ? ' • DOWN' : ''}`, 192, 90);
+
+    texture.needsUpdate = true;
+}
+
+function _buildRemoteHair(appearance) {
+    const hairGroup = new THREE.Group();
+    const hairMat = new THREE.MeshStandardMaterial({
+        color: appearance.colors.hair,
+        roughness: 0.88,
+        metalness: 0.02,
+    });
+
+    const style = appearance.hairStyle || 'short';
+
+    if (style === 'bald') return hairGroup;
+
+    const cap = new THREE.Mesh(new THREE.SphereGeometry(0.34, 14, 12), hairMat);
+    cap.scale.set(1.02, 0.75, 1.02);
+    cap.position.y = 0.10;
+    hairGroup.add(cap);
+
+    if (style === 'spiky') {
+        for (let i = 0; i < 6; i++) {
+            const spike = new THREE.Mesh(new THREE.ConeGeometry(0.05, 0.18, 6), hairMat);
+            const ang = (Math.PI * 2 * i) / 6;
+            spike.position.set(Math.cos(ang) * 0.15, 0.33, Math.sin(ang) * 0.15);
+            spike.rotation.z = Math.cos(ang) * 0.25;
+            spike.rotation.x = Math.sin(ang) * 0.25;
+            hairGroup.add(spike);
+        }
+    } else if (style === 'midlength' || style === 'bobcut') {
+        const back = new THREE.Mesh(new THREE.BoxGeometry(0.52, 0.42, 0.18), hairMat);
+        back.position.set(0, -0.08, -0.12);
+        hairGroup.add(back);
+    } else if (style === 'long' || style === 'wavy') {
+        const back = new THREE.Mesh(new THREE.BoxGeometry(0.56, 0.78, 0.22), hairMat);
+        back.position.set(0, -0.28, -0.14);
+        hairGroup.add(back);
+    } else if (style === 'pigtails') {
+        const left = new THREE.Mesh(new THREE.CapsuleGeometry(0.08, 0.42, 5, 8), hairMat);
+        const right = new THREE.Mesh(new THREE.CapsuleGeometry(0.08, 0.42, 5, 8), hairMat);
+        left.position.set(-0.26, -0.10, -0.02);
+        right.position.set(0.26, -0.10, -0.02);
+        left.rotation.z = 0.22;
+        right.rotation.z = -0.22;
+        hairGroup.add(left, right);
+    } else {
+        const fringe = new THREE.Mesh(new THREE.BoxGeometry(0.48, 0.20, 0.16), hairMat);
+        fringe.position.set(0, 0.02, 0.18);
+        hairGroup.add(fringe);
+    }
+
+    return hairGroup;
+}
+
 function _createRemotePlayerVisual(snapshot) {
+    const appearance = _getRemoteAppearance(snapshot);
     const colors = _getRemoteWizardColors(snapshot);
+
+    const h = appearance.height ?? 1.0;
+    const torsoW = (appearance.gender === 'boy' ? 0.64 : 0.56) * (appearance.stomach ?? 1.0);
+    const torsoD = (appearance.gender === 'boy' ? 0.40 : 0.35) * (appearance.stomach ?? 1.0);
+    const torsoH = 0.78 * h;
+    const legH = 0.98 * h;
+    const headS = 0.52 * (appearance.headSize ?? 1.0);
+    const armLen = 0.72 * h;
+    const armThk = 0.14 * Math.max(0.85, appearance.muscle ?? 1.0);
+    const legThk = 0.18 * Math.max(0.85, appearance.muscle ?? 1.0);
+
     const group = new THREE.Group();
+    const bodyRoot = new THREE.Group();
+    bodyRoot.position.y = legH + 0.18;
+    group.add(bodyRoot);
 
-    const robe = new THREE.Mesh(
-        new THREE.CylinderGeometry(0.38, 0.58, 1.6, 10),
-        new THREE.MeshStandardMaterial({
-            color: colors.base,
-            emissive: colors.base,
-            emissiveIntensity: 0.20,
-            roughness: 0.72,
-            metalness: 0.08,
-        })
+    const robeMat = new THREE.MeshStandardMaterial({
+        color: appearance.showRobe ? appearance.colors.robe : appearance.colors.shirt,
+        emissive: colors.base,
+        emissiveIntensity: 0.10,
+        roughness: 0.76,
+        metalness: 0.06,
+    });
+
+    const pantsMat = new THREE.MeshStandardMaterial({
+        color: appearance.colors.pants,
+        roughness: 0.88,
+        metalness: 0.04,
+    });
+
+    const shoeMat = new THREE.MeshStandardMaterial({
+        color: appearance.colors.shoes,
+        roughness: 0.85,
+        metalness: 0.04,
+    });
+
+    const skinMat = new THREE.MeshStandardMaterial({
+        color: appearance.colors.skin,
+        roughness: 0.96,
+        metalness: 0.01,
+    });
+
+    const wandWoodMat = new THREE.MeshStandardMaterial({
+        color: appearance.colors.wandWood,
+        roughness: 0.88,
+        metalness: 0.03,
+    });
+
+    const wandCoreMat = new THREE.MeshBasicMaterial({
+        color: appearance.colors.wandCore,
+        transparent: true,
+        opacity: 0.95,
+        blending: THREE.AdditiveBlending,
+        depthWrite: false,
+    });
+
+    const torso = new THREE.Mesh(
+        appearance.showRobe
+            ? new THREE.CylinderGeometry(torsoW * 0.66, torsoW * 1.02, torsoH, 12)
+            : new THREE.BoxGeometry(torsoW, torsoH, torsoD),
+        robeMat
     );
-    robe.position.y = 0.85;
+    torso.position.y = torsoH * 0.5;
+    bodyRoot.add(torso);
 
-    const head = new THREE.Mesh(
-        new THREE.SphereGeometry(0.28, 18, 18),
+    const hips = new THREE.Mesh(
+        new THREE.BoxGeometry(torsoW * 0.92, 0.22, torsoD * 1.1),
         new THREE.MeshStandardMaterial({
-            color: 0xf3d4b4,
-            roughness: 0.95,
-            metalness: 0.02,
-        })
-    );
-    head.position.y = 1.95;
-
-    const hat = new THREE.Mesh(
-        new THREE.ConeGeometry(0.34, 0.75, 12),
-        new THREE.MeshStandardMaterial({
-            color: colors.base,
-            emissive: colors.base,
-            emissiveIntensity: 0.18,
-            roughness: 0.78,
-            metalness: 0.06,
-        })
-    );
-    hat.position.y = 2.45;
-
-    const brim = new THREE.Mesh(
-        new THREE.TorusGeometry(0.32, 0.04, 10, 24),
-        new THREE.MeshStandardMaterial({
-            color: colors.base,
-            emissive: colors.base,
-            emissiveIntensity: 0.16,
-            roughness: 0.8,
+            color: appearance.showRobe ? appearance.colors.robe : appearance.colors.pants,
+            roughness: 0.84,
             metalness: 0.05,
         })
     );
-    brim.position.y = 2.10;
-    brim.rotation.x = Math.PI / 2;
+    hips.position.y = 0.10;
+    bodyRoot.add(hips);
+
+    const neck = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.08, 0.12, 10), skinMat);
+    neck.position.y = torsoH + 0.08;
+    bodyRoot.add(neck);
+
+    const headGroup = new THREE.Group();
+    headGroup.position.y = torsoH + 0.22;
+    bodyRoot.add(headGroup);
+
+    const head = new THREE.Mesh(new THREE.SphereGeometry(headS, 18, 18), skinMat);
+    head.scale.set(1.0, 1.15, 0.95);
+    headGroup.add(head);
+
+    const eyeMat = new THREE.MeshBasicMaterial({ color: appearance.colors.eyes });
+    const eyeL = new THREE.Mesh(new THREE.SphereGeometry(0.028, 8, 8), eyeMat);
+    const eyeR = eyeL.clone();
+    eyeL.position.set(-0.10, 0.03, headS * 0.82);
+    eyeR.position.set(0.10, 0.03, headS * 0.82);
+    headGroup.add(eyeL, eyeR);
+
+    const hair = _buildRemoteHair(appearance);
+    headGroup.add(hair);
+
+    if (appearance.showHat) {
+        const brim = new THREE.Mesh(
+            new THREE.CylinderGeometry(headS * 0.95, headS * 1.22, 0.05, 18),
+            new THREE.MeshStandardMaterial({
+                color: appearance.colors.hat1,
+                roughness: 0.82,
+                metalness: 0.05,
+            })
+        );
+        brim.position.y = headS * 0.82;
+
+        const cone = new THREE.Mesh(
+            new THREE.ConeGeometry(headS * 0.78, headS * 1.85, 16),
+            new THREE.MeshStandardMaterial({
+                color: appearance.colors.hat1,
+                roughness: 0.78,
+                metalness: 0.05,
+            })
+        );
+        cone.position.y = headS * 1.56;
+        cone.rotation.z = 0.08;
+
+        const band = new THREE.Mesh(
+            new THREE.TorusGeometry(headS * 0.62, 0.03, 8, 18),
+            new THREE.MeshStandardMaterial({
+                color: appearance.colors.hat2,
+                roughness: 0.55,
+                metalness: 0.20,
+            })
+        );
+        band.position.y = headS * 1.05;
+        band.rotation.x = Math.PI / 2;
+
+        headGroup.add(brim, cone, band);
+    }
+
+    if (appearance.facialHair && appearance.facialHair !== 'none') {
+        const beard = new THREE.Mesh(
+            new THREE.ConeGeometry(0.10, appearance.facialHair === 'goatee' ? 0.18 : 0.28, 8),
+            new THREE.MeshStandardMaterial({
+                color: appearance.colors.hair,
+                roughness: 0.9,
+                metalness: 0.02,
+            })
+        );
+        beard.position.set(0, -headS * 0.46, headS * 0.68);
+        beard.rotation.x = Math.PI;
+        headGroup.add(beard);
+    }
+
+    function makeLeg(side) {
+        const legRoot = new THREE.Group();
+        legRoot.position.set(side * torsoW * 0.26, legH, 0);
+        group.add(legRoot);
+
+        const upper = new THREE.Mesh(new THREE.CylinderGeometry(legThk * 0.9, legThk, legH * 0.52, 10), pantsMat);
+        upper.position.y = -legH * 0.26;
+        legRoot.add(upper);
+
+        const lowerRoot = new THREE.Group();
+        lowerRoot.position.y = -legH * 0.52;
+        legRoot.add(lowerRoot);
+
+        const lower = new THREE.Mesh(new THREE.CylinderGeometry(legThk * 0.78, legThk * 0.86, legH * 0.48, 10), pantsMat);
+        lower.position.y = -legH * 0.24;
+        lowerRoot.add(lower);
+
+        const foot = new THREE.Mesh(new THREE.BoxGeometry(legThk * 1.5, 0.12, legThk * 2.2), shoeMat);
+        foot.position.set(0, -legH * 0.50, legThk * 0.4);
+        lowerRoot.add(foot);
+
+        return { legRoot, lowerRoot };
+    }
+
+    function makeArm(side) {
+        const upperArm = new THREE.Group();
+        upperArm.position.set(side * (torsoW * 0.72), torsoH * 0.88, 0);
+        bodyRoot.add(upperArm);
+
+        const upperMesh = new THREE.Mesh(new THREE.CylinderGeometry(armThk * 0.9, armThk, armLen * 0.46, 10), robeMat);
+        upperMesh.position.y = -armLen * 0.23;
+        upperArm.add(upperMesh);
+
+        const foreArm = new THREE.Group();
+        foreArm.position.y = -armLen * 0.46;
+        upperArm.add(foreArm);
+
+        const foreMesh = new THREE.Mesh(new THREE.CylinderGeometry(armThk * 0.75, armThk * 0.86, armLen * 0.42, 10), robeMat);
+        foreMesh.position.y = -armLen * 0.21;
+        foreArm.add(foreMesh);
+
+        const hand = new THREE.Mesh(new THREE.SphereGeometry(armThk * 0.74, 10, 10), skinMat);
+        hand.scale.set(1.0, 1.2, 0.9);
+        hand.position.y = -armLen * 0.45;
+        foreArm.add(hand);
+
+        return { upperArm, foreArm };
+    }
+
+    const legL = makeLeg(-1);
+    const legR = makeLeg(1);
+    const armL = makeArm(-1);
+    const armR = makeArm(1);
+
+    const wandGroup = new THREE.Group();
+    const wandHandle = new THREE.Mesh(new THREE.CylinderGeometry(0.022, 0.022, 0.52, 8), wandWoodMat);
+    const wandGem = new THREE.Mesh(new THREE.SphereGeometry(0.06, 10, 10), wandCoreMat);
+    wandGem.position.y = 0.28;
+    wandGroup.add(wandHandle, wandGem);
+    wandGroup.rotation.x = Math.PI * 0.52;
+    wandGroup.position.set(appearance.handedness === 'left' ? 0.03 : -0.03, -armLen * 0.48, 0.05);
+
+    const wandForeArm = appearance.handedness === 'left' ? armR.foreArm : armL.foreArm;
+    wandForeArm.add(wandGroup);
 
     const aura = new THREE.Mesh(
-        new THREE.TorusGeometry(0.55, 0.035, 12, 36),
+        new THREE.TorusGeometry(Math.max(0.45, torsoW * 1.2), 0.04, 12, 36),
         new THREE.MeshBasicMaterial({
             color: colors.aura,
             transparent: true,
-            opacity: 0.78,
+            opacity: 0.74,
             depthWrite: false,
             blending: THREE.AdditiveBlending,
         })
     );
-    aura.position.y = 1.2;
+    aura.position.set(0, torsoH * 0.52, 0);
     aura.rotation.x = Math.PI / 2;
+    bodyRoot.add(aura);
 
-    const staff = new THREE.Mesh(
-        new THREE.CylinderGeometry(0.025, 0.025, 1.2, 8),
-        new THREE.MeshStandardMaterial({
-            color: 0x5c4033,
-            roughness: 0.85,
-            metalness: 0.03,
-        })
-    );
-    staff.position.set(0.34, 1.2, 0.16);
-    staff.rotation.z = 0.28;
-
-    const gem = new THREE.Mesh(
-        new THREE.SphereGeometry(0.06, 12, 12),
-        new THREE.MeshBasicMaterial({
-            color: colors.aura,
-            transparent: true,
-            opacity: 0.95,
-            blending: THREE.AdditiveBlending,
-            depthWrite: false,
-        })
-    );
-    gem.position.y = 0.62;
-    staff.add(gem);
-
-    const nameColor = snapshot?.alignment === 'light' ? '#fde68a' : '#c4b5fd';
-    const nametag = _makeRemoteNameSprite(snapshot?.name || 'Wizard', nameColor);
-
-    group.add(robe);
-    group.add(head);
-    group.add(hat);
-    group.add(brim);
-    group.add(aura);
-    group.add(staff);
-    group.add(nametag);
+    const nameSprite = _makeRemoteNameSprite();
+    group.add(nameSprite);
 
     group.position.copy(_vec3FromNet(snapshot.position));
     group.rotation.y = snapshot.rotationY ?? 0;
-    group.userData.snapshot = snapshot;
-    group.userData.aura = aura;
-    group.userData.robe = robe;
-    group.userData.nametag = nametag;
-    group.userData.deadTilt = 0;
+
+    group.userData.parts = {
+        appearance,
+        bodyRoot,
+        headGroup,
+        aura,
+        upperArmL: armL.upperArm,
+        upperArmR: armR.upperArm,
+        foreArmL: armL.foreArm,
+        foreArmR: armR.foreArm,
+        legL: legL.legRoot,
+        legR: legR.legRoot,
+        shinL: legL.lowerRoot,
+        shinR: legR.lowerRoot,
+        wandGroup,
+        nameSprite,
+        walkT: 0,
+        hpKey: '',
+    };
+
+    _refreshRemoteNameSprite(nameSprite, snapshot);
 
     worldScene.add(group);
     REMOTE_PLAYER_VISUALS.set(snapshot.id, group);
@@ -2409,25 +2759,128 @@ function _syncRemotePlayerVisuals(delta) {
         const group = _ensureRemotePlayerVisual(snapshot);
         if (!group) return;
 
+        const parts = group.userData.parts || {};
+        const appearance = _getRemoteAppearance(snapshot);
         const targetPos = _vec3FromNet(snapshot.position);
+        const velX = snapshot.velocity?.x ?? 0;
+        const velZ = snapshot.velocity?.z ?? 0;
+        const moveSpeed = Math.sqrt(velX * velX + velZ * velZ);
+        const moving = moveSpeed > 0.18 && !snapshot.dead;
+
         group.position.lerp(targetPos, Math.min(1, delta * MULTIPLAYER_CONFIG.remoteLerp));
         group.rotation.y = THREE.MathUtils.lerp(group.rotation.y, snapshot.rotationY ?? 0, Math.min(1, delta * 8));
 
-        const aura = group.userData.aura;
-        const robe = group.userData.robe;
-        const dead = !!snapshot.dead;
+        parts.walkT = (parts.walkT || 0) + delta * Math.max(0, moveSpeed * 2.2);
+        const walkSwing = Math.sin(parts.walkT) * Math.min(0.72, moveSpeed * 0.12);
+        const aimHand = appearance.handedness === 'left' ? 'R' : 'L';
+        const guardHand = appearance.handedness === 'left' ? 'L' : 'R';
 
-        if (aura) {
-            aura.rotation.z += delta * 1.7;
-            aura.material.opacity = dead ? 0.18 : 0.78;
-        }
-        if (robe?.material) {
-            robe.material.emissiveIntensity = dead ? 0.04 : 0.20;
+        if (parts.aura) {
+            parts.aura.rotation.z += delta * 1.7;
+            parts.aura.material.opacity = snapshot.dead ? 0.16 : 0.74;
         }
 
-        const targetTilt = dead ? Math.PI * 0.42 : 0;
-        group.userData.deadTilt = THREE.MathUtils.lerp(group.userData.deadTilt || 0, targetTilt, Math.min(1, delta * 4));
-        group.rotation.z = group.userData.deadTilt;
+        if (snapshot.dead) {
+            if (parts.bodyRoot) {
+                parts.bodyRoot.rotation.x = THREE.MathUtils.lerp(parts.bodyRoot.rotation.x, 0.82, delta * 4);
+                parts.bodyRoot.rotation.z = THREE.MathUtils.lerp(parts.bodyRoot.rotation.z, 0.10, delta * 4);
+            }
+            if (parts.upperArmL) {
+                parts.upperArmL.rotation.x = THREE.MathUtils.lerp(parts.upperArmL.rotation.x, 1.45, delta * 4);
+                parts.upperArmL.rotation.z = THREE.MathUtils.lerp(parts.upperArmL.rotation.z, 0.65, delta * 4);
+                parts.foreArmL.rotation.x = THREE.MathUtils.lerp(parts.foreArmL.rotation.x, -0.55, delta * 4);
+            }
+            if (parts.upperArmR) {
+                parts.upperArmR.rotation.x = THREE.MathUtils.lerp(parts.upperArmR.rotation.x, 1.22, delta * 4);
+                parts.upperArmR.rotation.z = THREE.MathUtils.lerp(parts.upperArmR.rotation.z, -0.72, delta * 4);
+                parts.foreArmR.rotation.x = THREE.MathUtils.lerp(parts.foreArmR.rotation.x, -0.42, delta * 4);
+            }
+            if (parts.legL) {
+                parts.legL.rotation.x = THREE.MathUtils.lerp(parts.legL.rotation.x, -0.84, delta * 4);
+                parts.shinL.rotation.x = THREE.MathUtils.lerp(parts.shinL.rotation.x, 0.44, delta * 4);
+            }
+            if (parts.legR) {
+                parts.legR.rotation.x = THREE.MathUtils.lerp(parts.legR.rotation.x, 0.52, delta * 4);
+                parts.shinR.rotation.x = THREE.MathUtils.lerp(parts.shinR.rotation.x, 0.18, delta * 4);
+            }
+            if (parts.headGroup) {
+                parts.headGroup.rotation.x = THREE.MathUtils.lerp(parts.headGroup.rotation.x, -0.20, delta * 4);
+                parts.headGroup.rotation.z = THREE.MathUtils.lerp(parts.headGroup.rotation.z, 0.18, delta * 4);
+            }
+            group.rotation.z = THREE.MathUtils.lerp(group.rotation.z, Math.PI * 0.42, delta * 4);
+        } else {
+            group.rotation.z = THREE.MathUtils.lerp(group.rotation.z, 0, delta * 4);
+
+            if (parts.bodyRoot) {
+                const bob = moving ? Math.abs(Math.sin(parts.walkT)) * 0.04 : Math.sin(performance.now() * 0.0018) * 0.01;
+                parts.bodyRoot.position.y = THREE.MathUtils.lerp(parts.bodyRoot.position.y, bob, delta * 6);
+                parts.bodyRoot.rotation.x = THREE.MathUtils.lerp(parts.bodyRoot.rotation.x, moving ? 0.04 : 0, delta * 6);
+                parts.bodyRoot.rotation.z = THREE.MathUtils.lerp(parts.bodyRoot.rotation.z, 0, delta * 6);
+            }
+
+            if (parts.legL) {
+                parts.legL.rotation.x = THREE.MathUtils.lerp(parts.legL.rotation.x, moving ? -walkSwing : 0.04, delta * 8);
+                parts.legR.rotation.x = THREE.MathUtils.lerp(parts.legR.rotation.x, moving ? walkSwing : -0.04, delta * 8);
+                parts.shinL.rotation.x = THREE.MathUtils.lerp(parts.shinL.rotation.x, moving ? Math.max(0, -walkSwing) * 0.7 : 0.04, delta * 8);
+                parts.shinR.rotation.x = THREE.MathUtils.lerp(parts.shinR.rotation.x, moving ? Math.max(0, walkSwing) * 0.7 : 0.04, delta * 8);
+            }
+
+            const aimBlend = snapshot.aiming ? 1 : 0;
+            const pitchAim = snapshot.pitch ?? 0;
+
+            if (parts[`upperArm${aimHand}`] && parts[`foreArm${aimHand}`]) {
+                const wandUpper = parts[`upperArm${aimHand}`];
+                const wandFore = parts[`foreArm${aimHand}`];
+                const guardUpper = parts[`upperArm${guardHand}`];
+                const guardFore = parts[`foreArm${guardHand}`];
+
+                const targetAimX = THREE.MathUtils.clamp(-1.62 + pitchAim * 0.9, -2.2, -0.4);
+                const targetAimZ = appearance.handedness === 'left' ? -0.08 : 0.08;
+
+                wandUpper.rotation.x = THREE.MathUtils.lerp(
+                    wandUpper.rotation.x,
+                    aimBlend > 0 ? targetAimX : (moving ? (appearance.handedness === 'left' ? walkSwing * 0.62 : -walkSwing * 0.62) : 0.08),
+                    delta * 8
+                );
+                wandUpper.rotation.z = THREE.MathUtils.lerp(
+                    wandUpper.rotation.z,
+                    aimBlend > 0 ? targetAimZ : 0,
+                    delta * 8
+                );
+                wandFore.rotation.x = THREE.MathUtils.lerp(
+                    wandFore.rotation.x,
+                    aimBlend > 0 ? -0.55 : 0.16,
+                    delta * 8
+                );
+
+                if (guardUpper && guardFore) {
+                    guardUpper.rotation.x = THREE.MathUtils.lerp(
+                        guardUpper.rotation.x,
+                        aimBlend > 0 ? -0.18 : (moving ? (appearance.handedness === 'left' ? -walkSwing * 0.52 : walkSwing * 0.52) : 0.08),
+                        delta * 8
+                    );
+                    guardFore.rotation.x = THREE.MathUtils.lerp(
+                        guardFore.rotation.x,
+                        aimBlend > 0 ? -0.30 : 0.16,
+                        delta * 8
+                    );
+                }
+
+                if (parts.wandGroup) {
+                    parts.wandGroup.rotation.x = THREE.MathUtils.lerp(
+                        parts.wandGroup.rotation.x,
+                        aimBlend > 0 ? -Math.PI : Math.PI * 0.52,
+                        delta * 8
+                    );
+                }
+            }
+        }
+
+        const hpKey = `${snapshot.name}|${snapshot.hp}|${snapshot.maxHP}|${snapshot.dead}`;
+        if (parts.nameSprite && parts.hpKey !== hpKey) {
+            parts.hpKey = hpKey;
+            _refreshRemoteNameSprite(parts.nameSprite, snapshot);
+        }
     });
 
     for (const [playerId] of REMOTE_PLAYER_VISUALS) {
@@ -5194,13 +5647,31 @@ function generateWorld() {
 // Keyboard
 const keys = { w: false, a: false, s: false, d: false, space: false, shift: false, ctrl: false };
 document.addEventListener('keydown', (e) => {
-    if (e.key === 'Tab' && GAME_STATE.mode === 'world') {
+    const key = e.key.toLowerCase();
+
+    if (GAME_STATE.mode === 'world' && (e.key === 'Escape' || key === 'p')) {
+        e.preventDefault();
+
+        if (isSaveLoadOpen()) {
+            closeSaveLoadOverlay();
+            return;
+        }
+
+        if (isPauseMenuOpen()) {
+            closePauseMenu();
+        } else {
+            openPauseMenu();
+        }
+        return;
+    }
+
+    if (e.key === 'Tab' && GAME_STATE.mode === 'world' && !isPauseMenuOpen() && !isSaveLoadOpen()) {
         e.preventDefault();
         toggleInventory();
         return;
     }
 
-    if (e.key === 'F1' && GAME_STATE.mode === 'world') {
+    if (e.key === 'F1' && GAME_STATE.mode === 'world' && !isPauseMenuOpen() && !isSaveLoadOpen()) {
         e.preventDefault();
         toggleFriends();
         return;
@@ -5208,11 +5679,10 @@ document.addEventListener('keydown', (e) => {
 
     if (isGameMenuOpen()) return;
 
-    const key = e.key.toLowerCase();
-    if(keys.hasOwnProperty(key)) keys[key] = true;
-    if(e.key === ' ') keys.space = true;
-    if(e.key === 'Shift') keys.shift = true;
-    if(e.key === 'Control' || e.key === 'c') keys.ctrl = true;
+    if (keys.hasOwnProperty(key)) keys[key] = true;
+    if (e.key === ' ') keys.space = true;
+    if (e.key === 'Shift') keys.shift = true;
+    if (e.key === 'Control' || e.key === 'c') keys.ctrl = true;
 
     const numKey = parseInt(e.key);
     if (!isNaN(numKey) && numKey >= 1 && numKey <= 8 && GAME_STATE.mode === 'world' && isAiming && !isCastingSpell()) {
@@ -8720,6 +9190,7 @@ function setupUI() {
     // Enter Realm Button
     document.getElementById('btn-accept').addEventListener('click', () => {
         _resumeAudioContext();
+        performAutoSave(true);
         startGame();
     });
 
@@ -8791,6 +9262,18 @@ let inventoryPreviewScene = null;
 let inventoryPreviewCamera = null;
 let inventoryPreviewModel = null;
 
+const _deepClonePlain = (data) => JSON.parse(JSON.stringify(data));
+const DEFAULT_PROFILE_TEMPLATE = _deepClonePlain(GAME_STATE.char);
+const DEFAULT_INVENTORY_TEMPLATE = _deepClonePlain(GAME_STATE.inventory);
+const DEFAULT_FRIENDS_TEMPLATE = _deepClonePlain(GAME_STATE.friends);
+const SAVE_NAMESPACE = 'wotm_save_v2';
+const SAVE_SLOT_COUNT = 8;
+
+let _saveLoadMode = 'load';
+let _saveLoadSource = 'menu';
+let _pendingLoadedSave = null;
+let _autoSaveTimer = 0;
+
 function isInventoryOpen() {
     return !!GAME_STATE.inventory.open;
 }
@@ -8799,9 +9282,336 @@ function isFriendsOpen() {
     return !!GAME_STATE.friends.open;
 }
 
-function isGameMenuOpen() {
-    return isInventoryOpen() || isFriendsOpen();
+function isPauseMenuOpen() {
+    const overlay = document.getElementById('pause-overlay');
+    return !!overlay && overlay.style.display === 'flex';
 }
+
+function isSaveLoadOpen() {
+    const overlay = document.getElementById('save-slot-overlay');
+    return !!overlay && overlay.style.display === 'flex';
+}
+
+function isGameMenuOpen() {
+    return isInventoryOpen() || isFriendsOpen() || isPauseMenuOpen() || isSaveLoadOpen();
+}
+
+function _saveStorageKey(slotIndex) {
+    return slotIndex === 0
+        ? `${SAVE_NAMESPACE}_auto`
+        : `${SAVE_NAMESPACE}_slot_${slotIndex}`;
+}
+
+function _formatSaveTime(ts) {
+    if (!ts) return 'Empty';
+    const d = new Date(ts);
+    return d.toLocaleString();
+}
+
+function _serializeSpellSlots() {
+    return SPELL_SLOTS.map(slot => ({
+        index: slot.index,
+        locked: !!slot.locked,
+        spellId: slot.spell ? slot.spell.id : null
+    }));
+}
+
+function _applySpellSlotSnapshot(slotSnapshot = []) {
+    SPELL_SLOTS.forEach((slot, i) => {
+        const incoming = slotSnapshot[i] || { locked: i >= 4, spellId: null };
+        slot.locked = incoming.locked ?? (i >= 4);
+        slot.spell = incoming.spellId ? _getSpellById(incoming.spellId) : null;
+    });
+    _buildSpellBar();
+    _refreshSpellBarHighlight();
+}
+
+function _buildSavePayload(label = 'Save Slot') {
+    const p = GAME_STATE.player;
+    return {
+        version: 1,
+        meta: {
+            label,
+            savedAt: Date.now(),
+            name: GAME_STATE.char.name,
+            magic: GAME_STATE.char.magic,
+            alignment: GAME_STATE.char.alignment
+        },
+        char: _deepClonePlain(GAME_STATE.char),
+        inventory: _deepClonePlain(GAME_STATE.inventory),
+        friends: _deepClonePlain(GAME_STATE.friends),
+        spellSlots: _serializeSpellSlots(),
+        world: {
+            hp: p.hp ?? p.maxHP ?? 100,
+            energy: p.energy ?? p.maxEnergy ?? 100,
+            stamina: p.stamina ?? p.maxStamina ?? 100,
+            position: characterModel ? _serializeVec3(characterModel.position) : { x: 0, y: 8, z: 0 },
+            spawnPoint: _serializeVec3(GAME_STATE.player.spawnPoint || new THREE.Vector3(0, 8, 0)),
+            rotationY: characterModel?.rotation.y ?? 0,
+            yaw,
+            pitch
+        }
+    };
+}
+
+function _writeSaveSlot(slotIndex, payload) {
+    localStorage.setItem(_saveStorageKey(slotIndex), JSON.stringify(payload));
+}
+
+function _readSaveSlot(slotIndex) {
+    const raw = localStorage.getItem(_saveStorageKey(slotIndex));
+    if (!raw) return null;
+    try {
+        return JSON.parse(raw);
+    } catch {
+        return null;
+    }
+}
+
+function _applyLoadedSavePayload(payload) {
+    if (!payload) return false;
+
+    GAME_STATE.char = {
+        ..._deepClonePlain(DEFAULT_PROFILE_TEMPLATE),
+        ...(payload.char || {}),
+        colors: {
+            ..._deepClonePlain(DEFAULT_PROFILE_TEMPLATE.colors || {}),
+            ...((payload.char && payload.char.colors) || {})
+        }
+    };
+
+    GAME_STATE.inventory = {
+        ..._deepClonePlain(DEFAULT_INVENTORY_TEMPLATE),
+        ...(payload.inventory || {})
+    };
+
+    GAME_STATE.friends = {
+        ..._deepClonePlain(DEFAULT_FRIENDS_TEMPLATE),
+        ...(payload.friends || {})
+    };
+
+    _pendingLoadedSave = payload;
+    computeStats();
+    rebuildCharacter();
+    renderInventoryUI();
+    renderFriendsUI();
+    syncGameMenuButtons();
+    return true;
+}
+
+function performAutoSave(quiet = true) {
+    if (GAME_STATE.mode !== 'world') return;
+    const payload = _buildSavePayload('Auto Save');
+    _writeSaveSlot(0, payload);
+    if (!quiet) _showSpellCastStatus('Autosaved', true, 700);
+}
+
+function saveGameToSlot(slotIndex) {
+    if (slotIndex <= 0) return;
+
+    const payload = _buildSavePayload(`Save Slot ${slotIndex}`);
+    _writeSaveSlot(slotIndex, payload);
+    renderSaveSlots();
+    _showSpellCastStatus(`Saved to Slot ${slotIndex}`, true, 900);
+}
+
+function loadGameFromSlot(slotIndex) {
+    const payload = _readSaveSlot(slotIndex);
+    if (!payload) {
+        _showSpellCastStatus('That save slot is empty', false, 900);
+        return;
+    }
+
+    if (!_applyLoadedSavePayload(payload)) return;
+
+    closeSaveLoadOverlay();
+    document.getElementById('main-menu').style.display = 'none';
+    document.getElementById('ui-layer').style.display = 'none';
+    startGame();
+}
+
+function renderSaveSlots() {
+    const root = document.getElementById('save-slot-list');
+    if (!root) return;
+
+    root.innerHTML = '';
+
+    const slots = [{ index: 0, title: 'Auto Save', manual: false }]
+        .concat(Array.from({ length: SAVE_SLOT_COUNT }, (_, i) => ({
+            index: i + 1,
+            title: `Save Slot ${i + 1}`,
+            manual: true
+        })));
+
+    slots.forEach(slot => {
+        const data = _readSaveSlot(slot.index);
+        const row = document.createElement('div');
+        row.className = 'inventory-row';
+
+        const saveName = data?.meta?.name || 'Empty Slot';
+        const saveMagic = data?.meta?.magic ? String(data.meta.magic).toUpperCase() : '—';
+        const saveAlignment = data?.meta?.alignment ? String(data.meta.alignment).toUpperCase() : '—';
+        const saveTime = _formatSaveTime(data?.meta?.savedAt);
+
+        row.innerHTML = `
+            <div>
+                <div class="inventory-row-title">${slot.index === 0 ? '⟳' : '💾'} ${slot.title}</div>
+                <div class="inventory-row-desc">${saveName} • ${saveAlignment} ${saveMagic}</div>
+                <div class="inventory-row-desc">${saveTime}</div>
+            </div>
+        `;
+
+        const action = document.createElement('button');
+        action.className = 'inventory-use-btn';
+
+        if (_saveLoadMode === 'load') {
+            action.textContent = data ? 'Load' : 'Empty';
+            action.disabled = !data;
+            action.addEventListener('click', () => loadGameFromSlot(slot.index));
+        } else {
+            action.textContent = slot.manual ? 'Save' : 'Auto Only';
+            action.disabled = !slot.manual;
+            action.addEventListener('click', () => saveGameToSlot(slot.index));
+        }
+
+        row.appendChild(action);
+        root.appendChild(row);
+    });
+}
+
+function openSaveLoadOverlay(mode = 'load', source = 'menu') {
+    _saveLoadMode = mode;
+    _saveLoadSource = source;
+
+    const overlay = document.getElementById('save-slot-overlay');
+    const title = document.getElementById('save-slot-title');
+    const subtitle = document.getElementById('save-slot-subtitle');
+    const hint = document.getElementById('save-slot-hint');
+
+    if (!overlay) return;
+
+    if (title) title.textContent = mode === 'save' ? 'Chronicle Save Archive' : 'Chronicle Load Archive';
+    if (subtitle) subtitle.textContent = mode === 'save'
+        ? 'Preserve your wizard into one of the manual slots'
+        : 'Choose an auto save or one of your manual save slots';
+    if (hint) hint.textContent = mode === 'save'
+        ? 'The first slot is reserved for autosave only.'
+        : 'Load directly into your saved character path and world state.';
+
+    renderSaveSlots();
+    overlay.style.display = 'flex';
+}
+
+function closeSaveLoadOverlay() {
+    const overlay = document.getElementById('save-slot-overlay');
+    if (overlay) overlay.style.display = 'none';
+}
+
+function openPauseMenu() {
+    if (GAME_STATE.mode !== 'world' || isPlayerDead()) return;
+
+    if (isInventoryOpen()) closeInventory();
+    if (isFriendsOpen()) closeFriends();
+
+    const overlay = document.getElementById('pause-overlay');
+    if (overlay) overlay.style.display = 'flex';
+
+    if (document.pointerLockElement === canvas) {
+        document.exitPointerLock();
+    }
+}
+
+function closePauseMenu(relock = true) {
+    const overlay = document.getElementById('pause-overlay');
+    if (overlay) overlay.style.display = 'none';
+
+    if (relock && GAME_STATE.mode === 'world' && document.pointerLockElement !== canvas && !isPlayerDead()) {
+        canvas.requestPointerLock();
+    }
+}
+
+function returnToMainMenu() {
+    performAutoSave(true);
+
+    closePauseMenu(false);
+    closeSaveLoadOverlay();
+    if (isInventoryOpen()) closeInventory();
+    if (isFriendsOpen()) closeFriends();
+
+    GAME_STATE.mode = 'customization';
+    isAiming = false;
+    _aimCursor.x = 0.5;
+    _aimCursor.y = 0.5;
+    _updateHudCrosshair();
+
+    document.body.classList.remove('game-active', 'inventory-open', 'friends-open', 'aiming');
+    const menu = document.getElementById('main-menu');
+    const uiLayer = document.getElementById('ui-layer');
+    if (menu) {
+        menu.style.display = 'block';
+        menu.style.opacity = '1';
+    }
+    if (uiLayer) uiLayer.style.display = 'none';
+
+    if (document.pointerLockElement === canvas) {
+        document.exitPointerLock();
+    }
+}
+
+function startNewCharacterPath() {
+    GAME_STATE.char = _deepClonePlain(DEFAULT_PROFILE_TEMPLATE);
+    GAME_STATE.inventory = _deepClonePlain(DEFAULT_INVENTORY_TEMPLATE);
+    GAME_STATE.friends = _deepClonePlain(DEFAULT_FRIENDS_TEMPLATE);
+    _pendingLoadedSave = null;
+
+    computeStats();
+    rebuildCharacter();
+    renderInventoryUI();
+    renderFriendsUI();
+
+    const menu = document.getElementById('main-menu');
+    if (menu) {
+        menu.style.transition = 'opacity 0.8s ease';
+        menu.style.opacity = '0';
+        setTimeout(() => {
+            menu.style.display = 'none';
+            document.getElementById('ui-layer').style.display = 'block';
+        }, 800);
+    }
+}
+
+function updateAutoSave(delta) {
+    if (GAME_STATE.mode !== 'world') return;
+    _autoSaveTimer += delta;
+    if (_autoSaveTimer >= 45) {
+        _autoSaveTimer = 0;
+        performAutoSave(true);
+    }
+}
+
+window.addEventListener('beforeunload', () => {
+    try {
+        performAutoSave(true);
+    } catch {}
+});
+
+const _saveCloseBtn = document.getElementById('save-slot-close-btn');
+if (_saveCloseBtn) _saveCloseBtn.addEventListener('click', () => closeSaveLoadOverlay());
+
+const _pauseCloseBtn = document.getElementById('pause-close-btn');
+if (_pauseCloseBtn) _pauseCloseBtn.addEventListener('click', () => closePauseMenu());
+
+const _pauseResumeBtn = document.getElementById('pause-resume-btn');
+if (_pauseResumeBtn) _pauseResumeBtn.addEventListener('click', () => closePauseMenu());
+
+const _pauseSaveBtn = document.getElementById('pause-save-btn');
+if (_pauseSaveBtn) _pauseSaveBtn.addEventListener('click', () => openSaveLoadOverlay('save', 'pause'));
+
+const _pauseSettingsBtn = document.getElementById('pause-settings-btn');
+if (_pauseSettingsBtn) _pauseSettingsBtn.addEventListener('click', () => alert('Settings coming soon.'));
+
+const _pauseMainMenuBtn = document.getElementById('pause-mainmenu-btn');
+if (_pauseMainMenuBtn) _pauseMainMenuBtn.addEventListener('click', () => returnToMainMenu());
 
 function syncGameMenuButtons() {
     const invBtn = document.getElementById('inventory-toggle-btn');
@@ -9469,35 +10279,83 @@ syncGameMenuButtons();
 function startGame() {
     GAME_STATE.mode = 'world';
 
+    const mainMenu = document.getElementById('main-menu');
+    if (mainMenu) {
+        mainMenu.style.display = 'none';
+        mainMenu.style.opacity = '1';
+    }
+
     // ── 1. Kill every panel that should not be in-game ──
     const customEl = document.getElementById('customization-screen');
     if (customEl) customEl.style.display = 'none';
     const loadEl = document.getElementById('loading-screen');
     if (loadEl) loadEl.style.display = 'none';
     const uiLayer = document.getElementById('ui-layer');
-    if (uiLayer) uiLayer.style.display = 'none'; // entire panel gone in-game
+    if (uiLayer) uiLayer.style.display = 'none';
 
-    // ── 2. Activate HUD via body class (defined in <style> before Tailwind loads) ──
+    closePauseMenu(false);
+    closeSaveLoadOverlay();
+
+    // ── 2. Activate HUD ──
     document.body.classList.add('game-active');
+    document.body.classList.remove('inventory-open', 'friends-open');
 
-    // Extra safety: force HUD visible when entering the world
     ['hud-crosshair', 'hud-charinfo'].forEach(id => {
         const el = document.getElementById(id);
         if (el) el.style.display = 'block';
     });
 
-    // ── 3. Equip starter spells and populate the spell bar ──
-    equipStarterSpells();
-    _buildSpellBar();
-    _refreshSpellBarHighlight();
+    // ── 3. Compute stats and build world ──
+    computeStats();
+    generateWorld();
+    _startWorldAmbience();
+    _resumeAudioContext();
+    initMultiplayer();
+
+    if (_pendingLoadedSave && _pendingLoadedSave.spellSlots) {
+        _applySpellSlotSnapshot(_pendingLoadedSave.spellSlots);
+    } else {
+        equipStarterSpells();
+        _buildSpellBar();
+        _refreshSpellBarHighlight();
+    }
+
+    const loadedWorld = _pendingLoadedSave?.world || null;
+
+    GAME_STATE.player.dead = false;
+    GAME_STATE.player.ragdoll = false;
+    GAME_STATE.player.respawnTimer = 0;
+    GAME_STATE.player.deathFade = 0;
+    GAME_STATE.player.spawnPoint = loadedWorld?.spawnPoint
+        ? _vec3FromNet(loadedWorld.spawnPoint)
+        : new THREE.Vector3(0, 8, 0);
+
+    if (loadedWorld) {
+        characterModel.position.copy(_vec3FromNet(loadedWorld.position || loadedWorld.spawnPoint || { x: 0, y: 8, z: 0 }));
+        characterModel.rotation.y = loadedWorld.rotationY ?? 0;
+        yaw = loadedWorld.yaw ?? yaw;
+        pitch = loadedWorld.pitch ?? pitch;
+        GAME_STATE.player.hp = Math.min(GAME_STATE.player.maxHP, loadedWorld.hp ?? GAME_STATE.player.maxHP);
+        GAME_STATE.player.energy = Math.min(GAME_STATE.player.maxEnergy, loadedWorld.energy ?? GAME_STATE.player.maxEnergy);
+        GAME_STATE.player.stamina = Math.min(GAME_STATE.player.maxStamina, loadedWorld.stamina ?? GAME_STATE.player.maxStamina);
+    } else {
+        characterModel.position.copy(GAME_STATE.player.spawnPoint.clone());
+        GAME_STATE.player.hp = GAME_STATE.player.maxHP;
+        GAME_STATE.player.energy = GAME_STATE.player.maxEnergy;
+        GAME_STATE.player.stamina = GAME_STATE.player.maxStamina;
+    }
+
+    _pendingLoadedSave = null;
+
     updateSpellUI();
     updateHudMeters();
     renderInventoryUI();
     renderFriendsUI();
     syncGameMenuButtons();
+    _updateDeathOverlay();
+    performAutoSave(true);
 
-    // ── 4. Push character info into HUD elements ──
-    const nameEl  = document.getElementById('hud-name');
+    const nameEl = document.getElementById('hud-name');
     const classEl = document.getElementById('hud-class');
     if (nameEl) nameEl.innerText = GAME_STATE.char.name;
     if (classEl) {
@@ -9506,25 +10364,6 @@ function startGame() {
         classEl.innerText = `Lvl 1 ${alignLabel} ${classLabel} Wizard`;
     }
 
-    // ── 5. Compute attribute-driven stats ──
-    computeStats();
-
-    // ── 6. Build world ──
-    generateWorld();
-    _startWorldAmbience();
-    _resumeAudioContext();
-    initMultiplayer();
-    _resumeAudioContext();
-    initMultiplayer();
-
-    GAME_STATE.player.dead = false;
-    GAME_STATE.player.ragdoll = false;
-    GAME_STATE.player.respawnTimer = 0;
-    GAME_STATE.player.deathFade = 0;
-    GAME_STATE.player.spawnPoint = new THREE.Vector3(0, 8, 0);
-    _updateDeathOverlay();
-
-    // ── 7. Lock pointer ──
     canvas.requestPointerLock();
 }
 
@@ -10522,6 +11361,7 @@ function animate() {
     updatePlayerDeathState(delta);
     updateSpellRuntimeEffects(delta);
     updateMultiplayer(delta);
+    updateAutoSave(delta);
     updateSpellUI();
     updatePupilGaze(delta);
     updateIdleFidget(delta, clock.getElapsedTime());
