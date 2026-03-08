@@ -35,6 +35,17 @@ function broadcast(type, payload, exclude = null) {
   }
 }
 
+function sendToPlayer(targetId, type, payload) {
+  const message = JSON.stringify({ type, payload });
+  for (const client of wss.clients) {
+    if (client.playerId === targetId && client.readyState === 1) {
+      client.send(message);
+      return true;
+    }
+  }
+  return false;
+}
+
 function sanitizePlayer(playerId, payload = {}, existing = {}) {
   return {
     ...existing,
@@ -166,6 +177,71 @@ wss.on('connection', (ws) => {
           reason: payload.reason || 'defeated',
           respawnAt,
         });
+        break;
+      }
+
+      // ── Text Chat ──────────────────────────────────────────────
+      case 'chat_public': {
+        const sender = players.get(playerId);
+        broadcast('chat_public', {
+          from: playerId,
+          name: sender?.name ?? 'Wizard',
+          text: String(payload.text ?? '').slice(0, 300),
+          at: Date.now(),
+        }, ws);
+        break;
+      }
+
+      case 'chat_private': {
+        const sender = players.get(playerId);
+        const targetId = payload.to;
+        if (targetId) {
+          const msg = {
+            from: playerId,
+            name: sender?.name ?? 'Wizard',
+            text: String(payload.text ?? '').slice(0, 300),
+            at: Date.now(),
+          };
+          sendToPlayer(targetId, 'chat_private', msg);
+        }
+        break;
+      }
+
+      // ── Voice Chat (WebRTC signaling relay) ────────────────────
+      case 'voice_ready': {
+        broadcast('voice_ready', { from: playerId }, ws);
+        break;
+      }
+
+      case 'voice_offer': {
+        sendToPlayer(payload.to, 'voice_offer', {
+          from: playerId,
+          sdp: payload.sdp,
+        });
+        break;
+      }
+
+      case 'voice_answer': {
+        sendToPlayer(payload.to, 'voice_answer', {
+          from: playerId,
+          sdp: payload.sdp,
+        });
+        break;
+      }
+
+      case 'voice_ice': {
+        sendToPlayer(payload.to, 'voice_ice', {
+          from: playerId,
+          candidate: payload.candidate,
+        });
+        break;
+      }
+
+      case 'voice_speaking': {
+        broadcast('voice_speaking', {
+          from: playerId,
+          speaking: !!payload.speaking,
+        }, ws);
         break;
       }
     }
