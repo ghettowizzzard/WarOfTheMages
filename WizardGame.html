@@ -86,6 +86,194 @@
             transform: translateZ(-200px) scale(1.3);
         }
 
+        /* ── CHAT SYSTEM ── */
+        #chat-panel {
+            position: fixed;
+            bottom: 12px;
+            left: 12px;
+            width: clamp(260px, 22vw, 360px);
+            max-height: clamp(220px, 30vh, 400px);
+            display: flex;
+            flex-direction: column;
+            background: rgba(8, 3, 3, 0.82);
+            border: 1px solid rgba(255, 94, 0, 0.35);
+            border-radius: 10px;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.65);
+            font-family: 'Rajdhani', sans-serif;
+            z-index: 2147483640;
+            overflow: hidden;
+            transition: opacity 0.18s ease, transform 0.18s ease;
+            pointer-events: auto;
+        }
+        #chat-panel.chat-hidden {
+            opacity: 0;
+            transform: translateY(10px);
+            pointer-events: none;
+        }
+        #chat-tabs {
+            display: flex;
+            border-bottom: 1px solid rgba(255,94,0,0.25);
+            flex-shrink: 0;
+        }
+        .chat-tab-btn {
+            flex: 1;
+            padding: 6px 0;
+            background: transparent;
+            border: none;
+            color: rgba(220,180,100,0.60);
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 0.78rem;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            cursor: pointer;
+            text-transform: uppercase;
+            transition: color 0.15s, background 0.15s;
+        }
+        .chat-tab-btn:hover { color: #facc15; background: rgba(255,94,0,0.08); }
+        .chat-tab-btn.active { color: #facc15; border-bottom: 2px solid #ff5e00; background: rgba(255,94,0,0.10); }
+        #chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 6px 8px;
+            min-height: 80px;
+            scroll-behavior: smooth;
+        }
+        #chat-messages::-webkit-scrollbar { width: 4px; }
+        #chat-messages::-webkit-scrollbar-thumb { background: rgba(255,94,0,0.35); border-radius: 2px; }
+        .chat-msg {
+            font-size: 0.80rem;
+            line-height: 1.4;
+            color: #e5d3a1;
+            margin-bottom: 3px;
+            word-break: break-word;
+        }
+        .chat-msg-name { font-weight: 700; color: #fb923c; margin-right: 4px; }
+        .chat-msg-name.chat-msg-self { color: #facc15; }
+        .chat-msg-system { color: rgba(192,192,192,0.55); font-style: italic; font-size: 0.74rem; }
+        .chat-msg-private { color: #c084fc; }
+        .chat-msg-private .chat-msg-name { color: #a855f7; }
+        #chat-private-friends {
+            border-bottom: 1px solid rgba(255,94,0,0.18);
+            max-height: 110px;
+            overflow-y: auto;
+            flex-shrink: 0;
+        }
+        .chat-friend-row {
+            padding: 5px 8px;
+            cursor: pointer;
+            font-size: 0.78rem;
+            color: #d8b4fe;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: background 0.12s;
+        }
+        .chat-friend-row:hover { background: rgba(168,85,247,0.15); }
+        .chat-friend-row.active { background: rgba(168,85,247,0.28); color: #facc15; }
+        .chat-friend-dot { width: 7px; height: 7px; border-radius: 50%; background: #4ade80; flex-shrink: 0; }
+        .chat-friend-dot.offline { background: rgba(255,255,255,0.25); }
+        #chat-input-row {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            padding: 5px 7px;
+            border-top: 1px solid rgba(255,94,0,0.22);
+            flex-shrink: 0;
+        }
+        #chat-input {
+            flex: 1;
+            background: rgba(255,255,255,0.07);
+            border: 1px solid rgba(255,94,0,0.28);
+            border-radius: 6px;
+            color: #fff;
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 0.82rem;
+            padding: 4px 8px;
+            outline: none;
+            min-width: 0;
+        }
+        #chat-input::placeholder { color: rgba(255,255,255,0.28); }
+        #chat-input:focus { border-color: rgba(255,150,0,0.6); }
+        #chat-emoji-btn {
+            background: transparent;
+            border: none;
+            font-size: 1.05rem;
+            cursor: pointer;
+            padding: 2px 4px;
+            border-radius: 5px;
+            transition: background 0.12s;
+            line-height: 1;
+        }
+        #chat-emoji-btn:hover { background: rgba(255,94,0,0.18); }
+        #chat-send-btn {
+            background: linear-gradient(180deg,#7c3aed,#4c1d95);
+            border: 1px solid rgba(250,204,21,0.4);
+            border-radius: 6px;
+            color: #facc15;
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 0.76rem;
+            font-weight: 700;
+            padding: 4px 9px;
+            cursor: pointer;
+            transition: opacity 0.15s;
+            white-space: nowrap;
+        }
+        #chat-send-btn:disabled { opacity: 0.38; cursor: not-allowed; }
+        #chat-cooldown-bar {
+            height: 2px;
+            background: rgba(255,94,0,0.18);
+            flex-shrink: 0;
+        }
+        #chat-cooldown-fill {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg,#ff5e00,#facc15);
+            transition: width 0.12s linear;
+        }
+        #chat-emoji-picker {
+            position: absolute;
+            bottom: 52px;
+            left: 7px;
+            background: rgba(15,5,5,0.97);
+            border: 1px solid rgba(255,94,0,0.40);
+            border-radius: 8px;
+            padding: 7px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px;
+            width: clamp(200px, 20vw, 290px);
+            max-height: 160px;
+            overflow-y: auto;
+            z-index: 2147483641;
+        }
+        #chat-emoji-picker.chat-hidden { display: none; }
+        .chat-emoji-opt {
+            font-size: 1.15rem;
+            cursor: pointer;
+            padding: 3px;
+            border-radius: 4px;
+            transition: background 0.10s;
+        }
+        .chat-emoji-opt:hover { background: rgba(255,94,0,0.25); }
+        /* ── FLOATING CHAT BUBBLES (3D sprites via canvas, no additional CSS needed) ── */
+        /* CSS-side: nothing needed, sprites live in Three.js world space */
+
+        #chat-toggle-hint {
+            display: none;
+            position: fixed;
+            bottom: 14px;
+            left: 14px;
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 0.72rem;
+            color: rgba(255,150,50,0.45);
+            pointer-events: none;
+            z-index: 2147483639;
+            letter-spacing: 0.06em;
+        }
+        body.game-active #chat-toggle-hint {
+            display: block;
+        }
+
         #fireCanvas {
             position: absolute;
             top: 0; left: 0;
@@ -1192,15 +1380,10 @@
                     </div>
                     <div>
                         <label class="block mb-2 text-sm">Primary School of Magic</label>
-                        <select id="magic-type" class="custom-input w-full p-3 text-base">
-                            <option value="storm" style="color:#c084fc; font-weight:bold;">⚡ Storm (Purple/Yellow)</option>
-                            <option value="earth" style="color:#4ade80; font-weight:bold;">🌿 Earth (Green/Brown)</option>
-                            <option value="fire" style="color:#f87171; font-weight:bold;">🔥 Fire (Red/Orange)</option>
-                            <option value="water" style="color:#60a5fa; font-weight:bold;">💧 Water (Blue/Cyan)</option>
-                            <option value="death" style="color:#9ca3af; font-weight:bold;">💀 Death (Black/White)</option>
-                            <option value="time" style="color:#facc15; font-weight:bold;">⏳ Time (Gold/Sand)</option>
-                            <option value="plasma" style="color:#f472b6; font-weight:bold;">🌌 Plasma (Pink/Neon)</option>
-                        </select>
+                        <button id="magic-type" type="button" class="custom-input w-full p-3 text-base" style="display:flex;align-items:center;justify-content:space-between;text-align:left;">
+                            <span id="magic-type-label">⚡ Storm (Purple/Yellow)</span>
+                            <span style="opacity:0.72;">▾</span>
+                        </button>
                     </div>
 
                     <!-- Attributes -->
@@ -1413,6 +1596,24 @@
     </div>
 
     <!-- ══ GAME HUD — naked body-level elements, all styling inline, shown/hidden by JS only ══ -->
+    <!-- ── CHAT PANEL ── -->
+    <div id="chat-panel" class="chat-hidden" style="display:none;">
+        <div id="chat-tabs">
+            <button class="chat-tab-btn active" data-chat-tab="public" type="button">🌐 Public</button>
+            <button class="chat-tab-btn" data-chat-tab="private" type="button">💬 Private</button>
+        </div>
+        <div id="chat-private-friends" style="display:none;"></div>
+        <div id="chat-messages"></div>
+        <div id="chat-cooldown-bar"><div id="chat-cooldown-fill"></div></div>
+        <div id="chat-input-row">
+            <input id="chat-input" type="text" maxlength="200" placeholder="Press T to chat…" autocomplete="off" spellcheck="false" />
+            <button id="chat-emoji-btn" type="button" title="Emoji">😊</button>
+            <button id="chat-send-btn" type="button">Send</button>
+        </div>
+        <div id="chat-emoji-picker" class="chat-hidden"></div>
+    </div>
+    <div id="chat-toggle-hint">T — Chat</div>
+
     <div id="hud-crosshair" style="display:none;position:fixed;top:50%;left:50%;width:18px;height:18px;background:#ffe600;border:3px solid #7a1a00;border-radius:50%;transform:translate(-50%,-50%);box-shadow:0 0 14px #ff3c00,0 0 28px rgba(255,230,0,0.55);z-index:2147483647;pointer-events:none;"></div>
 
     <div id="hud-charinfo" style="display:none;position:fixed;top:20px;left:20px;background:rgba(10,2,2,0.92);color:white;padding:15px 20px;border-radius:10px;border:2px solid #5a1000;border-left:6px solid #ff3c00;box-shadow:0 4px 0 rgba(0,0,0,0.7),0 0 20px rgba(255,60,0,0.2);font-family:'Rajdhani',sans-serif;z-index:2147483647;pointer-events:none;min-width:240px;">
@@ -1555,6 +1756,35 @@
         </div>
     </div>
 
+    <div id="settings-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.58);z-index:2147483643;align-items:center;justify-content:center;padding:20px;">
+        <div class="inventory-window" style="width:min(1120px,96vw);height:min(820px,92vh);display:flex;flex-direction:column;">
+            <div class="inventory-topbar">
+                <div>
+                    <div class="inventory-title">Arcane Settings</div>
+                    <div id="settings-subtitle" class="inventory-subtitle">Graphics • Audio • Controls</div>
+                </div>
+                <button id="settings-close-btn" class="inventory-close-btn" type="button">✕</button>
+            </div>
+
+            <div style="padding:14px 18px 0;display:flex;gap:10px;flex-wrap:wrap;">
+                <button id="settings-tab-graphics" class="inventory-tab-btn active" type="button" data-settings-tab="graphics">Graphics</button>
+                <button id="settings-tab-audio" class="inventory-tab-btn" type="button" data-settings-tab="audio">Audio</button>
+                <button id="settings-tab-controls" class="inventory-tab-btn" type="button" data-settings-tab="controls">Controls</button>
+            </div>
+
+            <div style="padding:16px 18px 18px;flex:1;min-height:0;">
+                <div id="settings-panel-graphics" class="inventory-tab-panel active" style="height:100%;overflow:auto;"></div>
+                <div id="settings-panel-audio" class="inventory-tab-panel" style="height:100%;overflow:auto;"></div>
+                <div id="settings-panel-controls" class="inventory-tab-panel" style="height:100%;overflow:auto;"></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="shared-dropdown-popup" style="display:none;position:fixed;min-width:260px;max-width:min(420px,92vw);max-height:320px;overflow:auto;background:#1a0a2e;border:1px solid #7a1a00;border-radius:14px;padding:10px;box-shadow:0 14px 34px rgba(0,0,0,0.68);z-index:2147483647;">
+        <div id="shared-dropdown-title" style="font-family:'Rajdhani',sans-serif;font-size:14px;font-weight:900;letter-spacing:1px;color:#facc15;text-transform:uppercase;margin-bottom:8px;"></div>
+        <div id="shared-dropdown-list" style="display:flex;flex-direction:column;gap:6px;"></div>
+    </div>
+
     <!-- Spell Slot Bar — body-level so position:fixed is never blocked by a parent display:none -->
     <div id="spell-bar"></div>
 
@@ -1695,7 +1925,10 @@
         }
     });
 
-    document.getElementById('mm-settings').addEventListener('click', () => alert('Settings coming soon.'));
+    document.getElementById('mm-settings').addEventListener('click', () => {
+    menuAnimating = false;
+    openSettingsOverlay('menu', 'graphics');
+});
     document.getElementById('mm-quit').addEventListener('click', () => alert('Close the browser tab to quit.'));
 })();
 
@@ -1883,6 +2116,785 @@ const AUDIO_ROOT = 'Sounds/';
 const SOUND_BUFFER_CACHE = new Map();
 const ACTIVE_LOOPING_SOUNDS = new Map();
 
+const SETTINGS_STORAGE_KEY = 'wotm_settings_v1';
+const DEFAULT_SETTINGS = {
+    graphics: {
+        quality: 'high',
+        renderScale: 1,
+        brightness: 1,
+        fullscreen: false,
+    },
+    audio: {
+        masterVolume: 1,
+        sfxVolume: 0.9,
+        ambienceVolume: 0.6,
+        voiceVolume: 0.85,
+        micEnabled: false,
+        micDeviceId: 'default',
+        micVolume: 1,
+        micMuted: false,
+    },
+    controls: {
+        keyboardMouse: {
+            moveForward: 'KeyW',
+            moveBackward: 'KeyS',
+            moveLeft: 'KeyA',
+            moveRight: 'KeyD',
+            sprint: 'ShiftLeft',
+            jump: 'Space',
+            crouch: 'KeyC',
+            interact: 'KeyE',
+            inventory: 'Tab',
+            friends: 'F1',
+            pauseMenu: ['Escape', 'KeyP'],
+            chat: 'Enter',
+            micMute: 'KeyM',
+            aim: 'MouseRight',
+        },
+        controller: {
+            sprint: 'L3',
+            jump: 'A',
+            crouch: 'B',
+            interact: 'X',
+            inventory: 'Y',
+            spellPrev: 'LB',
+            spellNext: 'RB',
+            aim: 'LT',
+            pauseMenu: 'START',
+            chat: 'BACK',
+            friends: 'R3',
+        },
+        mouseLookSensitivity: 1,
+        mouseAimSensitivity: 1,
+        controllerLookSensitivity: 1,
+        controllerAimSensitivity: 1,
+    }
+};
+
+function _cloneJson(data) {
+    return JSON.parse(JSON.stringify(data));
+}
+
+function _mergeSettings(base, incoming) {
+    const out = Array.isArray(base) ? [...base] : { ...base };
+    Object.keys(incoming || {}).forEach(key => {
+        const baseVal = out[key];
+        const incVal = incoming[key];
+        if (baseVal && incVal && typeof baseVal === 'object' && typeof incVal === 'object' && !Array.isArray(baseVal) && !Array.isArray(incVal)) {
+            out[key] = _mergeSettings(baseVal, incVal);
+        } else {
+            out[key] = _cloneJson(incVal);
+        }
+    });
+    return out;
+}
+
+let SETTINGS_STATE = (() => {
+    try {
+        const raw = localStorage.getItem(SETTINGS_STORAGE_KEY);
+        if (!raw) return _cloneJson(DEFAULT_SETTINGS);
+        const merged = _mergeSettings(_cloneJson(DEFAULT_SETTINGS), JSON.parse(raw));
+        // Migrate old ControlLeft → KeyC if the user never manually changed it
+        if (merged.controls?.keyboardMouse?.crouch === 'ControlLeft') {
+            merged.controls.keyboardMouse.crouch = 'KeyC';
+        }
+        return merged;
+    } catch {
+        return _cloneJson(DEFAULT_SETTINGS);
+    }
+})();
+
+let _settingsTab = 'graphics';
+let _settingsSource = 'menu';
+let _settingsRebindState = null;
+let _lastInputDevice = 'keyboardMouse';
+
+const SETTINGS_RUNTIME = {
+    microphoneOptions: []
+};
+
+const SHARED_DROPDOWN_STATE = {
+    popup: null,
+    titleEl: null,
+    listEl: null,
+    anchorEl: null,
+    options: [],
+    index: 0,
+    onSelect: null,
+};
+
+const COLOR_POPUP_STATE = {
+    popup: null,
+    activeBtn: null,
+    close: null,
+    render: null,
+    customInput: null,
+    currentColId: null,
+    customOpen: false,
+    customH: 0,
+    customS: 1,
+    customV: 1,
+    previewEl: null,
+    hueSlider: null,
+    satSlider: null,
+    valSlider: null,
+};
+
+function _applyCharacterColor(colId, hex) {
+    if (!colId || !hex) return;
+    if (GAME_STATE.char.colors[colId] === hex) return;
+    GAME_STATE.char.colors[colId] = hex;
+    const btn = document.querySelector(`.color-btn[data-col="${colId}"]`);
+    if (btn) btn.style.background = hex;
+    rebuildCharacter();
+}
+
+function _syncColorPopupCustomEditor(hex) {
+    if (COLOR_POPUP_STATE.previewEl) {
+        COLOR_POPUP_STATE.previewEl.style.background = hex;
+    }
+    if (COLOR_POPUP_STATE.hueSlider) {
+        COLOR_POPUP_STATE.hueSlider.value = String(COLOR_POPUP_STATE.customH);
+    }
+    if (COLOR_POPUP_STATE.satSlider) {
+        COLOR_POPUP_STATE.satSlider.value = String(COLOR_POPUP_STATE.customS);
+    }
+    if (COLOR_POPUP_STATE.valSlider) {
+        COLOR_POPUP_STATE.valSlider.value = String(COLOR_POPUP_STATE.customV);
+    }
+}
+
+function _markLastInputDevice(device) {
+    if (!device) return;
+    if (_lastInputDevice === device) return;
+    _lastInputDevice = device;
+    syncGameMenuButtons();
+    if (isSettingsOpen() && _settingsTab === 'controls') {
+        renderSettingsUI();
+    }
+}
+
+function _getMagicTypeOptions() {
+    return [
+        { value: 'storm',  label: '⚡ Storm (Purple/Yellow)' },
+        { value: 'earth',  label: '🌿 Earth (Green/Brown)' },
+        { value: 'fire',   label: '🔥 Fire (Red/Orange)' },
+        { value: 'water',  label: '💧 Water (Blue/Cyan)' },
+        { value: 'death',  label: '💀 Death (Black/White)' },
+        { value: 'time',   label: '⏳ Time (Gold/Sand)' },
+        { value: 'plasma', label: '🌌 Plasma (Pink/Neon)' },
+    ];
+}
+
+function _updateMagicTypeButtonLabel() {
+    const btnLabel = document.getElementById('magic-type-label');
+    if (!btnLabel) return;
+    const entry = _getMagicTypeOptions().find(opt => opt.value === GAME_STATE.char.magic) || _getMagicTypeOptions()[0];
+    btnLabel.textContent = entry?.label || 'Select Magic';
+}
+
+function _positionSharedDropdown() {
+    if (!SHARED_DROPDOWN_STATE.popup || !SHARED_DROPDOWN_STATE.anchorEl) return;
+
+    const rect = SHARED_DROPDOWN_STATE.anchorEl.getBoundingClientRect();
+    SHARED_DROPDOWN_STATE.popup.style.left = `${Math.max(8, rect.left)}px`;
+    SHARED_DROPDOWN_STATE.popup.style.top = `${Math.min(window.innerHeight - 340, rect.bottom + 6)}px`;
+}
+
+function _closeSharedDropdown() {
+    if (SHARED_DROPDOWN_STATE.popup) SHARED_DROPDOWN_STATE.popup.style.display = 'none';
+    if (SHARED_DROPDOWN_STATE.listEl) SHARED_DROPDOWN_STATE.listEl.innerHTML = '';
+    SHARED_DROPDOWN_STATE.anchorEl = null;
+    SHARED_DROPDOWN_STATE.options = [];
+    SHARED_DROPDOWN_STATE.index = 0;
+    SHARED_DROPDOWN_STATE.onSelect = null;
+}
+
+function _renderSharedDropdown() {
+    const popup = document.getElementById('shared-dropdown-popup');
+    const titleEl = document.getElementById('shared-dropdown-title');
+    const listEl = document.getElementById('shared-dropdown-list');
+    if (!popup || !titleEl || !listEl) return;
+
+    SHARED_DROPDOWN_STATE.popup = popup;
+    SHARED_DROPDOWN_STATE.titleEl = titleEl;
+    SHARED_DROPDOWN_STATE.listEl = listEl;
+
+    titleEl.textContent = SHARED_DROPDOWN_STATE.title || 'Choose Option';
+    listEl.innerHTML = '';
+
+    SHARED_DROPDOWN_STATE.options.forEach((opt, i) => {
+        const row = document.createElement('button');
+        row.type = 'button';
+        row.className = 'inventory-use-btn shared-dropdown-option';
+        row.style.width = '100%';
+        row.style.textAlign = 'left';
+        row.style.justifyContent = 'flex-start';
+        row.style.background = i === SHARED_DROPDOWN_STATE.index
+            ? 'linear-gradient(180deg,#8b5cf6,#5b21b6)'
+            : '';
+        row.style.borderColor = i === SHARED_DROPDOWN_STATE.index
+            ? 'rgba(250,204,21,0.75)'
+            : '';
+        row.textContent = opt.label;
+        row.addEventListener('click', () => {
+            SHARED_DROPDOWN_STATE.index = i;
+            SHARED_DROPDOWN_STATE.onSelect?.(opt);
+            _closeSharedDropdown();
+        });
+        listEl.appendChild(row);
+    });
+
+    popup.style.display = 'block';
+    _positionSharedDropdown();
+
+    const active = listEl.children[SHARED_DROPDOWN_STATE.index];
+    if (active) active.scrollIntoView({ block: 'nearest' });
+}
+
+function _openSharedDropdown({ anchorEl, title, options, value, onSelect }) {
+    SHARED_DROPDOWN_STATE.anchorEl = anchorEl || null;
+    SHARED_DROPDOWN_STATE.title = title || 'Choose Option';
+    SHARED_DROPDOWN_STATE.options = Array.isArray(options) ? options : [];
+    SHARED_DROPDOWN_STATE.onSelect = onSelect || null;
+
+    const valueIndex = SHARED_DROPDOWN_STATE.options.findIndex(opt => opt.value === value);
+    SHARED_DROPDOWN_STATE.index = valueIndex >= 0 ? valueIndex : 0;
+
+    _renderSharedDropdown();
+}
+
+function _moveSharedDropdownSelection(delta) {
+    if (!SHARED_DROPDOWN_STATE.popup || SHARED_DROPDOWN_STATE.popup.style.display !== 'block') return;
+    const total = SHARED_DROPDOWN_STATE.options.length;
+    if (!total) return;
+    SHARED_DROPDOWN_STATE.index = (SHARED_DROPDOWN_STATE.index + delta + total) % total;
+    _renderSharedDropdown();
+}
+
+function _confirmSharedDropdownSelection() {
+    if (!SHARED_DROPDOWN_STATE.popup || SHARED_DROPDOWN_STATE.popup.style.display !== 'block') return false;
+    const opt = SHARED_DROPDOWN_STATE.options[SHARED_DROPDOWN_STATE.index];
+    if (!opt) return false;
+    SHARED_DROPDOWN_STATE.onSelect?.(opt);
+    _closeSharedDropdown();
+    return true;
+}
+
+const MIC_MONITOR = {
+    stream: null,
+    audioContext: null,
+    analyser: null,
+    dataArray: null,
+    rafId: 0,
+    deviceId: 'default',
+};
+
+const CONTROLLER_LABELS = {
+    A: 'A',
+    B: 'B',
+    X: 'X',
+    Y: 'Y',
+    LB: 'LB / L1',
+    RB: 'RB / R1',
+    LT: 'LT / L2',
+    RT: 'RT / R2',
+    BACK: 'Select',
+    START: 'Start',
+    L3: 'L3',
+    R3: 'R3',
+    DPAD_UP: 'D-Pad Up',
+    DPAD_DOWN: 'D-Pad Down',
+    DPAD_LEFT: 'D-Pad Left',
+    DPAD_RIGHT: 'D-Pad Right',
+};
+
+function _persistSettings() {
+    try {
+        localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(SETTINGS_STATE));
+    } catch {}
+}
+
+function _normalizeBindingList(binding) {
+    if (Array.isArray(binding)) return binding;
+    return binding ? [binding] : [];
+}
+
+function _bindingMatches(binding, token) {
+    return _normalizeBindingList(binding).includes(token);
+}
+
+function _mouseBindingCode(button) {
+    if (button === 0) return 'MouseLeft';
+    if (button === 1) return 'MouseMiddle';
+    if (button === 2) return 'MouseRight';
+    return `Mouse${button}`;
+}
+
+function _formatKeyboardBinding(binding) {
+    const map = {
+        KeyW: 'W', KeyA: 'A', KeyS: 'S', KeyD: 'D', KeyC: 'C', KeyE: 'E', KeyM: 'M', KeyP: 'P',
+        Space: 'Space', Tab: 'Tab', Enter: 'Enter', Escape: 'Escape', F1: 'F1',
+        ShiftLeft: 'Left Shift', ShiftRight: 'Right Shift',
+        ControlLeft: 'Left Ctrl', ControlRight: 'Right Ctrl',
+        MouseLeft: 'Mouse Left', MouseMiddle: 'Mouse Middle', MouseRight: 'Mouse Right',
+    };
+    const list = _normalizeBindingList(binding);
+    return list.map(v => map[v] || v).join(' / ');
+}
+
+function _formatControllerBinding(binding) {
+    return CONTROLLER_LABELS[binding] || binding || 'Unbound';
+}
+
+function _isBoundKeyboardAction(event, action) {
+    return _bindingMatches(SETTINGS_STATE.controls.keyboardMouse[action], event.code);
+}
+
+function _isBoundMouseAction(button, action) {
+    return _bindingMatches(SETTINGS_STATE.controls.keyboardMouse[action], _mouseBindingCode(button));
+}
+
+function _controllerTokenDown(gamepad, token) {
+    if (!gamepad || !token) return false;
+
+    switch (token) {
+        case 'A': return !!gamepad.buttons?.[0]?.pressed;
+        case 'B': return !!gamepad.buttons?.[1]?.pressed;
+        case 'X': return !!gamepad.buttons?.[2]?.pressed;
+        case 'Y': return !!gamepad.buttons?.[3]?.pressed;
+        case 'LB': return !!gamepad.buttons?.[4]?.pressed;
+        case 'RB': return !!gamepad.buttons?.[5]?.pressed;
+        case 'LT': return (gamepad.buttons?.[6]?.value ?? 0) > 0.18;
+        case 'RT': return (gamepad.buttons?.[7]?.value ?? 0) > 0.18;
+        case 'BACK': return !!gamepad.buttons?.[8]?.pressed;
+        case 'START': return !!gamepad.buttons?.[9]?.pressed;
+        case 'L3': return !!gamepad.buttons?.[10]?.pressed;
+        case 'R3': return !!gamepad.buttons?.[11]?.pressed;
+        case 'DPAD_UP': return !!gamepad.buttons?.[12]?.pressed;
+        case 'DPAD_DOWN': return !!gamepad.buttons?.[13]?.pressed;
+        case 'DPAD_LEFT': return !!gamepad.buttons?.[14]?.pressed;
+        case 'DPAD_RIGHT': return !!gamepad.buttons?.[15]?.pressed;
+        default: return false;
+    }
+}
+
+function _controllerActionDown(gamepad, action) {
+    return _controllerTokenDown(gamepad, SETTINGS_STATE.controls.controller[action]);
+}
+
+function _controllerActionEdge(gamepad, action) {
+    const now = _controllerActionDown(gamepad, action);
+    const prev = !!CONTROLLER_STATE.prevButtons[action];
+    CONTROLLER_STATE.prevButtons[action] = now;
+    return now && !prev;
+}
+
+function _detectControllerRebindToken(gamepad) {
+    const tokens = ['A', 'B', 'X', 'Y', 'LB', 'RB', 'LT', 'RT', 'BACK', 'START', 'L3', 'R3', 'DPAD_UP', 'DPAD_DOWN', 'DPAD_LEFT', 'DPAD_RIGHT'];
+    for (const token of tokens) {
+        if (_controllerTokenDown(gamepad, token)) return token;
+    }
+    return null;
+}
+
+function _getScaledVolume(baseVolume = 1, category = 'sfx') {
+    const audio = SETTINGS_STATE.audio || DEFAULT_SETTINGS.audio;
+    const master = audio.masterVolume ?? 1;
+    const cat =
+        category === 'ambience' ? (audio.ambienceVolume ?? 1) :
+        category === 'voice' ? (audio.voiceVolume ?? 1) :
+        (audio.sfxVolume ?? 1);
+
+    return Math.max(0, Math.min(1, baseVolume * master * cat));
+}
+
+function _applyGraphicsSettings() {
+    const graphics = SETTINGS_STATE.graphics || DEFAULT_SETTINGS.graphics;
+    const renderScale = Math.max(0.5, Math.min(1.5, Number(graphics.renderScale ?? 1)));
+    const quality = graphics.quality || 'high';
+    const brightness = Math.max(0.5, Math.min(1.5, Number(graphics.brightness ?? 1)));
+
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2) * renderScale);
+    renderer.setSize(window.innerWidth, window.innerHeight);
+
+    renderer.shadowMap.enabled = quality !== 'low';
+    canvas.style.filter = `brightness(${brightness})`;
+}
+
+function _applyAudioSettings() {
+    ACTIVE_LOOPING_SOUNDS.forEach(entry => {
+        if (!entry?.audio) return;
+        const baseVolume = entry.baseVolume ?? entry.options?.volume ?? 0.5;
+        const category = entry.category ?? entry.options?.category ?? 'ambience';
+        entry.audio.volume = _getScaledVolume(baseVolume, category);
+    });
+}
+
+function _toggleMicMute() {
+    SETTINGS_STATE.audio.micMuted = !SETTINGS_STATE.audio.micMuted;
+    _persistSettings();
+    renderSettingsUI();
+}
+
+async function _refreshMicrophoneList() {
+    const label = document.getElementById('settings-mic-device-label');
+    if (!navigator.mediaDevices?.enumerateDevices) {
+        SETTINGS_RUNTIME.microphoneOptions = [{ value: 'default', label: 'No microphone support' }];
+        if (label) label.textContent = 'No microphone support';
+        return;
+    }
+
+    try {
+        const devices = await navigator.mediaDevices.enumerateDevices();
+        const mics = devices.filter(d => d.kind === 'audioinput');
+
+        SETTINGS_RUNTIME.microphoneOptions = mics.length
+            ? mics.map((mic, i) => ({
+                value: mic.deviceId || 'default',
+                label: mic.label || (i === 0 ? 'Default Microphone' : `Microphone ${i + 1}`)
+            }))
+            : [{ value: 'default', label: 'No microphone found' }];
+
+        const current = SETTINGS_RUNTIME.microphoneOptions.find(opt => opt.value === SETTINGS_STATE.audio.micDeviceId)
+            || SETTINGS_RUNTIME.microphoneOptions[0];
+
+        if (current) {
+            SETTINGS_STATE.audio.micDeviceId = current.value;
+            if (label) label.textContent = current.label;
+        }
+    } catch (err) {
+        console.warn('[MIC] Failed to enumerate microphones', err);
+        SETTINGS_RUNTIME.microphoneOptions = [{ value: 'default', label: 'Microphone unavailable' }];
+        if (label) label.textContent = 'Microphone unavailable';
+    }
+}
+
+function _stopMicMonitor() {
+    if (MIC_MONITOR.rafId) cancelAnimationFrame(MIC_MONITOR.rafId);
+    MIC_MONITOR.rafId = 0;
+
+    if (MIC_MONITOR.stream) {
+        MIC_MONITOR.stream.getTracks().forEach(track => track.stop());
+    }
+    if (MIC_MONITOR.audioContext) {
+        MIC_MONITOR.audioContext.close().catch(() => {});
+    }
+
+    MIC_MONITOR.stream = null;
+    MIC_MONITOR.audioContext = null;
+    MIC_MONITOR.analyser = null;
+    MIC_MONITOR.dataArray = null;
+    MIC_MONITOR.deviceId = 'default';
+
+    const fill = document.getElementById('settings-mic-meter-fill');
+    if (fill) fill.style.width = '0%';
+}
+
+async function _startMicMonitor() {
+    if (!SETTINGS_STATE.audio.micEnabled || !navigator.mediaDevices?.getUserMedia) {
+        _stopMicMonitor();
+        return;
+    }
+
+    const requestedDeviceId = SETTINGS_STATE.audio.micDeviceId || 'default';
+
+    if (
+        MIC_MONITOR.stream &&
+        MIC_MONITOR.analyser &&
+        MIC_MONITOR.audioContext &&
+        MIC_MONITOR.deviceId === requestedDeviceId
+    ) {
+        return;
+    }
+
+    _stopMicMonitor();
+
+    try {
+        let stream = null;
+
+        if (requestedDeviceId !== 'default') {
+            try {
+                stream = await navigator.mediaDevices.getUserMedia({
+                    audio: { deviceId: { exact: requestedDeviceId } }
+                });
+            } catch (exactErr) {
+                console.warn('[MIC] Exact device open failed, falling back to default microphone', exactErr);
+            }
+        }
+
+        if (!stream) {
+            stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        }
+
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        const analyser = audioContext.createAnalyser();
+        analyser.fftSize = 256;
+
+        const source = audioContext.createMediaStreamSource(stream);
+        source.connect(analyser);
+
+        MIC_MONITOR.stream = stream;
+        MIC_MONITOR.audioContext = audioContext;
+        MIC_MONITOR.analyser = analyser;
+        MIC_MONITOR.dataArray = new Uint8Array(analyser.frequencyBinCount);
+        MIC_MONITOR.deviceId = requestedDeviceId;
+
+        await _refreshMicrophoneList();
+
+        const tick = () => {
+            if (!MIC_MONITOR.analyser || !MIC_MONITOR.dataArray) return;
+            MIC_MONITOR.analyser.getByteFrequencyData(MIC_MONITOR.dataArray);
+            const avg = MIC_MONITOR.dataArray.reduce((a, b) => a + b, 0) / Math.max(1, MIC_MONITOR.dataArray.length);
+            const pct = Math.max(0, Math.min(100, (avg / 255) * 100 * (SETTINGS_STATE.audio.micVolume ?? 1)));
+
+            const fill = document.getElementById('settings-mic-meter-fill');
+            if (fill) fill.style.width = `${pct}%`;
+
+            MIC_MONITOR.rafId = requestAnimationFrame(tick);
+        };
+
+        tick();
+    } catch (err) {
+        console.warn('[MIC] Failed to start microphone monitor', err);
+        SETTINGS_STATE.audio.micEnabled = false;
+        _persistSettings();
+        renderSettingsUI();
+    }
+}
+
+// ══════════════════════════════════════════════════════════════════
+// PROXIMITY VOICE CHAT  (WebRTC peer-to-peer, WebSocket signaling)
+// ══════════════════════════════════════════════════════════════════
+const VOICE_CHAT = {
+    localStream: null,      // MediaStream from microphone
+    peers: new Map(),       // playerId → { pc, audioEl, gainNode, ctx }
+    speakingNow: false,     // is local player currently audible?
+    speakVolume: 0,         // 0-1 amplitude
+    analyser: null,
+    analyserData: null,
+    analyserCtx: null,
+    analyserRaf: 0,
+    PROXIMITY_NEAR: 4,      // metres: full volume
+    PROXIMITY_FAR: 22,      // metres: silent
+    SPEAK_THRESHOLD: 0.04,  // RMS level to be considered "speaking"
+};
+
+const VOICE_ICE_SERVERS = [
+    { urls: 'stun:stun.l.google.com:19302' },
+    { urls: 'stun:stun1.l.google.com:19302' },
+];
+
+function _vcLog(...args) { console.log('[VOICE]', ...args); }
+
+async function initVoiceChat() {
+    if (!SETTINGS_STATE.audio.micEnabled) return;
+    if (!NETWORK_STATE.connected) return;
+    if (!navigator.mediaDevices?.getUserMedia) { _vcLog('getUserMedia not supported'); return; }
+
+    try {
+        const deviceId = SETTINGS_STATE.audio.micDeviceId || 'default';
+        const constraints = deviceId !== 'default'
+            ? { audio: { deviceId: { ideal: deviceId }, echoCancellation: true, noiseSuppression: true } }
+            : { audio: { echoCancellation: true, noiseSuppression: true } };
+
+        VOICE_CHAT.localStream = await navigator.mediaDevices.getUserMedia(constraints);
+        _setupVoiceAnalyser(VOICE_CHAT.localStream);
+        _vcLog('Local stream acquired');
+
+        // Let existing remote players know we have voice — they will offer to us
+        _sendNetworkMessage('voice_ready', { playerId: NETWORK_STATE.playerId });
+    } catch (err) {
+        _vcLog('Mic access error:', err);
+    }
+}
+
+function _setupVoiceAnalyser(stream) {
+    if (VOICE_CHAT.analyserCtx) VOICE_CHAT.analyserCtx.close().catch(() => {});
+    if (VOICE_CHAT.analyserRaf) cancelAnimationFrame(VOICE_CHAT.analyserRaf);
+
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const src = ctx.createMediaStreamSource(stream);
+    const analyser = ctx.createAnalyser();
+    analyser.fftSize = 512;
+    src.connect(analyser);
+
+    VOICE_CHAT.analyserCtx = ctx;
+    VOICE_CHAT.analyser = analyser;
+    VOICE_CHAT.analyserData = new Float32Array(analyser.fftSize);
+
+    const tick = () => {
+        if (!VOICE_CHAT.analyser) return;
+        analyser.getFloatTimeDomainData(VOICE_CHAT.analyserData);
+        let sum = 0;
+        for (let i = 0; i < VOICE_CHAT.analyserData.length; i++) {
+            sum += VOICE_CHAT.analyserData[i] * VOICE_CHAT.analyserData[i];
+        }
+        const rms = Math.sqrt(sum / VOICE_CHAT.analyserData.length);
+        VOICE_CHAT.speakVolume = rms;
+        const wasSpeaking = VOICE_CHAT.speakingNow;
+        VOICE_CHAT.speakingNow = rms > VOICE_CHAT.SPEAK_THRESHOLD && !SETTINGS_STATE.audio.micMuted;
+
+        if (VOICE_CHAT.speakingNow !== wasSpeaking) {
+            // Update local nametag immediately
+            if (charParts._renderNametagCanvas && charParts._nametagSprite) {
+                charParts._renderNametagCanvas();
+                charParts._nametagSprite.material.map.needsUpdate = true;
+            }
+            // Broadcast speaking state to others in next snapshot
+        }
+        VOICE_CHAT.analyserRaf = requestAnimationFrame(tick);
+    };
+    tick();
+}
+
+async function _vcCreatePeer(remotePlayerId, isOfferer) {
+    if (VOICE_CHAT.peers.has(remotePlayerId)) return VOICE_CHAT.peers.get(remotePlayerId);
+
+    _vcLog(`Creating peer for ${remotePlayerId}, offerer=${isOfferer}`);
+    const pc = new RTCPeerConnection({ iceServers: VOICE_ICE_SERVERS });
+
+    // Add local tracks
+    if (VOICE_CHAT.localStream) {
+        VOICE_CHAT.localStream.getTracks().forEach(track => {
+            pc.addTrack(track, VOICE_CHAT.localStream);
+        });
+    }
+
+    // Receive remote audio
+    const audioEl = new Audio();
+    audioEl.autoplay = true;
+    audioEl.volume = 0;
+    let gainNode = null;
+    let audioCtx = null;
+
+    pc.ontrack = (e) => {
+        _vcLog(`Got remote track from ${remotePlayerId}`);
+        audioEl.srcObject = e.streams[0];
+
+        // Use Web Audio for volume control — this context is user-gesture safe
+        // because we only create it after multiplayer connects (which requires interaction)
+        try {
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            const src = audioCtx.createMediaElementSource(audioEl);
+            gainNode = audioCtx.createGain();
+            gainNode.gain.value = 0;
+            src.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+        } catch (err) {
+            // Fallback: use audioEl.volume directly
+            _vcLog('Gain node failed, using element volume:', err);
+        }
+    };
+
+    pc.onicecandidate = (e) => {
+        if (e.candidate) {
+            _sendNetworkMessage('voice_ice', {
+                to: remotePlayerId,
+                candidate: e.candidate,
+            });
+        }
+    };
+
+    pc.onconnectionstatechange = () => {
+        _vcLog(`Peer ${remotePlayerId} state: ${pc.connectionState}`);
+        if (pc.connectionState === 'failed' || pc.connectionState === 'closed') {
+            _vcRemovePeer(remotePlayerId);
+        }
+    };
+
+    const entry = { pc, audioEl, gainNode, audioCtxVC: audioCtx };
+    VOICE_CHAT.peers.set(remotePlayerId, entry);
+
+    if (isOfferer) {
+        const offer = await pc.createOffer();
+        await pc.setLocalDescription(offer);
+        _sendNetworkMessage('voice_offer', {
+            to: remotePlayerId,
+            sdp: pc.localDescription,
+        });
+    }
+
+    return entry;
+}
+
+async function _vcHandleOffer(fromId, sdp) {
+    const entry = await _vcCreatePeer(fromId, false);
+    await entry.pc.setRemoteDescription(new RTCSessionDescription(sdp));
+    const answer = await entry.pc.createAnswer();
+    await entry.pc.setLocalDescription(answer);
+    _sendNetworkMessage('voice_answer', { to: fromId, sdp: entry.pc.localDescription });
+}
+
+async function _vcHandleAnswer(fromId, sdp) {
+    const entry = VOICE_CHAT.peers.get(fromId);
+    if (entry) await entry.pc.setRemoteDescription(new RTCSessionDescription(sdp));
+}
+
+async function _vcHandleIce(fromId, candidate) {
+    const entry = VOICE_CHAT.peers.get(fromId);
+    if (entry) {
+        try { await entry.pc.addIceCandidate(new RTCIceCandidate(candidate)); } catch {}
+    }
+}
+
+function _vcRemovePeer(playerId) {
+    const entry = VOICE_CHAT.peers.get(playerId);
+    if (!entry) return;
+    try { entry.pc.close(); } catch {}
+    entry.audioEl.srcObject = null;
+    try { entry.audioCtxVC?.close(); } catch {}
+    VOICE_CHAT.peers.delete(playerId);
+}
+
+function stopVoiceChat() {
+    if (VOICE_CHAT.analyserRaf) cancelAnimationFrame(VOICE_CHAT.analyserRaf);
+    VOICE_CHAT.analyserRaf = 0;
+    if (VOICE_CHAT.analyserCtx) VOICE_CHAT.analyserCtx.close().catch(() => {});
+    VOICE_CHAT.analyserCtx = null;
+    VOICE_CHAT.analyser = null;
+
+    VOICE_CHAT.peers.forEach((_, id) => _vcRemovePeer(id));
+    VOICE_CHAT.peers.clear();
+
+    if (VOICE_CHAT.localStream) {
+        VOICE_CHAT.localStream.getTracks().forEach(t => t.stop());
+        VOICE_CHAT.localStream = null;
+    }
+    VOICE_CHAT.speakingNow = false;
+    VOICE_CHAT.speakVolume = 0;
+}
+
+// Called every frame — update volume of each remote peer based on 3D distance
+function updateVoiceChatVolumes() {
+    if (VOICE_CHAT.peers.size === 0) return;
+    const muted = SETTINGS_STATE.audio.micMuted;
+    const masterVol = _getScaledVolume(1, 'voice');
+
+    VOICE_CHAT.peers.forEach((entry, playerId) => {
+        // Find this player's 3D position via their visual model
+        const visual = REMOTE_PLAYER_VISUALS.get(playerId);
+        let targetVol = 0;
+
+        if (visual?.model && characterModel && !muted) {
+            const dist = characterModel.position.distanceTo(visual.model.position);
+            const near = VOICE_CHAT.PROXIMITY_NEAR;
+            const far  = VOICE_CHAT.PROXIMITY_FAR;
+            if (dist <= near) {
+                targetVol = masterVol;
+            } else if (dist < far) {
+                targetVol = masterVol * (1 - (dist - near) / (far - near));
+            }
+        }
+
+        if (entry.gainNode) {
+            entry.gainNode.gain.setTargetAtTime(targetVol, entry.audioCtxVC?.currentTime ?? 0, 0.05);
+        } else {
+            entry.audioEl.volume = Math.max(0, Math.min(1, targetVol));
+        }
+    });
+}
+
 function _makeSoundRange(base, start, end) {
     return Array.from({ length: end - start + 1 }, (_, i) => `${base} (${start + i}).mp3`);
 }
@@ -1958,6 +2970,7 @@ const SOUND_POOLS = {
         uplifting: _makeSoundRange('UpliftingMagicBurst', 1, 2),
         waterSwoosh: _makeSoundRange('WaterMagicImpactSwoosh', 1, 4),
         whisperCast: _makeSoundRange('WhisperMagicCast', 1, 2),
+        fizzle: ['MagicCastFizzle (1).mp3', 'MagicCastFizzle (2).mp3'],
     },
     voice: {
         femaleDeath: ['FemaleDeath1.mp3', 'FemaleDeath2.mp3', 'FemaleDeath3.mp3'],
@@ -1977,11 +2990,10 @@ function _soundUrl(fileName) {
 }
 
 function _resumeAudioContext() {
-    if (!audioListener || !audioListener.context) return;
+    if (!audioListener || !audioListener.context) return Promise.resolve();
     const ctx = audioListener.context;
-    if (ctx.state === 'suspended') {
-        ctx.resume().catch(() => {});
-    }
+    if (ctx.state === 'running') return Promise.resolve();
+    return ctx.resume().catch(() => {});
 }
 
 function _loadSoundBuffer(fileName) {
@@ -1993,131 +3005,95 @@ function _createSoundElement(fileName, loop = false) {
     audio.preload = 'auto';
     audio.loop = loop;
     audio.playsInline = true;
-    audio.crossOrigin = 'anonymous';
     return audio;
 }
 
 function _configurePositionalSound(sound, options = {}) {
-    sound.setRefDistance(options.refDistance ?? 4);
-    sound.setMaxDistance(options.maxDistance ?? 42);
-    sound.setRolloffFactor(options.rolloffFactor ?? 1.35);
-    sound.setDistanceModel('exponential');
-    sound.setVolume(options.volume ?? 0.65);
+    // Legacy stub — positional audio now uses HTML5 Audio with distance volume
 }
-
 function _playManagedAudioElement(audio, label = 'audio') {
     if (!audio) return;
-    _resumeAudioContext();
+    audio.play().catch(err => console.warn('[AUDIO] Failed to play', label, err));
+}
 
-    if (audio && audio.playbackRate !== undefined) {
-        // playbackRate is applied in the individual play helpers when options exist
-    }
-
-    const playPromise = audio.play();
-    if (playPromise && typeof playPromise.catch === 'function') {
-        playPromise.catch(error => {
-            console.warn(`[AUDIO] Failed to play ${label}`, error);
-        });
-    }
+// Returns attenuated volume based on 3D distance from the listener (camera).
+function _computeDistanceVolume(position, options = {}) {
+    const refDist  = options.refDistance ?? 4;
+    const maxDist  = options.maxDistance ?? 42;
+    const baseVol  = _getScaledVolume(options.volume ?? 0.65, options.category ?? 'sfx');
+    if (!position || !worldCamera) return baseVol;
+    const dist = position.distanceTo(worldCamera.position);
+    if (dist <= refDist) return baseVol;
+    if (dist >= maxDist) return 0;
+    // Inverse-square-ish rolloff
+    const factor = refDist / dist;
+    return Math.max(0, Math.min(1, baseVol * factor * factor));
 }
 
 function _playOneShotSoundAt(position, filePool, options = {}) {
     const fileName = Array.isArray(filePool) ? _pickRandom(filePool) : filePool;
-    if (!fileName || !audioListener || !worldScene) return;
+    if (!fileName) return;
 
-    const anchor = new THREE.Object3D();
-    anchor.position.copy(position || new THREE.Vector3());
-    worldScene.add(anchor);
-
-    const sound = new THREE.PositionalAudio(audioListener);
-    anchor.add(sound);
-    _configurePositionalSound(sound, options);
-
-    const audio = _createSoundElement(fileName, false);
+    const audio = new Audio(_soundUrl(fileName));
+    audio.volume = _computeDistanceVolume(position, options);
     if (options.playbackRate) audio.playbackRate = options.playbackRate;
-    sound.setMediaElementSource(audio);
 
-    const cleanup = () => {
-        audio.pause();
-        audio.src = '';
-        if (anchor.parent) anchor.parent.remove(anchor);
-    };
-
+    const cleanup = () => { audio.src = ''; };
     audio.addEventListener('ended', cleanup, { once: true });
     audio.addEventListener('error', () => {
-        console.warn(`[AUDIO] Failed to load ${_soundUrl(fileName)} from direct media element.`);
+        console.warn(`[AUDIO] Failed to load: ${_soundUrl(fileName)}`);
         cleanup();
     }, { once: true });
 
-    _resumeAudioContext();
-    const playPromise = audio.play();
-    if (playPromise && typeof playPromise.catch === 'function') {
-        playPromise.catch(error => {
-            console.warn(`[AUDIO] Failed to play ${fileName}`, error);
-            cleanup();
-        });
-    }
+    audio.play().catch(err => {
+        console.warn(`[AUDIO] Play blocked: ${fileName}`, err);
+    });
 }
 
 function _attachPositionalSoundToObject(targetObject, filePool, options = {}) {
     const fileName = Array.isArray(filePool) ? _pickRandom(filePool) : filePool;
-    if (!fileName || !targetObject || !audioListener) return null;
+    if (!fileName) return null;
 
-    const sound = new THREE.PositionalAudio(audioListener);
-    targetObject.add(sound);
-    _configurePositionalSound(sound, options);
-
-    const audio = _createSoundElement(fileName, !!options.loop);
+    const audio = new Audio(_soundUrl(fileName));
+    audio.loop = !!options.loop;
+    const pos = (targetObject && targetObject.position) ? targetObject.position : null;
+    audio.volume = _computeDistanceVolume(pos, options);
     if (options.playbackRate) audio.playbackRate = options.playbackRate;
-    sound.setMediaElementSource(audio);
 
-    _resumeAudioContext();
-    const playPromise = audio.play();
-    if (playPromise && typeof playPromise.catch === 'function') {
-        playPromise.catch(error => {
-            console.warn(`[AUDIO] Failed to play attached sound ${fileName}`, error);
-        });
-    }
+    audio.play().catch(err => {
+        console.warn(`[AUDIO] Play blocked (attached): ${fileName}`, err);
+    });
 
-    return { sound, audio };
+    return { audio };
 }
 
 function _ensureLoopingWorldSound(key, targetOrPosition, filePool, options = {}) {
     if (ACTIVE_LOOPING_SOUNDS.has(key)) return;
 
     const fileName = Array.isArray(filePool) ? _pickRandom(filePool) : filePool;
-    if (!fileName || !audioListener) return;
+    if (!fileName) return;
 
-    const host = (targetOrPosition && targetOrPosition.isObject3D)
-        ? targetOrPosition
-        : (() => {
-            const anchor = new THREE.Object3D();
-            anchor.position.copy(targetOrPosition || new THREE.Vector3());
-            worldScene.add(anchor);
-            return anchor;
-        })();
-
-    const sound = new THREE.PositionalAudio(audioListener);
-    host.add(sound);
-    _configurePositionalSound(sound, options);
-
-    const audio = _createSoundElement(fileName, true);
+    const audio = new Audio(_soundUrl(fileName));
+    audio.loop = true;
     if (options.playbackRate) audio.playbackRate = options.playbackRate;
-    sound.setMediaElementSource(audio);
 
-    _resumeAudioContext();
-    const playPromise = audio.play();
-    if (playPromise && typeof playPromise.catch === 'function') {
-        playPromise.catch(error => {
-            console.warn(`[AUDIO] Failed to play looping sound ${fileName}`, error);
-        });
-    }
+    const pos = (targetOrPosition && targetOrPosition.isObject3D)
+        ? targetOrPosition.position
+        : (targetOrPosition instanceof THREE.Vector3 ? targetOrPosition : null);
+
+    audio.volume = _computeDistanceVolume(pos, { ...options, category: options.category ?? 'ambience' });
 
     ACTIVE_LOOPING_SOUNDS.set(key, {
-        host,
-        sound,
         audio,
-        detached: !(targetOrPosition && targetOrPosition.isObject3D)
+        options,
+        baseVolume: options.volume ?? 0.65,
+        category: options.category ?? 'ambience',
+    });
+
+    audio.play().catch(err => {
+        console.warn(`[AUDIO] Play blocked (loop) ${fileName}:`, err);
+        // Remove so _startWorldAmbience() can retry on next user gesture
+        ACTIVE_LOOPING_SOUNDS.delete(key);
     });
 }
 
@@ -2131,64 +3107,63 @@ function _stopLoopingWorldSound(key) {
         entry.audio.src = '';
     }
 
-    if (entry.host && entry.detached && entry.host.parent) {
-        entry.host.parent.remove(entry.host);
-    }
-
     ACTIVE_LOOPING_SOUNDS.delete(key);
 }
 function _startWorldAmbience() {
-    _ensureLoopingWorldSound('ambient-wind', worldCamera, SOUND_POOLS.ambience.wind, {
-        volume: 0.18,
-        refDistance: 8,
-        maxDistance: 120,
-        playbackRate: 0.94,
-    });
-
-    _stopLoopingWorldSound('ambient-school');
-    _stopLoopingWorldSound('ambient-alignment');
-
-    if (GAME_STATE.char.magic === 'fire') {
-        _ensureLoopingWorldSound('ambient-school', worldCamera, SOUND_POOLS.ambience.fire, {
-            volume: 0.12,
-            refDistance: 7,
-            maxDistance: 80,
-        });
-    } else if (GAME_STATE.char.magic === 'time') {
-        _ensureLoopingWorldSound('ambient-school', worldCamera, _combineSoundPools(SOUND_POOLS.ambience.runeHum, SOUND_POOLS.ambience.realityRipple), {
-            volume: 0.10,
-            refDistance: 7,
-            maxDistance: 70,
-        });
-    } else if (GAME_STATE.char.magic === 'plasma') {
-        _ensureLoopingWorldSound('ambient-school', worldCamera, SOUND_POOLS.ambience.arcanePortal, {
-            volume: 0.08,
-            refDistance: 7,
-            maxDistance: 70,
-        });
+    // Only wind plays as world ambience. Other sounds are reserved for spells/objects.
+    if (!ACTIVE_LOOPING_SOUNDS.has('ambient-wind-1')) {
+        const wind1 = new Audio(_soundUrl('AmbienceWind (1).mp3'));
+        wind1.loop = true;
+        wind1.volume = _getScaledVolume(0.20, 'ambience');
+        wind1.play().catch(() => {});
+        ACTIVE_LOOPING_SOUNDS.set('ambient-wind-1', { audio: wind1, baseVolume: 0.20, category: 'ambience' });
     }
 
-    if (GAME_STATE.char.alignment === 'light') {
-        _ensureLoopingWorldSound('ambient-alignment', worldCamera, _combineSoundPools(SOUND_POOLS.ambience.lightMana, SOUND_POOLS.ambience.holyShrine), {
-            volume: 0.10,
-            refDistance: 7,
-            maxDistance: 70,
-        });
-    } else {
-        _ensureLoopingWorldSound('ambient-alignment', worldCamera, _combineSoundPools(SOUND_POOLS.ambience.darkMana, SOUND_POOLS.ambience.darkPortal, SOUND_POOLS.ambience.ominous), {
-            volume: 0.08,
-            refDistance: 9,
-            maxDistance: 85,
-        });
+    if (!ACTIVE_LOOPING_SOUNDS.has('ambient-wind-2')) {
+        const wind2 = new Audio(_soundUrl('AmbienceWind (2).mp3'));
+        wind2.loop = true;
+        wind2.volume = 0; // starts silent, fades in when wind-1 is mid-way
+        wind2.play().catch(() => {});
+        ACTIVE_LOOPING_SOUNDS.set('ambient-wind-2', { audio: wind2, baseVolume: 0.20, category: 'ambience' });
+
+        // Randomized cross-fade between the two wind layers
+        (function crossFadeWind() {
+            const entry1 = ACTIVE_LOOPING_SOUNDS.get('ambient-wind-1');
+            const entry2 = ACTIVE_LOOPING_SOUNDS.get('ambient-wind-2');
+            if (!entry1 || !entry2) return;
+
+            const targetVol = _getScaledVolume(0.20, 'ambience');
+            const fadeDuration = (18 + Math.random() * 24) * 1000; // 18-42 s
+            const steps = 80;
+            const interval = fadeDuration / steps;
+
+            // Decide which to fade up and which to fade down at random
+            const fadeUpEntry = Math.random() < 0.5 ? entry1 : entry2;
+            const fadeDownEntry = fadeUpEntry === entry1 ? entry2 : entry1;
+
+            let step = 0;
+            const timer = setInterval(() => {
+                if (!ACTIVE_LOOPING_SOUNDS.has('ambient-wind-1')) { clearInterval(timer); return; }
+                step++;
+                const t = step / steps;
+                fadeUpEntry.audio.volume = Math.min(targetVol, targetVol * t);
+                fadeDownEntry.audio.volume = Math.max(0, targetVol * (1 - t * 0.5)); // never fully silent
+                if (step >= steps) {
+                    clearInterval(timer);
+                    setTimeout(crossFadeWind, (12 + Math.random() * 20) * 1000);
+                }
+            }, interval);
+        })();
     }
 }
 
 function _getVoicePool(kind = 'hurt') {
-    const gender = String(GAME_STATE.char.gender || 'female').toLowerCase();
+    const gender = String(GAME_STATE.char.gender || 'girl').toLowerCase();
+    const isMale = gender === 'boy' || gender === 'male';
     if (kind === 'death') {
-        return gender === 'male' ? SOUND_POOLS.voice.maleDeath : SOUND_POOLS.voice.femaleDeath;
+        return isMale ? SOUND_POOLS.voice.maleDeath : SOUND_POOLS.voice.femaleDeath;
     }
-    return gender === 'male' ? SOUND_POOLS.voice.maleHurt : SOUND_POOLS.voice.femaleHurt;
+    return isMale ? SOUND_POOLS.voice.maleHurt : SOUND_POOLS.voice.femaleHurt;
 }
 
 function _playPlayerVoice(kind = 'hurt', position = null) {
@@ -2198,6 +3173,7 @@ function _playPlayerVoice(kind = 'hurt', position = null) {
 
     _playOneShotSoundAt(origin, _getVoicePool(kind), {
         volume: 0.85,
+        category: 'voice',
         refDistance: 4,
         maxDistance: 28,
     });
@@ -2225,9 +3201,15 @@ const NETWORK_STATE = {
 const REMOTE_PLAYER_VISUALS = new Map();
 
 function _getMultiplayerSocketUrl() {
-    if (location.protocol === 'file:') return null;
-    const wsProtocol = location.protocol === 'https:' ? 'wss:' : 'ws:';
-    return `${wsProtocol}//${location.host}`;
+    const protocol = String(location.protocol || '').toLowerCase();
+    const host = String(location.host || '').trim();
+
+    if (!host) return null;
+    if (protocol === 'file:' || protocol === 'blob:' || protocol === 'data:' || protocol === 'about:') return null;
+    if (protocol !== 'http:' && protocol !== 'https:') return null;
+
+    const wsProtocol = protocol === 'https:' ? 'wss:' : 'ws:';
+    return `${wsProtocol}//${host}`;
 }
 
 function _serializeVec3(vec) {
@@ -2413,6 +3395,13 @@ function _refreshRemoteNameSprite(sprite, snapshot) {
     ctx.font = '700 18px Rajdhani';
     ctx.fillStyle = '#ffffff';
     ctx.fillText(`${Math.round(snapshot.hp || 0)} / ${Math.round(snapshot.maxHP || 0)} HP${snapshot.dead ? ' • DOWN' : ''}`, 192, 90);
+
+    // Mic speaking indicator
+    if (sprite.userData._speaking) {
+        ctx.font = '700 22px Rajdhani';
+        ctx.fillStyle = '#4ade80';
+        ctx.fillText('🎤', 348, 28);
+    }
 
     texture.needsUpdate = true;
 }
@@ -2952,6 +3941,62 @@ function _handleNetworkMessage(message) {
         case 'player_state': {
             const player = message.payload?.player || message.payload;
             _storeRemotePlayer(player);
+            break;
+        }
+
+        case 'chat_public': {
+            const { sender, text } = message.payload || {};
+            if (sender && text) _chatReceivePublic(sender, text);
+            break;
+        }
+
+        case 'chat_private': {
+            const { sender, senderId, text } = message.payload || {};
+            if (senderId && sender && text) _chatReceivePrivate(senderId, sender, text);
+            break;
+        }
+
+        // ── Voice Chat Signaling ──
+        case 'voice_ready': {
+            // A peer just got their mic ready — we offer to them
+            const fromId = message.payload?.playerId;
+            if (fromId && fromId !== NETWORK_STATE.playerId && VOICE_CHAT.localStream) {
+                _vcCreatePeer(fromId, true).catch(err => _vcLog('Offer error:', err));
+            }
+            break;
+        }
+        case 'voice_offer': {
+            const { to, sdp, from } = message.payload || {};
+            if (to === NETWORK_STATE.playerId && from && sdp) {
+                _vcHandleOffer(from, sdp).catch(err => _vcLog('Handle offer error:', err));
+            }
+            break;
+        }
+        case 'voice_answer': {
+            const { to, sdp, from } = message.payload || {};
+            if (to === NETWORK_STATE.playerId && from && sdp) {
+                _vcHandleAnswer(from, sdp).catch(err => _vcLog('Handle answer error:', err));
+            }
+            break;
+        }
+        case 'voice_ice': {
+            const { to, candidate, from } = message.payload || {};
+            if (to === NETWORK_STATE.playerId && from && candidate) {
+                _vcHandleIce(from, candidate).catch(() => {});
+            }
+            break;
+        }
+        case 'voice_speaking': {
+            // Remote player speaking state — show/hide mic icon on their nametag
+            const { playerId, speaking } = message.payload || {};
+            if (playerId) {
+                const visual = REMOTE_PLAYER_VISUALS.get(playerId);
+                if (visual?.parts?.nameSprite) {
+                    visual.parts.nameSprite.userData._speaking = !!speaking;
+                    const snap = NETWORK_STATE.players.get(playerId);
+                    if (snap) _refreshRemoteNameSprite(visual.parts.nameSprite, snap);
+                }
+            }
             break;
         }
 
@@ -5484,6 +6529,13 @@ function rebuildCharacter() {
             ntCtx.strokeText(GAME_STATE.char.name || 'Wizard', 256, 56);
             ntCtx.fillStyle = GAME_STATE.char.nametagColor || '#ffe066';
             ntCtx.fillText(GAME_STATE.char.name || 'Wizard', 256, 56);
+
+            // Mic speaking indicator for local player
+            if (VOICE_CHAT.speakingNow) {
+                ntCtx.font = '700 38px Rajdhani';
+                ntCtx.fillStyle = '#4ade80';
+                ntCtx.fillText('🎤', 440, 56);
+            }
         }
         renderNametagCanvas();
 
@@ -5646,11 +6698,25 @@ function generateWorld() {
 
 // Keyboard
 const keys = { w: false, a: false, s: false, d: false, space: false, shift: false, ctrl: false };
-document.addEventListener('keydown', (e) => {
-    const key = e.key.toLowerCase();
+let _activeAimMouseButton = null;
 
-    if (GAME_STATE.mode === 'world' && (e.key === 'Escape' || key === 'p')) {
+document.addEventListener('keydown', (e) => {
+    _markLastInputDevice('keyboardMouse');
+
+    if (_settingsRebindState?.device === 'keyboardMouse' && isSettingsOpen()) {
         e.preventDefault();
+        e.stopPropagation();
+        _completeRebindInput(e.code);
+        return;
+    }
+
+    if (GAME_STATE.mode === 'world' && _isBoundKeyboardAction(e, 'pauseMenu')) {
+        e.preventDefault();
+
+        if (isSettingsOpen()) {
+            closeSettingsOverlay();
+            return;
+        }
 
         if (isSaveLoadOpen()) {
             closeSaveLoadOverlay();
@@ -5665,24 +6731,48 @@ document.addEventListener('keydown', (e) => {
         return;
     }
 
-    if (e.key === 'Tab' && GAME_STATE.mode === 'world' && !isPauseMenuOpen() && !isSaveLoadOpen()) {
+    if (_isBoundKeyboardAction(e, 'inventory') && GAME_STATE.mode === 'world' && !isPauseMenuOpen() && !isSaveLoadOpen() && !isSettingsOpen()) {
         e.preventDefault();
         toggleInventory();
         return;
     }
 
-    if (e.key === 'F1' && GAME_STATE.mode === 'world' && !isPauseMenuOpen() && !isSaveLoadOpen()) {
+    if (_isBoundKeyboardAction(e, 'friends') && GAME_STATE.mode === 'world' && !isPauseMenuOpen() && !isSaveLoadOpen() && !isSettingsOpen()) {
         e.preventDefault();
         toggleFriends();
         return;
     }
 
-    if (isGameMenuOpen()) return;
+    // T — Toggle chat open/close
+    if (e.code === 'KeyT' && GAME_STATE.mode === 'world' && !isPauseMenuOpen() && !isSaveLoadOpen() && !isSettingsOpen() && !isInventoryOpen()) {
+        e.preventDefault();
+        toggleChatPanel();
+        return;
+    }
 
-    if (keys.hasOwnProperty(key)) keys[key] = true;
-    if (e.key === ' ') keys.space = true;
-    if (e.key === 'Shift') keys.shift = true;
-    if (e.key === 'Control' || e.key === 'c') keys.ctrl = true;
+    if (_isBoundKeyboardAction(e, 'interact') && GAME_STATE.mode === 'world' && !isGameMenuOpen()) {
+        e.preventDefault();
+        triggerPrimaryInteraction('keyboard');
+        return;
+    }
+
+    if (_isBoundKeyboardAction(e, 'micMute')) {
+        e.preventDefault();
+        _toggleMicMute();
+        return;
+    }
+
+    if (isGameMenuOpen()) return;
+    // Only fully block game input when the chat text field itself is focused (player is actively typing)
+    if (_isChatInputFocused()) return;
+
+    if (_isBoundKeyboardAction(e, 'moveForward')) keys.w = true;
+    if (_isBoundKeyboardAction(e, 'moveBackward')) keys.s = true;
+    if (_isBoundKeyboardAction(e, 'moveLeft')) keys.a = true;
+    if (_isBoundKeyboardAction(e, 'moveRight')) keys.d = true;
+    if (_isBoundKeyboardAction(e, 'jump')) keys.space = true;
+    if (_isBoundKeyboardAction(e, 'sprint')) keys.shift = true;
+    if (_isBoundKeyboardAction(e, 'crouch')) keys.ctrl = true;
 
     const numKey = parseInt(e.key);
     if (!isNaN(numKey) && numKey >= 1 && numKey <= 8 && GAME_STATE.mode === 'world' && isAiming && !isCastingSpell()) {
@@ -5690,14 +6780,17 @@ document.addEventListener('keydown', (e) => {
         e.preventDefault();
     }
 });
-document.addEventListener('keyup', (e) => {
-    const key = e.key.toLowerCase();
-    if(keys.hasOwnProperty(key)) keys[key] = false;
-    if(e.key === ' ') keys.space = false;
-    if(e.key === 'Shift') keys.shift = false;
-    if(e.key === 'Control' || e.key === 'c') keys.ctrl = false;
-});
 
+document.addEventListener('keyup', (e) => {
+    if (_isChatInputFocused()) return;
+    if (_isBoundKeyboardAction(e, 'moveForward')) keys.w = false;
+    if (_isBoundKeyboardAction(e, 'moveBackward')) keys.s = false;
+    if (_isBoundKeyboardAction(e, 'moveLeft')) keys.a = false;
+    if (_isBoundKeyboardAction(e, 'moveRight')) keys.d = false;
+    if (_isBoundKeyboardAction(e, 'jump')) keys.space = false;
+    if (_isBoundKeyboardAction(e, 'sprint')) keys.shift = false;
+    if (_isBoundKeyboardAction(e, 'crouch')) keys.ctrl = false;
+});
 // Mouse & Camera
 let pitch = 0; // Up/down
 let yaw = 0;   // Left/right
@@ -5707,6 +6800,1430 @@ let isAiming  = false;         // RMB held — wand aim mode
 let _aimFOV   = 60;            // current (lerped) FOV
 let _aimBodyYaw = 0;           // body yaw frozen at aim-start
 let _aimStartYaw = 0;          // camera yaw frozen at aim-start (for 85° clamp)
+
+const CONTROLLER_CONFIG = {
+    moveDeadzone: 0.18,
+    lookDeadzone: 0.10,
+    lookSpeed: 2.35,
+    aimLookScale: 0.42,
+    aimCursorSpeed: 1.12,
+    triggerDeadzone: 0.18,
+    triggerReleaseDeadzone: 0.10,
+};
+
+const CONTROLLER_STATE = {
+    connected: false,
+    gamepadIndex: -1,
+    moveRight: 0,
+    moveForward: 0,
+    moveMagnitude: 0,
+    sprintHeld: false,
+    crouchHeld: false,
+    jumpPressed: false,
+    ownsAim: false,
+    aimTriggerHeld: false,
+    emoteHold: 0,
+    emoteShown: false,
+    prevButtons: {},
+    prevMenuAxes: { up: false, down: false, left: false, right: false },
+    menuRootId: null,
+    menuFocusIndex: 0,
+    focusedEl: null,
+    selectEdit: null,
+    colorEdit: null,
+};
+
+function _hexToHsv(hex) {
+    const color = new THREE.Color(hex || '#ffffff');
+    const r = color.r, g = color.g, b = color.b;
+    const max = Math.max(r, g, b), min = Math.min(r, g, b);
+    const d = max - min;
+
+    let h = 0;
+    const s = max === 0 ? 0 : d / max;
+    const v = max;
+
+    if (d !== 0) {
+        switch (max) {
+            case r: h = ((g - b) / d + (g < b ? 6 : 0)) / 6; break;
+            case g: h = ((b - r) / d + 2) / 6; break;
+            case b: h = ((r - g) / d + 4) / 6; break;
+        }
+    }
+
+    return { h, s, v };
+}
+
+function _hsvToHex(h, s, v) {
+    const color = new THREE.Color();
+    color.setHSL((h % 1 + 1) % 1, Math.max(0, Math.min(1, s)), Math.max(0, Math.min(1, v * 0.5 + 0.25)));
+    return `#${color.getHexString()}`;
+}
+
+function _setControllerEditOverlay(title, subtitle, html) {
+    const overlay = document.getElementById('controller-edit-overlay');
+    const titleEl = document.getElementById('controller-edit-title');
+    const subtitleEl = document.getElementById('controller-edit-subtitle');
+    const previewEl = document.getElementById('controller-edit-preview');
+    if (!overlay || !titleEl || !subtitleEl || !previewEl) return;
+
+    titleEl.textContent = title;
+    subtitleEl.textContent = subtitle;
+    previewEl.innerHTML = html;
+
+    overlay.style.right = '20px';
+    overlay.style.bottom = isSettingsOpen() ? '24px' : '170px';
+    overlay.style.maxHeight = isSettingsOpen() ? '36vh' : '42vh';
+    overlay.style.display = 'block';
+}
+
+function _clearControllerEditOverlay() {
+    const overlay = document.getElementById('controller-edit-overlay');
+    const previewEl = document.getElementById('controller-edit-preview');
+    if (previewEl) previewEl.innerHTML = '';
+    if (overlay) overlay.style.display = 'none';
+}
+
+function _renderControllerSelectEditOverlay() {
+    const edit = CONTROLLER_STATE.selectEdit;
+    if (!edit || !edit.el) {
+        _clearControllerEditOverlay();
+        return;
+    }
+
+    const options = Array.from(edit.el.options || []);
+    const current = options[edit.previewIndex];
+    const itemsHtml = options.map((opt, i) => `
+        <div style="
+            padding:8px 10px;
+            margin-top:6px;
+            border-radius:10px;
+            border:1px solid ${i === edit.previewIndex ? 'rgba(250,204,21,0.85)' : 'rgba(255,255,255,0.08)'};
+            background:${i === edit.previewIndex ? 'rgba(250,204,21,0.16)' : 'rgba(255,255,255,0.03)'};
+            color:${i === edit.previewIndex ? '#fff7cc' : '#e2e8f0'};
+            font-weight:${i === edit.previewIndex ? '800' : '700'};
+            letter-spacing:0.3px;
+        ">${opt.textContent}</div>
+    `).join('');
+
+    _setControllerEditOverlay(
+        edit.el.labels?.[0]?.textContent?.trim() || 'Option Select',
+        `Current: ${current ? current.textContent : '—'} • D-Pad/Stick browse • A confirm • B cancel`,
+        `<div>${itemsHtml}</div>`
+    );
+}
+
+function _beginControllerSelectEdit(el) {
+    if (!el || !el.matches('select')) return;
+
+    CONTROLLER_STATE.selectEdit = {
+        el,
+        originalIndex: el.selectedIndex,
+        previewIndex: el.selectedIndex,
+    };
+
+    _renderControllerSelectEditOverlay();
+    _showSpellCastStatus('D-Pad or stick: browse • A: confirm • B: cancel', true, 1200);
+}
+
+function _adjustControllerSelectEdit(delta) {
+    const edit = CONTROLLER_STATE.selectEdit;
+    if (!edit || !edit.el) return;
+
+    const maxIndex = Math.max(0, edit.el.options.length - 1);
+    edit.previewIndex = Math.max(0, Math.min(maxIndex, edit.previewIndex + delta));
+    edit.el.selectedIndex = edit.previewIndex;
+    edit.el.dispatchEvent(new Event('input', { bubbles: true }));
+    edit.el.dispatchEvent(new Event('change', { bubbles: true }));
+    _renderControllerSelectEditOverlay();
+}
+
+function _finishControllerSelectEdit(confirmSelection = true) {
+    const edit = CONTROLLER_STATE.selectEdit;
+    if (!edit || !edit.el) return;
+
+    edit.el.selectedIndex = confirmSelection ? edit.previewIndex : edit.originalIndex;
+    edit.el.dispatchEvent(new Event('input', { bubbles: true }));
+    edit.el.dispatchEvent(new Event('change', { bubbles: true }));
+    CONTROLLER_STATE.selectEdit = null;
+    _clearControllerEditOverlay();
+}
+
+function _renderControllerColorEditOverlay() {
+    const edit = CONTROLLER_STATE.colorEdit;
+    if (!edit) {
+        _clearControllerEditOverlay();
+        return;
+    }
+
+    const hex = edit.el?.value || edit.originalValue || '#ffffff';
+    const huePct = Math.round(edit.h * 100);
+    const satPct = Math.round(edit.s * 100);
+    const valPct = Math.round(edit.v * 100);
+
+    _setControllerEditOverlay(
+        'Custom Color Picker',
+        `Right stick: saturation/value • LB/RB: hue • A confirm • B cancel`,
+        `
+            <div style="display:flex;align-items:center;gap:12px;">
+                <div style="width:74px;height:74px;border-radius:14px;border:2px solid rgba(255,255,255,0.18);background:${hex};box-shadow:0 0 18px rgba(0,0,0,0.28);"></div>
+                <div style="flex:1;display:flex;flex-direction:column;gap:6px;">
+                    <div style="font-weight:900;color:#f8fafc;letter-spacing:0.6px;">${hex.toUpperCase()}</div>
+                    <div style="font-size:13px;color:#cbd5e1;">Hue: ${huePct}%</div>
+                    <div style="font-size:13px;color:#cbd5e1;">Saturation: ${satPct}%</div>
+                    <div style="font-size:13px;color:#cbd5e1;">Brightness: ${valPct}%</div>
+                </div>
+            </div>
+            <div style="margin-top:12px;height:14px;border-radius:999px;background:linear-gradient(90deg,#ff0000,#ffff00,#00ff00,#00ffff,#0000ff,#ff00ff,#ff0000);border:1px solid rgba(255,255,255,0.14);position:relative;">
+                <div style="position:absolute;top:-3px;left:calc(${huePct}% - 6px);width:12px;height:20px;border-radius:8px;background:#fff;border:2px solid #111827;"></div>
+            </div>
+        `
+    );
+}
+
+function _beginControllerColorEdit(el) {
+    if (!el || !el.matches('input[type="color"]')) return;
+
+    const hsv = _hexToHsv(el.value || '#ffffff');
+    CONTROLLER_STATE.colorEdit = {
+        el,
+        originalValue: el.value || '#ffffff',
+        h: hsv.h,
+        s: hsv.s,
+        v: hsv.v,
+    };
+
+    _applyControllerColorEditPreview();
+    _renderControllerColorEditOverlay();
+    _showSpellCastStatus('Right stick: color field • LB/RB: hue bar • A: confirm • B: cancel', true, 1500);
+}
+
+function _applyControllerColorEditPreview() {
+    const edit = CONTROLLER_STATE.colorEdit;
+    if (!edit || !edit.el) return;
+
+    const nextHex = _hsvToHex(edit.h, edit.s, edit.v);
+    edit.el.value = nextHex;
+    edit.el.dispatchEvent(new Event('input', { bubbles: true }));
+    _renderControllerColorEditOverlay();
+}
+
+function _adjustControllerColorEdit(stickX, stickY, delta, hueStep = 0) {
+    const edit = CONTROLLER_STATE.colorEdit;
+    if (!edit) return;
+
+    edit.h = (edit.h + hueStep + 1) % 1;
+    edit.s = Math.max(0, Math.min(1, edit.s + stickX * delta * 0.95));
+    edit.v = Math.max(0, Math.min(1, edit.v - stickY * delta * 0.95));
+    _applyControllerColorEditPreview();
+}
+
+function _finishControllerColorEdit(confirmSelection = true) {
+    const edit = CONTROLLER_STATE.colorEdit;
+    if (!edit || !edit.el) return;
+
+    edit.el.value = confirmSelection ? edit.el.value : edit.originalValue;
+    edit.el.dispatchEvent(new Event('input', { bubbles: true }));
+    edit.el.dispatchEvent(new Event('change', { bubbles: true }));
+    CONTROLLER_STATE.colorEdit = null;
+    _clearControllerEditOverlay();
+}
+
+function _controllerDeadzone(value, deadzone = CONTROLLER_CONFIG.moveDeadzone) {
+    const mag = Math.abs(value);
+    if (mag < deadzone) return 0;
+    const scaled = (mag - deadzone) / (1 - deadzone);
+    return Math.sign(value) * scaled;
+}
+
+function _getActiveGamepad() {
+    const pads = navigator.getGamepads ? Array.from(navigator.getGamepads()) : [];
+    const pad = pads.find(Boolean) || null;
+    if (!pad) return null;
+    CONTROLLER_STATE.gamepadIndex = pad.index;
+    return pad;
+}
+
+function _isControllerVisible(el) {
+    if (!el) return false;
+    const style = window.getComputedStyle(el);
+    if (style.display === 'none' || style.visibility === 'hidden' || style.opacity === '0') return false;
+    return el.offsetParent !== null || el.getClientRects().length > 0;
+}
+
+function _clearControllerFocus() {
+    const prev = CONTROLLER_STATE.focusedEl;
+    if (!prev) return;
+
+    prev.style.outline = prev.dataset.ctrlPrevOutline || '';
+    prev.style.boxShadow = prev.dataset.ctrlPrevShadow || '';
+    prev.style.transform = prev.dataset.ctrlPrevTransform || '';
+    CONTROLLER_STATE.focusedEl = null;
+}
+
+function _scrollControllerFocusIntoView(el) {
+    if (!el || typeof el.scrollIntoView !== 'function') return;
+
+    const customization = document.getElementById('customization-screen');
+    const settingsOverlay = document.getElementById('settings-overlay');
+
+    if (customization && customization.contains(el)) {
+        el.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: 'smooth' });
+        return;
+    }
+
+    if (settingsOverlay && settingsOverlay.contains(el)) {
+        el.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: 'smooth' });
+        return;
+    }
+
+    el.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+}
+
+function _setControllerFocus(el) {
+    if (!el || CONTROLLER_STATE.focusedEl === el) return;
+    _clearControllerFocus();
+
+    el.dataset.ctrlPrevOutline = el.style.outline || '';
+    el.dataset.ctrlPrevShadow = el.style.boxShadow || '';
+    el.dataset.ctrlPrevTransform = el.style.transform || '';
+
+    el.style.outline = '3px solid rgba(253,230,138,0.95)';
+    el.style.boxShadow = '0 0 0 3px rgba(124,58,237,0.45), 0 0 24px rgba(253,230,138,0.28)';
+    el.style.transform = `${el.dataset.ctrlPrevTransform || ''} scale(1.01)`.trim();
+    el.focus?.({ preventScroll: true });
+
+    try {
+        el.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: 'auto' });
+    } catch {}
+
+    CONTROLLER_STATE.focusedEl = el;
+}
+
+function _getControllerMenuRoot() {
+    const sharedDropdown = document.getElementById('shared-dropdown-popup');
+    if (sharedDropdown && _isControllerVisible(sharedDropdown)) return sharedDropdown;
+
+    const colorPopup = document.getElementById('color-popup');
+    if (colorPopup && colorPopup.classList.contains('open') && _isControllerVisible(colorPopup)) return colorPopup;
+
+    const ids = [
+        'settings-overlay',
+        'save-slot-overlay',
+        'pause-overlay',
+        'inventory-overlay',
+        'friends-overlay',
+        'customization-screen',
+        'main-menu'
+    ];
+
+    for (const id of ids) {
+        const el = document.getElementById(id);
+        if (el && _isControllerVisible(el)) return el;
+    }
+    return null;
+}
+
+function _getControllerMenuTargets(root = _getControllerMenuRoot()) {
+    if (!root) return [];
+    return Array.from(root.querySelectorAll(
+        'button:not([disabled]), input[type="range"], input[type="checkbox"], input[type="color"], select, .pop-swatch'
+    )).filter(_isControllerVisible);
+}
+
+function _getControllerMenuScrollContainer(root = _getControllerMenuRoot()) {
+    if (!root) return null;
+
+    if (root.id === 'settings-overlay') {
+        return document.querySelector(`#settings-panel-${_settingsTab}.active`) || root;
+    }
+
+    if (root.id === 'inventory-overlay') {
+        return document.querySelector(`#inventory-overlay .inventory-tab-panel.active`) || root;
+    }
+
+    if (root.id === 'friends-overlay') {
+        return document.querySelector(`#friends-overlay .inventory-tab-panel.active`) || root;
+    }
+
+    return root;
+}
+
+function _ensureControllerMenuFocus() {
+    const root = _getControllerMenuRoot();
+    if (!root) {
+        CONTROLLER_STATE.menuRootId = null;
+        CONTROLLER_STATE.menuFocusIndex = 0;
+        _clearControllerFocus();
+        return;
+    }
+
+    if (CONTROLLER_STATE.menuRootId !== root.id) {
+        CONTROLLER_STATE.menuRootId = root.id;
+        CONTROLLER_STATE.menuFocusIndex = 0;
+        _clearControllerFocus();
+
+        const scrollContainer = _getControllerMenuScrollContainer(root);
+        if (scrollContainer && typeof scrollContainer.scrollTop === 'number') {
+            scrollContainer.scrollTop = 0;
+        }
+    }
+
+    const targets = _getControllerMenuTargets(root);
+    if (!targets.length) {
+        _clearControllerFocus();
+        return;
+    }
+
+    CONTROLLER_STATE.menuFocusIndex = Math.max(0, Math.min(CONTROLLER_STATE.menuFocusIndex, targets.length - 1));
+    _setControllerFocus(targets[CONTROLLER_STATE.menuFocusIndex]);
+}
+
+function _moveControllerMenuFocus(delta) {
+    const root = _getControllerMenuRoot();
+    const targets = _getControllerMenuTargets(root);
+    if (!targets.length) return;
+
+    const prevIndex = CONTROLLER_STATE.menuFocusIndex;
+    const nextIndex = (prevIndex + delta + targets.length) % targets.length;
+    const wrappedTop = delta > 0 && nextIndex < prevIndex;
+    const wrappedBottom = delta < 0 && nextIndex > prevIndex;
+
+    CONTROLLER_STATE.menuFocusIndex = nextIndex;
+
+    const scrollContainer = _getControllerMenuScrollContainer(root);
+    if (scrollContainer && typeof scrollContainer.scrollTop === 'number') {
+        if (wrappedTop) scrollContainer.scrollTop = 0;
+        if (wrappedBottom) scrollContainer.scrollTop = scrollContainer.scrollHeight;
+    }
+
+    _setControllerFocus(targets[CONTROLLER_STATE.menuFocusIndex]);
+}
+
+function _nudgeFocusedControllerControl(delta) {
+    const el = CONTROLLER_STATE.focusedEl;
+    if (!el) return false;
+
+    if (el.matches('input[type="range"]')) {
+        const step = parseFloat(el.step || '1') || 1;
+        const min = parseFloat(el.min || '0');
+        const max = parseFloat(el.max || '100');
+        const current = parseFloat(el.value || '0');
+        const next = Math.max(min, Math.min(max, current + step * delta));
+        if (next !== current) {
+            el.value = String(next);
+            el.dispatchEvent(new Event('input', { bubbles: true }));
+            el.dispatchEvent(new Event('change', { bubbles: true }));
+        }
+        return true;
+    }
+
+    if (CONTROLLER_STATE.selectEdit && el === CONTROLLER_STATE.selectEdit.el) {
+        _adjustControllerSelectEdit(delta);
+        return true;
+    }
+
+    if (el.matches('input[type="checkbox"]')) {
+        el.checked = !el.checked;
+        el.dispatchEvent(new Event('change', { bubbles: true }));
+        return true;
+    }
+
+    return false;
+}
+
+function _activateControllerFocus() {
+    const el = CONTROLLER_STATE.focusedEl;
+    if (!el) return;
+
+    if (el.matches('button, .pop-swatch')) {
+        el.click();
+        return;
+    }
+
+    if (el.matches('select')) {
+        _beginControllerSelectEdit(el);
+        return;
+    }
+
+    if (el.matches('input[type="color"]')) {
+        _beginControllerColorEdit(el);
+        return;
+    }
+
+    if (el.matches('input[type="checkbox"]')) {
+        el.checked = !el.checked;
+        el.dispatchEvent(new Event('change', { bubbles: true }));
+    }
+}
+
+function _cycleControllerTabs(delta) {
+    if (isSettingsOpen()) {
+        const tabs = ['graphics', 'audio', 'controls'];
+        const i = tabs.indexOf(_settingsTab);
+        _settingsTab = tabs[(i + delta + tabs.length) % tabs.length];
+        renderSettingsUI();
+        return true;
+    }
+
+    if (isInventoryOpen()) {
+        const tabs = ['items', 'spells', 'upgrades'];
+        const i = tabs.indexOf(GAME_STATE.inventory.activeTab);
+        setInventoryTab(tabs[(i + delta + tabs.length) % tabs.length]);
+        return true;
+    }
+
+    if (isFriendsOpen()) {
+        const tabs = ['list', 'requests'];
+        const i = tabs.indexOf(GAME_STATE.friends.activeTab);
+        setFriendsTab(tabs[(i + delta + tabs.length) % tabs.length]);
+        return true;
+    }
+
+    return false;
+}
+
+function _closeCurrentControllerMenu() {
+    if (SHARED_DROPDOWN_STATE.popup?.style.display === 'block') {
+        _closeSharedDropdown();
+        return true;
+    }
+    if (COLOR_POPUP_STATE.popup?.classList.contains('open')) {
+        COLOR_POPUP_STATE.close?.();
+        return true;
+    }
+    if (isSettingsOpen()) {
+        closeSettingsOverlay();
+        return true;
+    }
+    if (isSaveLoadOpen()) {
+        closeSaveLoadOverlay();
+        return true;
+    }
+    if (isPauseMenuOpen()) {
+        closePauseMenu(false);
+        return true;
+    }
+    if (isInventoryOpen()) {
+        closeInventory();
+        return true;
+    }
+    if (isFriendsOpen()) {
+        closeFriends();
+        return true;
+    }
+    return false;
+}
+
+function _findNextSpellSlot(startIndex, delta) {
+    for (let step = 1; step <= SPELL_SLOTS.length; step++) {
+        const idx = (startIndex + delta * step + SPELL_SLOTS.length * 4) % SPELL_SLOTS.length;
+        const slot = SPELL_SLOTS[idx];
+        if (slot && !slot.locked && slot.spell) return idx;
+    }
+    return -1;
+}
+
+function _cycleSpellSlot(delta = 1) {
+    if (!_spellBarBuilt) _buildSpellBar();
+
+    const start = _activeSpellSlot >= 0 ? _activeSpellSlot : (delta > 0 ? -1 : 0);
+    const idx = _findNextSpellSlot(start, delta);
+    if (idx >= 0) _selectSpellSlot(idx);
+    return idx;
+}
+
+function _ensureSelectedSpellSlot() {
+    const slot = SPELL_SLOTS[_activeSpellSlot] || null;
+    if (slot && !slot.locked && slot.spell) return _activeSpellSlot;
+    return _cycleSpellSlot(1);
+}
+
+function _resetAimPresentation(options = {}) {
+    const {
+        resetCursor = true,
+        clearSelection = true,
+        clearTrace = true,
+        hideSpellBar = true,
+        closeOverlay = true,
+    } = options;
+
+    isAiming = false;
+
+    if (resetCursor) {
+        _aimCursor.x = 0.5;
+        _aimCursor.y = 0.5;
+    }
+
+    _updateHudCrosshair();
+
+    const spellBar = document.getElementById('spell-bar');
+    if (hideSpellBar && spellBar) spellBar.classList.remove('sb-visible');
+
+    if (closeOverlay && _spellOverlayOpen) _setSpellOverlay(false);
+
+    if (clearSelection) {
+        _activeSpellSlot = -1;
+        _refreshSpellBarHighlight();
+    }
+
+    if (clearTrace) _clearSpellTrace();
+}
+
+function _enterAimMode(source = 'mouse') {
+    if (GAME_STATE.mode !== 'world' || isCastingSpell() || isGameMenuOpen() || isPlayerDead()) return false;
+
+    _resumeAudioContext();
+
+    if (!isAiming) {
+        isAiming = true;
+        _aimCursor.x = 0.5;
+        _aimCursor.y = 0.5;
+        _updateHudCrosshair();
+        _clearSpellTrace();
+
+        _aimBodyYaw = characterModel ? characterModel.rotation.y : 0;
+        _aimStartYaw = yaw;
+
+        if (!_spellBarBuilt) _buildSpellBar();
+        const spellBar = document.getElementById('spell-bar');
+        if (spellBar) spellBar.classList.add('sb-visible');
+    }
+
+    CONTROLLER_STATE.ownsAim = source === 'controller';
+    return true;
+}
+
+function _releaseAimMode(options = {}) {
+    const {
+        attemptCast = true,
+        resetCursor = true,
+        clearSelection = true,
+        clearTrace = true,
+        hideSpellBar = true,
+        closeOverlay = true,
+    } = options;
+
+    if (!isAiming && !CONTROLLER_STATE.ownsAim) return null;
+
+    let castSpell = null;
+    if (attemptCast && _activeSpellSlot >= 0 && !isCastingSpell()) {
+        castSpell = _attemptSpellTraceCast();
+    }
+
+    CONTROLLER_STATE.ownsAim = false;
+    CONTROLLER_STATE.aimTriggerHeld = false;
+
+    _resetAimPresentation({
+        resetCursor,
+        clearSelection,
+        clearTrace,
+        hideSpellBar,
+        closeOverlay,
+    });
+
+    return castSpell;
+}
+
+function _setControllerAimState(active) {
+    const wantAim = !!active && GAME_STATE.mode === 'world' && !isCastingSpell() && !isGameMenuOpen() && !isPlayerDead();
+
+    if (wantAim) {
+        _enterAimMode('controller');
+        return;
+    }
+
+    if (CONTROLLER_STATE.ownsAim) {
+        _releaseAimMode();
+    }
+}
+
+function triggerPrimaryInteraction(source = 'keyboard') {
+    const evt = new CustomEvent('wotm-interact', {
+        bubbles: true,
+        cancelable: true,
+        detail: {
+            source,
+            position: characterModel ? _serializeVec3(characterModel.position) : null
+        }
+    });
+
+    const handled = !document.dispatchEvent(evt);
+    if (!handled) {
+        _showSpellCastStatus('Nothing to interact with', false, 700);
+    }
+}
+
+// ══════════════════════════════════════════════════════════════════
+// CHAT SYSTEM
+// ══════════════════════════════════════════════════════════════════
+const CHAT_STATE = {
+    open: false,
+    tab: 'public',           // 'public' | 'private'
+    selectedFriend: null,    // friend id for private chat
+    cooldownUntil: 0,        // timestamp ms
+    cooldownMs: 5000,
+    messages: {
+        public: [],
+        private: {},         // keyed by friend id
+    },
+    friends: [],             // populated by multiplayer later
+    emojiOpen: false,
+    cooldownRaf: null,
+};
+
+const CHAT_EMOJIS = [
+    '😊','😂','🔥','⚡','💀','🌿','💧','❄️','✨','🌌',
+    '💜','💛','❤️','🖤','🌟','👋','👍','💪','🙏','🎉',
+    '😎','😈','🤔','😮','😡','🥳','🧙','🪄','⚔️','🛡️',
+    '🐉','🌙','☀️','🌊','🌪️','💥','🎯','🔮','📜','🏆',
+];
+
+function isChatOpen() { return CHAT_STATE.open; }
+function _isChatInputFocused() {
+    const inp = document.getElementById('chat-input');
+    return !!(inp && document.activeElement === inp);
+}
+
+function openChatPanel(focusInput = true) {
+    const panel = document.getElementById('chat-panel');
+    const hint  = document.getElementById('chat-toggle-hint');
+    if (!panel) return;
+
+    CHAT_STATE.open = true;
+    panel.style.display = 'flex';
+    // Force reflow then animate in
+    requestAnimationFrame(() => panel.classList.remove('chat-hidden'));
+    if (hint) hint.style.opacity = '0';
+
+    // Release pointer lock so player can type
+    if (document.pointerLockElement) document.exitPointerLock();
+
+    _chatRenderMessages();
+    _chatRenderFriends();
+
+    if (focusInput) {
+        setTimeout(() => {
+            const inp = document.getElementById('chat-input');
+            if (inp) inp.focus();
+        }, 60);
+    }
+}
+
+function closeChatPanel() {
+    const panel = document.getElementById('chat-panel');
+    const hint  = document.getElementById('chat-toggle-hint');
+    if (!panel) return;
+
+    CHAT_STATE.open = false;
+    CHAT_STATE.emojiOpen = false;
+    panel.classList.add('chat-hidden');
+    const picker = document.getElementById('chat-emoji-picker');
+    if (picker) picker.classList.add('chat-hidden');
+
+    setTimeout(() => {
+        if (!CHAT_STATE.open) panel.style.display = 'none';
+    }, 200);
+    if (hint) hint.style.opacity = '';
+
+    const inp = document.getElementById('chat-input');
+    if (inp) inp.blur();
+}
+
+function toggleChatPanel() {
+    if (CHAT_STATE.open) closeChatPanel();
+    else openChatPanel();
+}
+
+function openChatPanelStub() { openChatPanel(); }
+
+function _chatCurrentMessages() {
+    if (CHAT_STATE.tab === 'private' && CHAT_STATE.selectedFriend) {
+        return CHAT_STATE.messages.private[CHAT_STATE.selectedFriend] || [];
+    }
+    return CHAT_STATE.messages.public;
+}
+
+function _chatRenderMessages() {
+    const box = document.getElementById('chat-messages');
+    if (!box) return;
+
+    const msgs = _chatCurrentMessages();
+    box.innerHTML = '';
+
+    if (CHAT_STATE.tab === 'private' && !CHAT_STATE.selectedFriend) {
+        box.innerHTML = '<div class="chat-msg chat-msg-system">Select a friend to view messages.</div>';
+        return;
+    }
+
+    if (msgs.length === 0) {
+        box.innerHTML = '<div class="chat-msg chat-msg-system">No messages yet. Say hello!</div>';
+        return;
+    }
+
+    const myName = GAME_STATE?.char?.name || 'You';
+    msgs.forEach(m => {
+        const div = document.createElement('div');
+        const isMe = m.sender === myName;
+        const isSystem = m.type === 'system';
+
+        if (isSystem) {
+            div.className = 'chat-msg chat-msg-system';
+            div.textContent = m.text;
+        } else {
+            div.className = 'chat-msg' + (CHAT_STATE.tab === 'private' ? ' chat-msg-private' : '');
+            const nameSpan = document.createElement('span');
+            nameSpan.className = 'chat-msg-name' + (isMe ? ' chat-msg-self' : '');
+            nameSpan.textContent = m.sender + ':';
+            div.appendChild(nameSpan);
+            div.appendChild(document.createTextNode(' ' + m.text));
+        }
+        box.appendChild(div);
+    });
+
+    box.scrollTop = box.scrollHeight;
+}
+
+function _chatRenderFriends() {
+    const friendsEl = document.getElementById('chat-private-friends');
+    if (!friendsEl) return;
+
+    const isPrivate = CHAT_STATE.tab === 'private';
+    friendsEl.style.display = isPrivate ? '' : 'none';
+    if (!isPrivate) return;
+
+    friendsEl.innerHTML = '';
+    if (CHAT_STATE.friends.length === 0) {
+        friendsEl.innerHTML = '<div class="chat-msg chat-msg-system" style="padding:6px 8px;">No friends added yet.</div>';
+        return;
+    }
+
+    CHAT_STATE.friends.forEach(f => {
+        const row = document.createElement('div');
+        row.className = 'chat-friend-row' + (CHAT_STATE.selectedFriend === f.id ? ' active' : '');
+        row.innerHTML = `<span class="chat-friend-dot${f.online ? '' : ' offline'}"></span><span>${f.name}</span>`;
+        row.addEventListener('click', () => {
+            if (CHAT_STATE.selectedFriend === f.id) {
+                CHAT_STATE.selectedFriend = null;
+            } else {
+                CHAT_STATE.selectedFriend = f.id;
+                if (!CHAT_STATE.messages.private[f.id]) CHAT_STATE.messages.private[f.id] = [];
+            }
+            _chatRenderFriends();
+            _chatRenderMessages();
+        });
+        friendsEl.appendChild(row);
+    });
+}
+
+function _chatSwitchTab(tab) {
+    CHAT_STATE.tab = tab;
+    CHAT_STATE.emojiOpen = false;
+    const picker = document.getElementById('chat-emoji-picker');
+    if (picker) picker.classList.add('chat-hidden');
+
+    document.querySelectorAll('.chat-tab-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.chatTab === tab);
+    });
+    _chatRenderFriends();
+    _chatRenderMessages();
+}
+
+function _chatGetCooldownRemaining() {
+    return Math.max(0, CHAT_STATE.cooldownUntil - Date.now());
+}
+
+function _chatUpdateCooldownBar() {
+    const fill = document.getElementById('chat-cooldown-fill');
+    const sendBtn = document.getElementById('chat-send-btn');
+    const remaining = _chatGetCooldownRemaining();
+
+    if (remaining <= 0) {
+        if (fill) fill.style.width = '0%';
+        if (sendBtn) sendBtn.disabled = false;
+        CHAT_STATE.cooldownRaf = null;
+        return;
+    }
+
+    const pct = (remaining / CHAT_STATE.cooldownMs) * 100;
+    if (fill) fill.style.width = pct + '%';
+    if (sendBtn) sendBtn.disabled = true;
+    CHAT_STATE.cooldownRaf = requestAnimationFrame(_chatUpdateCooldownBar);
+}
+
+function _chatSendMessage() {
+    if (_chatGetCooldownRemaining() > 0) return;
+
+    const inp = document.getElementById('chat-input');
+    if (!inp) return;
+    const text = inp.value.trim();
+    if (!text) return;
+
+    const myName = GAME_STATE?.char?.name || 'Wizard';
+    const msg = { sender: myName, text, time: Date.now(), type: 'chat' };
+
+    if (CHAT_STATE.tab === 'public') {
+        CHAT_STATE.messages.public.push(msg);
+        // Broadcast to multiplayer when connected
+        _sendNetworkMessage('chat_public', { sender: myName, text });
+    } else if (CHAT_STATE.tab === 'private' && CHAT_STATE.selectedFriend) {
+        if (!CHAT_STATE.messages.private[CHAT_STATE.selectedFriend]) {
+            CHAT_STATE.messages.private[CHAT_STATE.selectedFriend] = [];
+        }
+        CHAT_STATE.messages.private[CHAT_STATE.selectedFriend].push(msg);
+        _sendNetworkMessage('chat_private', { sender: myName, targetId: CHAT_STATE.selectedFriend, text });
+    } else {
+        return; // private tab but no friend selected
+    }
+
+    inp.value = '';
+    CHAT_STATE.cooldownUntil = Date.now() + CHAT_STATE.cooldownMs;
+    _chatRenderMessages();
+
+    // Spawn floating bubble above player head
+    _spawnFloatingChatBubble(text, characterModel);
+
+    if (!CHAT_STATE.cooldownRaf) _chatUpdateCooldownBar();
+}
+
+function _chatReceivePublic(sender, text, senderModel) {
+    CHAT_STATE.messages.public.push({ sender, text, time: Date.now(), type: 'chat' });
+    // Cap history
+    if (CHAT_STATE.messages.public.length > 200) CHAT_STATE.messages.public.shift();
+    if (CHAT_STATE.open && CHAT_STATE.tab === 'public') {
+        _chatRenderMessages();
+    }
+    // Spawn floating bubble above the sender's model if we have it
+    if (senderModel) _spawnFloatingChatBubble(text, senderModel);
+}
+
+function _chatReceivePrivate(senderId, senderName, text) {
+    if (!CHAT_STATE.messages.private[senderId]) CHAT_STATE.messages.private[senderId] = [];
+    CHAT_STATE.messages.private[senderId].push({ sender: senderName, text, time: Date.now(), type: 'chat' });
+    if (CHAT_STATE.messages.private[senderId].length > 200) CHAT_STATE.messages.private[senderId].shift();
+    if (CHAT_STATE.open && CHAT_STATE.tab === 'private' && CHAT_STATE.selectedFriend === senderId) {
+        _chatRenderMessages();
+    }
+}
+
+// ══════════════════════════════════════════════════════════════════
+// FLOATING ANIME CHAT BUBBLES (3D sprites above character head)
+// ══════════════════════════════════════════════════════════════════
+const FLOATING_CHAT_BUBBLES = [];
+const CHAT_BUBBLE_MAX  = 4;
+const CHAT_BUBBLE_LIFE = 15;   // seconds total
+const CHAT_BUBBLE_FADE = 2;    // seconds to fade at end
+
+function _spawnFloatingChatBubble(text, targetModel) {
+    targetModel = targetModel || characterModel;
+    if (!targetModel || !worldScene) return;
+
+    // Trim long messages in the bubble
+    const displayText = text.length > 80 ? text.slice(0, 77) + '…' : text;
+
+    // Enforce max — remove oldest for this model
+    const mine = FLOATING_CHAT_BUBBLES.filter(b => b.model === targetModel);
+    while (mine.length >= CHAT_BUBBLE_MAX) {
+        const oldest = mine.shift();
+        const idx = FLOATING_CHAT_BUBBLES.indexOf(oldest);
+        if (idx !== -1) FLOATING_CHAT_BUBBLES.splice(idx, 1);
+        _destroyChatBubble(oldest);
+    }
+
+    const CW = 560, CH = 120;
+    const canvas = document.createElement('canvas');
+    canvas.width  = CW;
+    canvas.height = CH;
+    const ctx = canvas.getContext('2d');
+
+    // Measure and wrap text
+    ctx.font = 'bold 34px "Segoe UI Emoji", "Segoe UI", Arial, sans-serif';
+    const maxTW = CW - 56;
+    const words = displayText.split(' ');
+    const lines = [];
+    let line = '';
+    for (const w of words) {
+        const test = line ? line + ' ' + w : w;
+        if (ctx.measureText(test).width > maxTW && line) { lines.push(line); line = w; }
+        else line = test;
+    }
+    if (line) lines.push(line);
+
+    function drawBubble(alpha) {
+        ctx.clearRect(0, 0, CW, CH);
+        ctx.save();
+        ctx.globalAlpha = Math.max(0, Math.min(1, alpha));
+
+        const r = 20;
+        const bx = 8, by = 8, bw = CW - 16, bh = CH - 32;
+        const tailX = CW / 2;
+
+        // Shadow
+        ctx.shadowColor = 'rgba(0,0,0,0.45)';
+        ctx.shadowBlur  = 14;
+        ctx.shadowOffsetY = 3;
+
+        // White bubble body with tail
+        ctx.beginPath();
+        ctx.moveTo(bx + r, by);
+        ctx.lineTo(bx + bw - r, by);
+        ctx.quadraticCurveTo(bx + bw, by,      bx + bw, by + r);
+        ctx.lineTo(bx + bw, by + bh - r);
+        ctx.quadraticCurveTo(bx + bw, by + bh, bx + bw - r, by + bh);
+        ctx.lineTo(tailX + 13, by + bh);
+        ctx.lineTo(tailX,      CH - 5);          // tail tip
+        ctx.lineTo(tailX - 13, by + bh);
+        ctx.lineTo(bx + r, by + bh);
+        ctx.quadraticCurveTo(bx, by + bh, bx, by + bh - r);
+        ctx.lineTo(bx, by + r);
+        ctx.quadraticCurveTo(bx, by, bx + r, by);
+        ctx.closePath();
+
+        ctx.fillStyle = 'rgba(255,255,255,0.96)';
+        ctx.fill();
+
+        // Coloured border (warm orange/purple)
+        ctx.shadowColor = 'transparent';
+        ctx.strokeStyle = 'rgba(200,80,255,0.55)';
+        ctx.lineWidth   = 2.5;
+        ctx.stroke();
+
+        // Text
+        ctx.shadowBlur = 0;
+        ctx.font        = 'bold 34px "Segoe UI Emoji", "Segoe UI", Arial, sans-serif';
+        ctx.fillStyle   = '#1a1a1a';
+        ctx.textAlign   = 'center';
+        ctx.textBaseline = 'middle';
+        const lineH  = 38;
+        const totalH = lines.length * lineH;
+        const startY = (bh / 2) + by - totalH / 2 + lineH / 2;
+        lines.forEach((l, i) => ctx.fillText(l, CW / 2, startY + i * lineH, maxTW));
+
+        ctx.restore();
+    }
+
+    drawBubble(1);
+
+    const tex = new THREE.CanvasTexture(canvas);
+    const mat = new THREE.SpriteMaterial({ map: tex, depthTest: false, transparent: true });
+    const sprite = new THREE.Sprite(mat);
+    sprite.scale.set(0, 0, 1); // starts invisible — pop-in animates it
+    targetModel.add(sprite);
+
+    const entry = { sprite, canvas, ctx, drawBubble, tex, mat, age: 0, life: CHAT_BUBBLE_LIFE, model: targetModel, popAge: 0, popDuration: 0.26 };
+    FLOATING_CHAT_BUBBLES.push(entry);
+    _repositionChatBubbles(targetModel);
+    return entry;
+}
+
+function _destroyChatBubble(entry) {
+    if (!entry) return;
+    if (entry.sprite?.parent) entry.sprite.parent.remove(entry.sprite);
+    entry.mat?.dispose();
+    entry.tex?.dispose();
+}
+
+function _repositionChatBubbles(targetModel) {
+    const baseY = (charParts?._nametagSprite?.position?.y ?? 2.1) + 0.68;
+    const forModel = FLOATING_CHAT_BUBBLES.filter(b => b.model === targetModel);
+    const count = forModel.length;
+    forModel.forEach((b, i) => {
+        // Newest message (highest index) gets slot 0 = bottom, older ones stack upward
+        const slot = (count - 1) - i;
+        b.sprite.position.set(0, baseY + slot * 0.68, 0);
+    });
+}
+
+function updateFloatingChatBubbles(delta) {
+    if (FLOATING_CHAT_BUBBLES.length === 0) return;
+    let anyRemoved = false;
+    const byModel = new Set();
+
+    for (let i = FLOATING_CHAT_BUBBLES.length - 1; i >= 0; i--) {
+        const b = FLOATING_CHAT_BUBBLES[i];
+        b.age += delta;
+
+        // Pop-in spring animation
+        if (b.popAge < b.popDuration) {
+            b.popAge += delta;
+            const t = Math.min(1, b.popAge / b.popDuration);
+            // Overshoot: grow to 1.22x then settle to 1.0
+            let s;
+            if (t < 0.65) {
+                s = (t / 0.65) * 1.22;
+            } else {
+                s = 1.22 - ((t - 0.65) / 0.35) * 0.22;
+            }
+            b.sprite.scale.set(2.9 * s, 0.62 * s, 1);
+        } else {
+            b.sprite.scale.set(2.9, 0.62, 1);
+        }
+
+        // Fade-out near end of life
+        const fadeStart = b.life - CHAT_BUBBLE_FADE;
+        if (b.age >= fadeStart) {
+            const alpha = Math.max(0, 1 - (b.age - fadeStart) / CHAT_BUBBLE_FADE);
+            b.drawBubble(alpha);
+            b.tex.needsUpdate = true;
+        }
+
+        if (b.age >= b.life) {
+            byModel.add(b.model);
+            _destroyChatBubble(b);
+            FLOATING_CHAT_BUBBLES.splice(i, 1);
+            anyRemoved = true;
+        }
+    }
+    if (anyRemoved) byModel.forEach(m => _repositionChatBubbles(m));
+}
+
+function _initChatUI() {
+    // Tab buttons
+    document.querySelectorAll('.chat-tab-btn').forEach(btn => {
+        btn.addEventListener('click', () => _chatSwitchTab(btn.dataset.chatTab));
+    });
+
+    // Send button
+    const sendBtn = document.getElementById('chat-send-btn');
+    if (sendBtn) sendBtn.addEventListener('click', _chatSendMessage);
+
+    // Enter to send, Escape to close
+    const inp = document.getElementById('chat-input');
+    if (inp) {
+        inp.addEventListener('keydown', (e) => {
+            e.stopPropagation(); // prevent game key handling
+            if (e.key === 'Enter') { e.preventDefault(); _chatSendMessage(); }
+            if (e.key === 'Escape') { e.preventDefault(); closeChatPanel(); }
+        });
+    }
+
+    // Emoji button
+    const emojiBtn = document.getElementById('chat-emoji-btn');
+    const emojiPicker = document.getElementById('chat-emoji-picker');
+    if (emojiBtn && emojiPicker) {
+        // Populate emojis
+        CHAT_EMOJIS.forEach(em => {
+            const span = document.createElement('span');
+            span.className = 'chat-emoji-opt';
+            span.textContent = em;
+            span.addEventListener('click', () => {
+                const i = document.getElementById('chat-input');
+                if (i) {
+                    const pos = i.selectionStart ?? i.value.length;
+                    i.value = i.value.slice(0, pos) + em + i.value.slice(pos);
+                    i.selectionStart = i.selectionEnd = pos + em.length;
+                    i.focus();
+                }
+                emojiPicker.classList.add('chat-hidden');
+                CHAT_STATE.emojiOpen = false;
+            });
+            emojiPicker.appendChild(span);
+        });
+
+        emojiBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            CHAT_STATE.emojiOpen = !CHAT_STATE.emojiOpen;
+            emojiPicker.classList.toggle('chat-hidden', !CHAT_STATE.emojiOpen);
+        });
+
+        document.addEventListener('click', (e) => {
+            if (CHAT_STATE.emojiOpen && !emojiPicker.contains(e.target) && e.target !== emojiBtn) {
+                CHAT_STATE.emojiOpen = false;
+                emojiPicker.classList.add('chat-hidden');
+            }
+        });
+    }
+
+    // System welcome message
+    CHAT_STATE.messages.public.push({ type: 'system', text: 'Welcome to War of the Mages! Be respectful.', sender: '' });
+}
+
+function openEmoteWheelStub() {
+    _showSpellCastStatus('Emote wheel coming soon', true, 900);
+}
+
+function _controllerButtonDown(gamepad, index, threshold = 0.5) {
+    const btn = gamepad?.buttons?.[index];
+    if (!btn) return false;
+    return !!btn.pressed || (typeof btn.value === 'number' && btn.value > threshold);
+}
+
+function _controllerButtonEdge(gamepad, index, threshold = 0.5) {
+    const now = _controllerButtonDown(gamepad, index, threshold);
+    const prev = !!CONTROLLER_STATE.prevButtons[index];
+    CONTROLLER_STATE.prevButtons[index] = now;
+    return now && !prev;
+}
+
+function updateGamepadInput(delta) {
+    const gamepad = _getActiveGamepad();
+
+    if (!gamepad) {
+        CONTROLLER_STATE.connected = false;
+        CONTROLLER_STATE.moveRight = 0;
+        CONTROLLER_STATE.moveForward = 0;
+        CONTROLLER_STATE.moveMagnitude = 0;
+        CONTROLLER_STATE.sprintHeld = false;
+        CONTROLLER_STATE.crouchHeld = false;
+        CONTROLLER_STATE.jumpPressed = false;
+        CONTROLLER_STATE.aimTriggerHeld = false;
+        CONTROLLER_STATE.emoteHold = 0;
+        CONTROLLER_STATE.emoteShown = false;
+        CONTROLLER_STATE.prevButtons = {};
+        CONTROLLER_STATE.prevMenuAxes = { up: false, down: false, left: false, right: false };
+
+        if (CONTROLLER_STATE.selectEdit) _finishControllerSelectEdit(false);
+        if (CONTROLLER_STATE.colorEdit) _finishControllerColorEdit(false);
+
+        if (CONTROLLER_STATE.ownsAim) {
+            _releaseAimMode({
+                attemptCast: false,
+                resetCursor: true,
+                clearSelection: true,
+                clearTrace: true,
+                hideSpellBar: true,
+                closeOverlay: true,
+            });
+        }
+        _ensureControllerMenuFocus();
+        return;
+    }
+
+    CONTROLLER_STATE.connected = true;
+
+    const hasControllerActivity =
+        gamepad.buttons?.some(btn => (btn?.pressed || (btn?.value ?? 0) > 0.2)) ||
+        Math.abs(gamepad.axes?.[0] ?? 0) > 0.18 ||
+        Math.abs(gamepad.axes?.[1] ?? 0) > 0.18 ||
+        Math.abs(gamepad.axes?.[2] ?? 0) > 0.18 ||
+        Math.abs(gamepad.axes?.[3] ?? 0) > 0.18;
+
+    if (hasControllerActivity) {
+        _markLastInputDevice('controller');
+    }
+
+    if (_settingsRebindState?.device === 'controller' && isSettingsOpen()) {
+        const token = _detectControllerRebindToken(gamepad);
+        if (token) {
+            _completeRebindInput(token);
+            return;
+        }
+    }
+
+    const menuRoot = _getControllerMenuRoot();
+    if (menuRoot) {
+        CONTROLLER_STATE.moveRight = 0;
+        CONTROLLER_STATE.moveForward = 0;
+        CONTROLLER_STATE.moveMagnitude = 0;
+        CONTROLLER_STATE.sprintHeld = false;
+        CONTROLLER_STATE.crouchHeld = false;
+        CONTROLLER_STATE.jumpPressed = false;
+        CONTROLLER_STATE.aimTriggerHeld = false;
+
+        if (CONTROLLER_STATE.ownsAim) {
+            _releaseAimMode({
+                attemptCast: false,
+                resetCursor: true,
+                clearSelection: true,
+                clearTrace: true,
+                hideSpellBar: true,
+                closeOverlay: true,
+            });
+        }
+
+        _ensureControllerMenuFocus();
+
+        const leftY = _controllerDeadzone(gamepad.axes?.[1] ?? 0, 0.35);
+        const leftX = _controllerDeadzone(gamepad.axes?.[0] ?? 0, 0.35);
+        const rightXMenu = _controllerDeadzone(gamepad.axes?.[2] ?? 0, 0.18);
+        const rightYMenu = _controllerDeadzone(gamepad.axes?.[3] ?? 0, 0.18);
+
+        const navUp = _controllerTokenDown(gamepad, 'DPAD_UP') || leftY < -0.72;
+        const navDown = _controllerTokenDown(gamepad, 'DPAD_DOWN') || leftY > 0.72;
+        const navLeft = _controllerTokenDown(gamepad, 'DPAD_LEFT') || leftX < -0.72;
+        const navRight = _controllerTokenDown(gamepad, 'DPAD_RIGHT') || leftX > 0.72;
+
+        if (menuRoot.id === 'color-popup' && COLOR_POPUP_STATE.customOpen) {
+            if (_controllerActionEdge(gamepad, 'spellPrev')) {
+                COLOR_POPUP_STATE.customH = Math.max(0, COLOR_POPUP_STATE.customH - 0.02);
+            }
+            if (_controllerActionEdge(gamepad, 'spellNext')) {
+                COLOR_POPUP_STATE.customH = Math.min(1, COLOR_POPUP_STATE.customH + 0.02);
+            }
+
+            if (Math.abs(rightXMenu) > 0.01) {
+                COLOR_POPUP_STATE.customS = Math.max(0, Math.min(1, COLOR_POPUP_STATE.customS + rightXMenu * delta * 0.95));
+            }
+            if (Math.abs(rightYMenu) > 0.01) {
+                COLOR_POPUP_STATE.customV = Math.max(0, Math.min(1, COLOR_POPUP_STATE.customV - rightYMenu * delta * 0.95));
+            }
+
+            const hex = _hsvToHex(COLOR_POPUP_STATE.customH, COLOR_POPUP_STATE.customS, COLOR_POPUP_STATE.customV);
+            _syncColorPopupCustomEditor(hex);
+            if (COLOR_POPUP_STATE.currentColId) {
+                _applyCharacterColor(COLOR_POPUP_STATE.currentColId, hex);
+            }
+        }
+
+        const confirmPressed = _controllerTokenDown(gamepad, 'A');
+        const cancelPressed = _controllerTokenDown(gamepad, 'B');
+
+        if (CONTROLLER_STATE.selectEdit) {
+            if (navUp && !CONTROLLER_STATE.prevMenuAxes.up) _adjustControllerSelectEdit(-1);
+            if (navDown && !CONTROLLER_STATE.prevMenuAxes.down) _adjustControllerSelectEdit(1);
+            if (navLeft && !CONTROLLER_STATE.prevMenuAxes.left) _adjustControllerSelectEdit(-1);
+            if (navRight && !CONTROLLER_STATE.prevMenuAxes.right) _adjustControllerSelectEdit(1);
+
+            if (confirmPressed && !CONTROLLER_STATE.prevButtons.__menuConfirm) _finishControllerSelectEdit(true);
+            if (cancelPressed && !CONTROLLER_STATE.prevButtons.__menuCancel) _finishControllerSelectEdit(false);
+
+            CONTROLLER_STATE.prevMenuAxes.up = navUp;
+            CONTROLLER_STATE.prevMenuAxes.down = navDown;
+            CONTROLLER_STATE.prevMenuAxes.left = navLeft;
+            CONTROLLER_STATE.prevMenuAxes.right = navRight;
+            CONTROLLER_STATE.prevButtons.__menuConfirm = confirmPressed;
+            CONTROLLER_STATE.prevButtons.__menuCancel = cancelPressed;
+            return;
+        }
+
+        if (CONTROLLER_STATE.colorEdit) {
+            if (_controllerActionEdge(gamepad, 'spellPrev')) _adjustControllerColorEdit(0, 0, delta, -0.025);
+            if (_controllerActionEdge(gamepad, 'spellNext')) _adjustControllerColorEdit(0, 0, delta, 0.025);
+
+            if (Math.abs(rightXMenu) > 0.01 || Math.abs(rightYMenu) > 0.01) {
+                _adjustControllerColorEdit(rightXMenu, rightYMenu, delta, 0);
+            }
+
+            if (confirmPressed && !CONTROLLER_STATE.prevButtons.__menuConfirm) _finishControllerColorEdit(true);
+            if (cancelPressed && !CONTROLLER_STATE.prevButtons.__menuCancel) _finishControllerColorEdit(false);
+
+            CONTROLLER_STATE.prevMenuAxes.up = navUp;
+            CONTROLLER_STATE.prevMenuAxes.down = navDown;
+            CONTROLLER_STATE.prevMenuAxes.left = navLeft;
+            CONTROLLER_STATE.prevMenuAxes.right = navRight;
+            CONTROLLER_STATE.prevButtons.__menuConfirm = confirmPressed;
+            CONTROLLER_STATE.prevButtons.__menuCancel = cancelPressed;
+            return;
+        }
+
+        if (navUp && !CONTROLLER_STATE.prevMenuAxes.up) _moveControllerMenuFocus(-1);
+        if (navDown && !CONTROLLER_STATE.prevMenuAxes.down) _moveControllerMenuFocus(1);
+        if (navLeft && !CONTROLLER_STATE.prevMenuAxes.left) {
+            if (!_nudgeFocusedControllerControl(-1)) _moveControllerMenuFocus(-1);
+        }
+        if (navRight && !CONTROLLER_STATE.prevMenuAxes.right) {
+            if (!_nudgeFocusedControllerControl(1)) _moveControllerMenuFocus(1);
+        }
+
+        CONTROLLER_STATE.prevMenuAxes.up = navUp;
+        CONTROLLER_STATE.prevMenuAxes.down = navDown;
+        CONTROLLER_STATE.prevMenuAxes.left = navLeft;
+        CONTROLLER_STATE.prevMenuAxes.right = navRight;
+
+        if (confirmPressed && !CONTROLLER_STATE.prevButtons.__menuConfirm) _activateControllerFocus();
+        if (cancelPressed && !CONTROLLER_STATE.prevButtons.__menuCancel) _closeCurrentControllerMenu();
+
+        CONTROLLER_STATE.prevButtons.__menuConfirm = confirmPressed;
+        CONTROLLER_STATE.prevButtons.__menuCancel = cancelPressed;
+
+        if (_controllerActionEdge(gamepad, 'spellPrev')) _cycleControllerTabs(-1);
+        if (_controllerActionEdge(gamepad, 'spellNext')) _cycleControllerTabs(1);
+
+        if (_controllerActionEdge(gamepad, 'pauseMenu')) {
+            if (isSettingsOpen()) closeSettingsOverlay();
+            else if (isSaveLoadOpen()) closeSaveLoadOverlay();
+            else if (isPauseMenuOpen()) closePauseMenu(false);
+            else if (GAME_STATE.mode === 'world') openPauseMenu();
+        }
+
+        return;
+    }
+
+    CONTROLLER_STATE.prevMenuAxes.up = false;
+    CONTROLLER_STATE.prevMenuAxes.down = false;
+    CONTROLLER_STATE.prevMenuAxes.left = false;
+    CONTROLLER_STATE.prevMenuAxes.right = false;
+
+    if (GAME_STATE.mode !== 'world') {
+        _ensureControllerMenuFocus();
+        return;
+    }
+
+    const leftX = _controllerDeadzone(gamepad.axes?.[0] ?? 0, CONTROLLER_CONFIG.moveDeadzone);
+    const leftY = _controllerDeadzone(gamepad.axes?.[1] ?? 0, CONTROLLER_CONFIG.moveDeadzone);
+    const rightX = _controllerDeadzone(gamepad.axes?.[2] ?? 0, CONTROLLER_CONFIG.lookDeadzone);
+    const rightY = _controllerDeadzone(gamepad.axes?.[3] ?? 0, CONTROLLER_CONFIG.lookDeadzone);
+
+    const dpadRight = (_controllerTokenDown(gamepad, 'DPAD_RIGHT') ? 1 : 0) - (_controllerTokenDown(gamepad, 'DPAD_LEFT') ? 1 : 0);
+    const dpadForward = (_controllerTokenDown(gamepad, 'DPAD_UP') ? 1 : 0) - (_controllerTokenDown(gamepad, 'DPAD_DOWN') ? 1 : 0);
+
+    CONTROLLER_STATE.moveRight = Math.abs(dpadRight) > 0 ? dpadRight : leftX;
+    CONTROLLER_STATE.moveForward = Math.abs(dpadForward) > 0 ? dpadForward : -leftY;
+    CONTROLLER_STATE.moveMagnitude = Math.min(1, Math.hypot(CONTROLLER_STATE.moveRight, CONTROLLER_STATE.moveForward));
+
+    CONTROLLER_STATE.sprintHeld = _controllerActionDown(gamepad, 'sprint');
+    CONTROLLER_STATE.crouchHeld = _controllerActionDown(gamepad, 'crouch');
+    CONTROLLER_STATE.jumpPressed = _controllerActionEdge(gamepad, 'jump');
+
+    if (_controllerActionEdge(gamepad, 'interact')) triggerPrimaryInteraction('controller');
+    if (_controllerActionEdge(gamepad, 'chat')) _showSpellCastStatus('Chat UI coming soon', true, 900);
+    if (_controllerActionEdge(gamepad, 'friends') && !isPauseMenuOpen() && !isSaveLoadOpen() && !isSettingsOpen()) toggleFriends();
+    if (_controllerActionEdge(gamepad, 'inventory') && !isPauseMenuOpen() && !isSaveLoadOpen() && !isSettingsOpen()) toggleInventory();
+
+    if (_controllerActionEdge(gamepad, 'pauseMenu')) {
+        if (isSettingsOpen()) closeSettingsOverlay();
+        else if (isSaveLoadOpen()) closeSaveLoadOverlay();
+        else if (isPauseMenuOpen()) closePauseMenu(false);
+        else openPauseMenu();
+    }
+
+    const aimHeldNow = _controllerActionDown(gamepad, 'aim');
+    if (aimHeldNow && !CONTROLLER_STATE.aimTriggerHeld) {
+        CONTROLLER_STATE.aimTriggerHeld = true;
+        _setControllerAimState(true);
+    } else if (!aimHeldNow && CONTROLLER_STATE.aimTriggerHeld) {
+        CONTROLLER_STATE.aimTriggerHeld = false;
+        _setControllerAimState(false);
+    }
+
+    if (!isGameMenuOpen() && !isPlayerDead()) {
+        const baseLook = CONTROLLER_CONFIG.lookSpeed * (SETTINGS_STATE.controls.controllerLookSensitivity ?? 1);
+        const aimLook = CONTROLLER_CONFIG.aimLookScale * (SETTINGS_STATE.controls.controllerAimSensitivity ?? 1);
+        const lookScale = isAiming ? aimLook : 1.0;
+
+        yaw -= rightX * baseLook * lookScale * delta;
+        pitch += rightY * baseLook * lookScale * delta;
+        pitch = Math.max(-Math.PI / 2 + 0.1, Math.min(Math.PI / 2 - 0.1, pitch));
+
+        if (isAiming) {
+            const AIM_YAW_LIMIT = 85 * Math.PI / 180;
+            yaw = Math.max(_aimStartYaw - AIM_YAW_LIMIT, Math.min(_aimStartYaw + AIM_YAW_LIMIT, yaw));
+
+            const rawCursor = {
+                x: _clamp01(_aimCursor.x + rightX * CONTROLLER_CONFIG.aimCursorSpeed * (SETTINGS_STATE.controls.controllerAimSensitivity ?? 1) * delta),
+                y: _clamp01(_aimCursor.y + rightY * CONTROLLER_CONFIG.aimCursorSpeed * (SETTINGS_STATE.controls.controllerAimSensitivity ?? 1) * delta),
+            };
+            const assistedCursor = _applyTraceAssist(rawCursor);
+            _aimCursor.x = assistedCursor.x;
+            _aimCursor.y = assistedCursor.y;
+            _updateHudCrosshair();
+        }
+    }
+
+    if (isAiming) {
+        if (_controllerActionEdge(gamepad, 'spellPrev')) {
+            if (_activeSpellSlot < 0) _selectSpellSlot(0, { allowToggle: false });
+            else _cycleSpellSlot(-1);
+        }
+        if (_controllerActionEdge(gamepad, 'spellNext')) {
+            if (_activeSpellSlot < 0) _selectSpellSlot(0, { allowToggle: false });
+            else _cycleSpellSlot(1);
+        }
+    } else {
+        _controllerActionEdge(gamepad, 'spellPrev');
+        _controllerActionEdge(gamepad, 'spellNext');
+    }
+}
 
 // ══════════════════════════════════════════════════════════════════
 // ── SPELL SYSTEM ──────────────────────────────────────────────────
@@ -6360,6 +8877,8 @@ function equipStarterSpells() {
         death:  'death_grave_sip',
         time:   'time_tick_snare',
         plasma: 'plasma_neon_lash',
+        light:  'light_mending_halo',
+        dark:   'dark_shadow_drain',
     };
 
     const alignmentStarterIds = {
@@ -6372,8 +8891,25 @@ function equipStarterSpells() {
         slot.spell = null;
     });
 
-    SPELL_SLOTS[0].spell = _getSpellById(magicStarterIds[GAME_STATE.char.magic]);
-    SPELL_SLOTS[1].spell = _getSpellById(alignmentStarterIds[GAME_STATE.char.alignment]);
+    const magicStarter = _getSpellById(magicStarterIds[GAME_STATE.char.magic]);
+    const alignmentStarter = _getSpellById(alignmentStarterIds[GAME_STATE.char.alignment]);
+
+    SPELL_SLOTS[0].spell = magicStarter || _getSpellById('storm_spark_jolt');
+    SPELL_SLOTS[1].spell = alignmentStarter || _getSpellById('light_mending_halo');
+
+    if (SPELL_SLOTS[1].spell && SPELL_SLOTS[0].spell && SPELL_SLOTS[1].spell.id === SPELL_SLOTS[0].spell.id) {
+        const sameSchoolBackup = SPELL_REGISTRY.find(spell =>
+            spell &&
+            spell.id !== SPELL_SLOTS[0].spell.id &&
+            (spell.school === GAME_STATE.char.magic || spell.school === GAME_STATE.char.alignment)
+        );
+        if (sameSchoolBackup) {
+            SPELL_SLOTS[1].spell = hydrateSpellDefinition(sameSchoolBackup);
+        }
+    }
+
+    _buildSpellBar();
+    _refreshSpellBarHighlight();
 }
 
 const TRACE_CAST_RULES = {
@@ -6511,6 +9047,12 @@ function _fizzleActiveTrace(message = 'Spell fizzled') {
     _closeSpellTraceUI();
     _clearSpellTrace();
     _resetTraceState(null);
+
+    _playOneShotSoundAt(
+        _getSpellCastOrigin(),
+        SOUND_POOLS.spell.fizzle,
+        { volume: 0.65, refDistance: 3, maxDistance: 20 }
+    );
     return null;
 }
 
@@ -7125,13 +9667,13 @@ function _getSpellSoundProfile(manifest) {
             profile.cast = _combineSoundPools(SOUND_POOLS.spell.holyCast, SOUND_POOLS.spell.uplifting);
             profile.travel = _combineSoundPools(SOUND_POOLS.spell.holyBeamFlight, SOUND_POOLS.spell.orbLoop);
             profile.impact = _combineSoundPools(SOUND_POOLS.spell.holyImpact, SOUND_POOLS.spell.uplifting);
-            profile.loop = _combineSoundPools(SOUND_POOLS.ambience.lightMana, SOUND_POOLS.ambience.holyShrine);
+            profile.loop = _combineSoundPools(SOUND_POOLS.spell.holyBeamFlight, SOUND_POOLS.spell.orbLoop);
             break;
         case 'dark':
             profile.cast = _combineSoundPools(SOUND_POOLS.spell.whisperCast, SOUND_POOLS.spell.deepChannel);
             profile.travel = SOUND_POOLS.spell.shadowFlight;
             profile.impact = _combineSoundPools(SOUND_POOLS.spell.darkImpact, SOUND_POOLS.spell.implosion, SOUND_POOLS.spell.voidExplosion);
-            profile.loop = _combineSoundPools(SOUND_POOLS.ambience.darkMana, SOUND_POOLS.ambience.darkPortal, SOUND_POOLS.ambience.ominous);
+            profile.loop = _combineSoundPools(SOUND_POOLS.spell.shadowFlight, SOUND_POOLS.spell.orbLoop);
             break;
     }
 
@@ -7529,7 +10071,7 @@ function _spawnProjectileEffect(manifest) {
     group.position.copy(start);
     worldScene.add(group);
 
-    _attachPositionalSoundToObject(group, soundProfile.travel, {
+    const _projTravelSnd = _attachPositionalSoundToObject(group, soundProfile.travel, {
         volume: 0.34,
         refDistance: 3.6,
         maxDistance: Math.max(20, manifest.range * 0.9),
@@ -7619,6 +10161,7 @@ function _spawnProjectileEffect(manifest) {
             }
         },
         dispose() {
+            if (_projTravelSnd?.audio) { _projTravelSnd.audio.pause(); _projTravelSnd.audio.src = ''; }
             _disposeSpellObject(group);
         }
     });
@@ -7639,7 +10182,7 @@ function _spawnBeamEffect(manifest) {
     group.add(inner);
     worldScene.add(group);
 
-    _attachPositionalSoundToObject(group, soundProfile.travel, {
+    const _beamTravelSnd = _attachPositionalSoundToObject(group, soundProfile.travel, {
         volume: 0.30,
         refDistance: 4,
         maxDistance: Math.max(24, manifest.range),
@@ -7710,6 +10253,7 @@ function _spawnBeamEffect(manifest) {
             }
         },
         dispose() {
+            if (_beamTravelSnd?.audio) { _beamTravelSnd.audio.pause(); _beamTravelSnd.audio.src = ''; }
             _disposeSpellObject(group);
         }
     });
@@ -7842,7 +10386,7 @@ function _spawnGroundZoneEffect(manifest, overrideCenter = null) {
     group.add(innerRing);
     worldScene.add(group);
 
-    _attachPositionalSoundToObject(group, soundProfile.loop || SOUND_POOLS.spell.orbLoop, {
+    const _zoneSnd = _attachPositionalSoundToObject(group, soundProfile.loop || SOUND_POOLS.spell.orbLoop, {
         volume: 0.22,
         refDistance: Math.max(4, radius * 1.2),
         maxDistance: Math.max(24, radius * 8),
@@ -7899,6 +10443,7 @@ function _spawnGroundZoneEffect(manifest, overrideCenter = null) {
             if (t >= 1) this.done = true;
         },
         dispose() {
+            if (_zoneSnd?.audio) { _zoneSnd.audio.pause(); _zoneSnd.audio.src = ''; }
             _disposeSpellObject(group);
         }
     });
@@ -7942,7 +10487,7 @@ function _spawnOrbitingEffect(manifest) {
 
     worldScene.add(group);
 
-    _attachPositionalSoundToObject(group, soundProfile.loop || SOUND_POOLS.spell.orbLoop, {
+    const _orbitSnd = _attachPositionalSoundToObject(group, soundProfile.loop || SOUND_POOLS.spell.orbLoop, {
         volume: 0.26,
         refDistance: 4,
         maxDistance: 28,
@@ -8013,6 +10558,7 @@ function _spawnOrbitingEffect(manifest) {
             }
         },
         dispose() {
+            if (_orbitSnd?.audio) { _orbitSnd.audio.pause(); _orbitSnd.audio.src = ''; }
             _disposeSpellObject(group);
         }
     });
@@ -8534,11 +11080,13 @@ function _refreshSpellBarHighlight() {
 }
 
 // Select / deselect a slot (toggle overlay)
-function _selectSpellSlot(index) {
+function _selectSpellSlot(index, options = {}) {
+    const { allowToggle = true } = options;
+
     if (SPELL_SLOTS[index] && SPELL_SLOTS[index].locked) return;
     _clearSpellTrace();
 
-    if (_activeSpellSlot === index) {
+    if (allowToggle && _activeSpellSlot === index) {
         _activeSpellSlot = -1;
         _setSpellOverlay(false);
     } else {
@@ -8824,38 +11372,41 @@ document.addEventListener('pointerlockchange', () => {
     isLocked = document.pointerLockElement === canvas;
 
     if (!isLocked) {
-        isAiming = false;
-        _aimCursor.x = 0.5;
-        _aimCursor.y = 0.5;
-        _updateHudCrosshair();
-        _clearSpellTrace();
-
-        if (_spellOverlayOpen) _setSpellOverlay(false);
-        _activeSpellSlot = -1;
-        _refreshSpellBarHighlight();
-
-        const bar = document.getElementById('spell-bar');
-        if (bar) bar.classList.remove('sb-visible');
+        _releaseAimMode({
+            attemptCast: false,
+            resetCursor: true,
+            clearSelection: true,
+            clearTrace: true,
+            hideSpellBar: true,
+            closeOverlay: true,
+        });
     }
 });
 
 canvas.addEventListener('click', () => {
-    _resumeAudioContext();
-    if(GAME_STATE.mode === 'world' && !isLocked && !isGameMenuOpen()) {
+    if (GAME_STATE.mode === 'world') {
+        // Restart ambience sounds that were blocked before user gesture
+        _startWorldAmbience();
+    }
+    if (GAME_STATE.mode === 'world' && !isLocked && !isGameMenuOpen()) {
         canvas.requestPointerLock();
     }
 });
 
 document.addEventListener('mousemove', (e) => {
     if (isLocked && GAME_STATE.mode === 'world') {
-        yaw -= e.movementX * MOUSE_SENSITIVITY;
+        const lookSens = MOUSE_SENSITIVITY * (isAiming
+            ? (SETTINGS_STATE.controls.mouseAimSensitivity ?? 1)
+            : (SETTINGS_STATE.controls.mouseLookSensitivity ?? 1));
+
+        yaw -= e.movementX * lookSens;
         if (isAiming) {
             const AIM_YAW_LIMIT = 85 * Math.PI / 180;
             yaw = Math.max(_aimStartYaw - AIM_YAW_LIMIT, Math.min(_aimStartYaw + AIM_YAW_LIMIT, yaw));
 
             const rawCursor = {
-                x: _clamp01(_aimCursor.x + e.movementX * _AIM_CURSOR_SPEED),
-                y: _clamp01(_aimCursor.y + e.movementY * _AIM_CURSOR_SPEED),
+                x: _clamp01(_aimCursor.x + e.movementX * _AIM_CURSOR_SPEED * (SETTINGS_STATE.controls.mouseAimSensitivity ?? 1)),
+                y: _clamp01(_aimCursor.y + e.movementY * _AIM_CURSOR_SPEED * (SETTINGS_STATE.controls.mouseAimSensitivity ?? 1)),
             };
             const assistedCursor = _applyTraceAssist(rawCursor);
 
@@ -8863,78 +11414,67 @@ document.addEventListener('mousemove', (e) => {
             _aimCursor.y = assistedCursor.y;
             _updateHudCrosshair();
         }
-        pitch += e.movementY * MOUSE_SENSITIVITY;
-        pitch = Math.max(-Math.PI/2 + 0.1, Math.min(Math.PI/2 - 0.1, pitch));
+        pitch += e.movementY * lookSens;
+        pitch = Math.max(-Math.PI / 2 + 0.1, Math.min(Math.PI / 2 - 0.1, pitch));
     }
     if (GAME_STATE.mode === 'customization') {
-        GAME_STATE._mouseNX = (e.clientX / window.innerWidth  - 0.5) * 2;
+        GAME_STATE._mouseNX = (e.clientX / window.innerWidth - 0.5) * 2;
         GAME_STATE._mouseNY = (e.clientY / window.innerHeight - 0.5) * 2;
         if (_custDragging) {
-            _custRotY  += (e.clientX - _custDragX) * 0.008;
-            _custDragX  = e.clientX;
+            _custRotY += (e.clientX - _custDragX) * 0.008;
+            _custDragX = e.clientX;
         }
     }
 });
 
 // Drag-to-rotate: mouse down/up/leave
 document.addEventListener('mousedown', (e) => {
+    _markLastInputDevice('keyboardMouse');
+
+    if (_settingsRebindState?.device === 'keyboardMouse' && isSettingsOpen()) {
+        e.preventDefault();
+        e.stopPropagation();
+        _completeRebindInput(_mouseBindingCode(e.button));
+        return;
+    }
+
     if (GAME_STATE.mode === 'customization' && e.button === 0) {
         _custDragging = true;
-        _custDragX    = e.clientX;
+        _custDragX = e.clientX;
+    }
+
+    if (_isBoundMouseAction(e.button, 'aim') && GAME_STATE.mode === 'world' && isLocked) {
+        if (_enterAimMode('mouse')) {
+            _activeAimMouseButton = e.button;
+            e.preventDefault();
+        }
     }
 });
+
 document.addEventListener('mouseup', (e) => {
     if (e.button === 0) _custDragging = false;
-    if (e.button === 2 && GAME_STATE.mode === 'world') {
-        const castSpell = _activeSpellSlot >= 0 ? _attemptSpellTraceCast() : null;
-        if (castSpell) return; // successful trace already moved us into cast state
-
-        isAiming = false;
-        _aimCursor.x = 0.5;
-        _aimCursor.y = 0.5;
-        _updateHudCrosshair();
-
-        const _sb = document.getElementById('spell-bar');
-        if (_sb) _sb.classList.remove('sb-visible');
-        if (_spellOverlayOpen) _setSpellOverlay(false);
-        _activeSpellSlot = -1;
-        _refreshSpellBarHighlight();
-        _clearSpellTrace();
+    if (GAME_STATE.mode === 'world' && _activeAimMouseButton !== null && e.button === _activeAimMouseButton) {
+        _activeAimMouseButton = null;
+        _releaseAimMode();
     }
 });
+
 document.addEventListener('mouseleave', () => {
     _custDragging = false;
+    _activeAimMouseButton = null;
+
     if (GAME_STATE.mode === 'world') {
-        isAiming = false;
-        _aimCursor.x = 0.5;
-        _aimCursor.y = 0.5;
-        _updateHudCrosshair();
-
-        const _sb = document.getElementById('spell-bar');
-        if (_sb) _sb.classList.remove('sb-visible');
-        _clearSpellTrace();
+        _releaseAimMode({
+            attemptCast: false,
+            resetCursor: true,
+            clearSelection: true,
+            clearTrace: true,
+            hideSpellBar: true,
+            closeOverlay: true,
+        });
     }
 });
 
-// RMB — enter aim mode; suppress context menu
-document.addEventListener('mousedown', (e) => {
-    if (e.button === 2 && GAME_STATE.mode === 'world' && isLocked && !isCastingSpell() && !isGameMenuOpen() && !isPlayerDead()) {
-        _resumeAudioContext();
-        isAiming = true;
-        _aimCursor.x = 0.5;
-        _aimCursor.y = 0.5;
-        _updateHudCrosshair();
-        _clearSpellTrace();
-
-        _aimBodyYaw = characterModel ? characterModel.rotation.y : 0;
-        _aimStartYaw = yaw;
-        e.preventDefault();
-
-        if (!_spellBarBuilt) _buildSpellBar();
-        const _sb = document.getElementById('spell-bar');
-        if (_sb) _sb.classList.add('sb-visible');
-    }
-});
 document.addEventListener('contextmenu', (e) => {
     if (GAME_STATE.mode === 'world') e.preventDefault();
 });
@@ -8967,11 +11507,22 @@ function setupUI() {
         });
     });
 
-    // Selects
-    document.getElementById('magic-type').addEventListener('change', (e) => {
-        GAME_STATE.char.magic = e.target.value;
-        GAME_STATE.char.colors.wandCore = MAGIC_COLORS[e.target.value];
-        rebuildCharacter();
+    // Shared dropdowns
+    _updateMagicTypeButtonLabel();
+    document.getElementById('magic-type').addEventListener('click', (e) => {
+        _markLastInputDevice('keyboardMouse');
+        _openSharedDropdown({
+            anchorEl: e.currentTarget,
+            title: 'Primary School of Magic',
+            options: _getMagicTypeOptions(),
+            value: GAME_STATE.char.magic,
+            onSelect: (opt) => {
+                GAME_STATE.char.magic = opt.value;
+                GAME_STATE.char.colors.wandCore = MAGIC_COLORS[opt.value];
+                _updateMagicTypeButtonLabel();
+                rebuildCharacter();
+            }
+        });
     });
 
     // Inputs (Name + Nametag color)
@@ -9112,79 +11663,189 @@ function setupUI() {
         return '#' + rgb.slice(0,3).map(n => n.toString(16).padStart(2,'0')).join('');
     }
 
-    const popup   = document.getElementById('color-popup');
-    let activeBtn = null;
+    const popup = document.getElementById('color-popup');
+    COLOR_POPUP_STATE.popup = popup;
+    COLOR_POPUP_STATE.activeBtn = null;
+    COLOR_POPUP_STATE.render = null;
+    COLOR_POPUP_STATE.customInput = null;
+    COLOR_POPUP_STATE.previewEl = null;
+    COLOR_POPUP_STATE.hueSlider = null;
+    COLOR_POPUP_STATE.satSlider = null;
+    COLOR_POPUP_STATE.valSlider = null;
 
     function closePopup() {
         popup.classList.remove('open');
-        activeBtn = null;
+        popup.innerHTML = '';
+        COLOR_POPUP_STATE.activeBtn = null;
+        COLOR_POPUP_STATE.customInput = null;
+        COLOR_POPUP_STATE.previewEl = null;
+        COLOR_POPUP_STATE.hueSlider = null;
+        COLOR_POPUP_STATE.satSlider = null;
+        COLOR_POPUP_STATE.valSlider = null;
+    }
+    COLOR_POPUP_STATE.close = closePopup;
+
+    function renderColorPopup(colId, sourceBtn) {
+        const swatchData = COLOR_PALETTES[colId] || [];
+        popup.innerHTML = '';
+        COLOR_POPUP_STATE.currentColId = colId;
+
+        const grid = document.createElement('div');
+        grid.className = 'swatch-grid';
+
+        swatchData.forEach(([hex, name]) => {
+            const sw = document.createElement('button');
+            sw.type = 'button';
+            sw.className = 'pop-swatch';
+            sw.style.background = hex;
+            sw.title = name;
+            sw.setAttribute('aria-label', name);
+            sw.addEventListener('click', (ev) => {
+                ev.stopPropagation();
+                _applyCharacterColor(colId, hex);
+                closePopup();
+            });
+            grid.appendChild(sw);
+        });
+        popup.appendChild(grid);
+
+        const customRow = document.createElement('div');
+        customRow.className = 'custom-row';
+
+        const customBtn = document.createElement('button');
+        customBtn.type = 'button';
+        customBtn.className = 'inventory-use-btn';
+        customBtn.id = 'color-popup-custom-btn';
+        customBtn.style.width = '100%';
+        customBtn.textContent = COLOR_POPUP_STATE.customOpen ? 'Hide Custom Mixer' : 'Custom…';
+        customBtn.addEventListener('click', (ev) => {
+            ev.stopPropagation();
+            COLOR_POPUP_STATE.customOpen = !COLOR_POPUP_STATE.customOpen;
+
+            const hsv = _hexToHsv(GAME_STATE.char.colors[colId] || sourceBtn.style.background || '#ffffff');
+            COLOR_POPUP_STATE.customH = hsv.h;
+            COLOR_POPUP_STATE.customS = hsv.s;
+            COLOR_POPUP_STATE.customV = hsv.v;
+
+            renderColorPopup(colId, sourceBtn);
+        });
+
+        customRow.appendChild(customBtn);
+        popup.appendChild(customRow);
+
+        if (COLOR_POPUP_STATE.customOpen) {
+            const editor = document.createElement('div');
+            editor.style.display = 'flex';
+            editor.style.flexDirection = 'column';
+            editor.style.gap = '8px';
+            editor.style.paddingTop = '6px';
+            editor.style.borderTop = '1px solid #3a1a4a';
+
+            const preview = document.createElement('div');
+            preview.style.height = '48px';
+            preview.style.borderRadius = '12px';
+            preview.style.border = '2px solid rgba(255,255,255,0.14)';
+
+            const makeSlider = (id, label, min, max, step, value, onInput) => {
+                const wrap = document.createElement('div');
+                wrap.style.display = 'flex';
+                wrap.style.flexDirection = 'column';
+                wrap.style.gap = '4px';
+
+                const text = document.createElement('label');
+                text.textContent = label;
+                text.style.fontSize = '12px';
+                text.style.color = '#cbd5e1';
+
+                const slider = document.createElement('input');
+                slider.type = 'range';
+                slider.id = id;
+                slider.min = min;
+                slider.max = max;
+                slider.step = step;
+                slider.value = value;
+                slider.className = 'range-slider';
+                slider.addEventListener('input', onInput);
+
+                wrap.appendChild(text);
+                wrap.appendChild(slider);
+                return { wrap, slider };
+            };
+
+            COLOR_POPUP_STATE.previewEl = preview;
+
+            const hueControl = makeSlider('color-custom-h', 'Hue', '0', '1', '0.01', String(COLOR_POPUP_STATE.customH), (ev) => {
+                COLOR_POPUP_STATE.customH = Number(ev.target.value);
+                const hex = _hsvToHex(COLOR_POPUP_STATE.customH, COLOR_POPUP_STATE.customS, COLOR_POPUP_STATE.customV);
+                _syncColorPopupCustomEditor(hex);
+                _applyCharacterColor(colId, hex);
+            });
+            const satControl = makeSlider('color-custom-s', 'Saturation', '0', '1', '0.01', String(COLOR_POPUP_STATE.customS), (ev) => {
+                COLOR_POPUP_STATE.customS = Number(ev.target.value);
+                const hex = _hsvToHex(COLOR_POPUP_STATE.customH, COLOR_POPUP_STATE.customS, COLOR_POPUP_STATE.customV);
+                _syncColorPopupCustomEditor(hex);
+                _applyCharacterColor(colId, hex);
+            });
+            const valControl = makeSlider('color-custom-v', 'Brightness', '0', '1', '0.01', String(COLOR_POPUP_STATE.customV), (ev) => {
+                COLOR_POPUP_STATE.customV = Number(ev.target.value);
+                const hex = _hsvToHex(COLOR_POPUP_STATE.customH, COLOR_POPUP_STATE.customS, COLOR_POPUP_STATE.customV);
+                _syncColorPopupCustomEditor(hex);
+                _applyCharacterColor(colId, hex);
+            });
+
+            COLOR_POPUP_STATE.hueSlider = hueControl.slider;
+            COLOR_POPUP_STATE.satSlider = satControl.slider;
+            COLOR_POPUP_STATE.valSlider = valControl.slider;
+
+            editor.appendChild(preview);
+            editor.appendChild(hueControl.wrap);
+            editor.appendChild(satControl.wrap);
+            editor.appendChild(valControl.wrap);
+            popup.appendChild(editor);
+
+            _syncColorPopupCustomEditor(_hsvToHex(COLOR_POPUP_STATE.customH, COLOR_POPUP_STATE.customS, COLOR_POPUP_STATE.customV));
+        }
+
+        popup.classList.add('open');
+        const rect = sourceBtn.getBoundingClientRect();
+        popup.style.top = (rect.bottom + 6) + 'px';
+        popup.style.left = Math.max(4, rect.right - 220) + 'px';
+
+        setTimeout(() => {
+            const targets = _getControllerMenuTargets(document.getElementById('customization-screen'));
+            const popupIndex = targets.findIndex(target => popup.contains(target));
+            if (popupIndex >= 0 && _lastInputDevice === 'controller') {
+                CONTROLLER_STATE.menuFocusIndex = popupIndex;
+                _setControllerFocus(targets[popupIndex]);
+            }
+        }, 0);
     }
 
-    function applyColor(colId, hex) {
-        GAME_STATE.char.colors[colId] = hex;
-        // Update the matching button background
-        const btn = document.querySelector(`.color-btn[data-col="${colId}"]`);
-        if (btn) btn.style.background = hex;
-        rebuildCharacter();
-    }
+    COLOR_POPUP_STATE.render = renderColorPopup;
 
     document.querySelectorAll('.color-btn').forEach(btn => {
         btn.addEventListener('click', (e) => {
             e.stopPropagation();
             const colId = btn.dataset.col;
 
-            // Toggle off if same button clicked again
-            if (activeBtn === btn) { closePopup(); return; }
-            activeBtn = btn;
+            if (COLOR_POPUP_STATE.activeBtn === btn) {
+                closePopup();
+                return;
+            }
 
-            // Build popup content
-            const swatchData = COLOR_PALETTES[colId] || [];
-            popup.innerHTML = '';
-
-            // Swatch grid
-            const grid = document.createElement('div');
-            grid.className = 'swatch-grid';
-            swatchData.forEach(([hex, name]) => {
-                const sw = document.createElement('div');
-                sw.className = 'pop-swatch';
-                sw.style.background = hex;
-                sw.title = name;
-                sw.addEventListener('click', (ev) => {
-                    ev.stopPropagation();
-                    applyColor(colId, hex);
-                    closePopup();
-                });
-                grid.appendChild(sw);
-            });
-            popup.appendChild(grid);
-
-            // Custom colour row
-            const customRow = document.createElement('div');
-            customRow.className = 'custom-row';
-            const lbl = document.createElement('label');
-            lbl.textContent = 'Custom…';
-            const inp = document.createElement('input');
-            inp.type  = 'color';
-            inp.value = cssToHex(btn.style.background);
-            inp.style.cssText = 'width:30px;height:30px;border-radius:50%;border:2px solid #7a1a00;cursor:pointer;padding:0;background:none;';
-            inp.addEventListener('input', (ev) => {
-                applyColor(colId, ev.target.value);
-            });
-            customRow.appendChild(lbl);
-            customRow.appendChild(inp);
-            popup.appendChild(customRow);
-
-            // Position popup near the button
-            popup.classList.add('open');
-            const rect = btn.getBoundingClientRect();
-            popup.style.top  = (rect.bottom + 6) + 'px';
-            popup.style.left = Math.max(4, rect.right - 220) + 'px';
+            COLOR_POPUP_STATE.activeBtn = btn;
+            COLOR_POPUP_STATE.customOpen = false;
+            renderColorPopup(colId, btn);
         });
     });
 
-    // Close popup on outside click
     document.addEventListener('click', (e) => {
-        if (activeBtn && !popup.contains(e.target)) closePopup();
+        if (COLOR_POPUP_STATE.activeBtn && !popup.contains(e.target) && !COLOR_POPUP_STATE.activeBtn.contains(e.target)) {
+            closePopup();
+        }
+        if (SHARED_DROPDOWN_STATE.popup?.style.display === 'block' && !SHARED_DROPDOWN_STATE.popup.contains(e.target) && !SHARED_DROPDOWN_STATE.anchorEl?.contains?.(e.target)) {
+            _closeSharedDropdown();
+        }
     });
 
     // Enter Realm Button
@@ -9212,6 +11873,11 @@ function setupUI() {
     document.querySelectorAll('[data-friends-tab]').forEach(btn => {
         btn.addEventListener('click', () => setFriendsTab(btn.dataset.friendsTab));
     });
+
+    _applyGraphicsSettings();
+    _applyAudioSettings();
+    renderSettingsUI();
+    syncGameMenuButtons();
 }
 
 // ── ATTRIBUTE SYSTEM ──
@@ -9227,29 +11893,37 @@ const ATTR_DEFS = [
 const ATTR_MAX = 20;
 
 function computeStats() {
-    const a = GAME_STATE.char.attributes;
+    const a = GAME_STATE.attributes || GAME_STATE.char.attributes || {
+        hp: 0,
+        stamina: 0,
+        energy: 0,
+        jumpHeight: 0,
+        moveSpeed: 0,
+        durability: 0,
+        magicStr: 0,
+    };
     const s = GAME_STATE.char;
     const p = GAME_STATE.player;
 
     // HP: each point raises max HP by 15 and regen slightly
-    p.maxHP        = 100 + a.hp      * 15;
-    p.hpRegen      =   1 + a.hp      * 0.35;
+    p.maxHP        = 100 + a.hp * 15;
+    p.hpRegen      =   1 + a.hp * 0.35;
 
     // Stamina: each point raises max stamina and regen slightly
     p.maxStamina   = 100 + a.stamina * 12;
     p.staminaRegen =   5 + a.stamina * 0.65;
 
     // Magic Energy: each point raises max energy and regen slightly
-    p.maxEnergy    = 100 + a.energy  * 10;
-    p.energyRegen  =   2 + a.energy  * 0.50;
+    p.maxEnergy    = 100 + a.energy * 10;
+    p.energyRegen  =   2 + a.energy * 0.50;
 
-    p.jumpForce    =  12 + a.jumpHeight * 0.7;
-    p.speed        =   8 + a.moveSpeed  * 0.45;
-    p.damageResist =       a.durability * 2.5;   // % reduction
-    p.magicPow     =  10 + a.magicStr   * 8;
+    p.jumpForce    = 12 + a.jumpHeight * 0.7;
+    p.speed        =  8 + a.moveSpeed * 0.45;
+    p.damageResist =      a.durability * 2.5;
+    p.magicPow     = 10 + a.magicStr * 8;
 
     // Combat strength derived from Muscle Density slider (range 0.7–1.4 → 1–10)
-    p.combatPow    = Math.max(1, Math.min(10, Math.round(((s.muscle - 0.7) / 0.7) * 9) + 1));
+    p.combatPow = Math.max(1, Math.min(10, Math.round(((s.muscle - 0.7) / 0.7) * 9) + 1));
 
     // Initialise current pools on first call
     if (p.hp      === undefined) p.hp      = p.maxHP;
@@ -9266,6 +11940,8 @@ const _deepClonePlain = (data) => JSON.parse(JSON.stringify(data));
 const DEFAULT_PROFILE_TEMPLATE = _deepClonePlain(GAME_STATE.char);
 const DEFAULT_INVENTORY_TEMPLATE = _deepClonePlain(GAME_STATE.inventory);
 const DEFAULT_FRIENDS_TEMPLATE = _deepClonePlain(GAME_STATE.friends);
+const DEFAULT_ATTRIBUTES_TEMPLATE = _deepClonePlain(GAME_STATE.attributes);
+const DEFAULT_ATTR_POINTS_TEMPLATE = Number(GAME_STATE.attrPoints ?? 12);
 const SAVE_NAMESPACE = 'wotm_save_v2';
 const SAVE_SLOT_COUNT = 8;
 
@@ -9273,6 +11949,512 @@ let _saveLoadMode = 'load';
 let _saveLoadSource = 'menu';
 let _pendingLoadedSave = null;
 let _autoSaveTimer = 0;
+
+let _saveThumbRenderer = null;
+let _saveThumbScene = null;
+let _saveThumbCamera = null;
+
+function isSettingsOpen() {
+    const overlay = document.getElementById('settings-overlay');
+    return !!overlay && overlay.style.display === 'flex';
+}
+
+function _cancelRebindInput() {
+    if (_settingsRebindState?.timeoutId) clearTimeout(_settingsRebindState.timeoutId);
+    _settingsRebindState = null;
+    renderSettingsUI();
+}
+
+function _beginRebindInput(device, action) {
+    if (_settingsRebindState && _settingsRebindState.device === device && _settingsRebindState.action === action) {
+        _cancelRebindInput();
+        return;
+    }
+
+    _settingsRebindState = {
+        device,
+        action,
+        startedAt: Date.now(),
+        timeoutId: setTimeout(() => {
+            _cancelRebindInput();
+        }, 10000),
+    };
+
+    renderSettingsUI();
+}
+
+function _completeRebindInput(binding) {
+    if (!_settingsRebindState || !binding) return;
+
+    SETTINGS_STATE.controls[_settingsRebindState.device][_settingsRebindState.action] = binding;
+    _persistSettings();
+
+    if (_settingsRebindState.timeoutId) clearTimeout(_settingsRebindState.timeoutId);
+    _settingsRebindState = null;
+    renderSettingsUI();
+}
+
+function _renderSettingsSectionCard(title, bodyHtml) {
+    return `
+        <div style="background:rgba(8,6,14,0.74);border:1px solid rgba(212,175,55,0.22);border-radius:18px;padding:16px;box-shadow:inset 0 1px 0 rgba(255,255,255,0.04);">
+            <div style="font-family:'Rajdhani',sans-serif;font-weight:800;letter-spacing:1.4px;color:#facc15;margin-bottom:12px;text-transform:uppercase;">${title}</div>
+            ${bodyHtml}
+        </div>
+    `;
+}
+
+function _renderSettingsRow(label, controlHtml, hint = '') {
+    return `
+        <div style="display:grid;grid-template-columns:minmax(180px,240px) 1fr;gap:16px;align-items:center;padding:10px 0;border-bottom:1px solid rgba(255,255,255,0.06);">
+            <div>
+                <div style="font-weight:800;color:#f8fafc;">${label}</div>
+                ${hint ? `<div style="font-size:12px;color:#cbd5e1;opacity:0.8;margin-top:4px;">${hint}</div>` : ''}
+            </div>
+            <div>${controlHtml}</div>
+        </div>
+    `;
+}
+
+function _renderGraphicsSettings() {
+    const g = SETTINGS_STATE.graphics;
+    const root = document.getElementById('settings-panel-graphics');
+    if (!root) return;
+
+    root.innerHTML = _renderSettingsSectionCard('Display & Quality', `
+        ${_renderSettingsRow('Graphics Quality', `
+            <button id="settings-quality" class="custom-input w-full p-3 text-base" type="button" style="display:flex;align-items:center;justify-content:space-between;text-align:left;">
+                <span>${g.quality === 'low' ? 'Low' : g.quality === 'medium' ? 'Medium' : 'High'}</span>
+                <span style="opacity:0.72;">▾</span>
+            </button>
+        `, 'Controls shadows and general render cost.')}
+
+        ${_renderSettingsRow('Resolution Scale', `
+            <button id="settings-render-scale" class="custom-input w-full p-3 text-base" type="button" style="display:flex;align-items:center;justify-content:space-between;text-align:left;">
+                <span>${Number(g.renderScale) === 0.75 ? '75%' : Number(g.renderScale) === 1.25 ? '125%' : '100%'}</span>
+                <span style="opacity:0.72;">▾</span>
+            </button>
+        `, 'Higher values look sharper but cost more performance.')}
+
+        ${_renderSettingsRow('Brightness', `
+            <div style="display:flex;align-items:center;gap:12px;">
+                <input id="settings-brightness" type="range" min="0.7" max="1.4" step="0.05" value="${Number(g.brightness ?? 1).toFixed(2)}" class="range-slider" style="flex:1;">
+                <span id="settings-brightness-value" class="val-badge">${Number(g.brightness ?? 1).toFixed(2)}</span>
+            </div>
+        `, 'Applies to both menus and world rendering.')}
+
+        ${_renderSettingsRow('Fullscreen', `
+            <button id="settings-fullscreen-btn" class="inventory-use-btn" type="button" style="width:220px;">
+                ${document.fullscreenElement ? 'Exit Fullscreen' : 'Enter Fullscreen'}
+            </button>
+        `, 'Toggles fullscreen mode for the game window.')}
+    `);
+}
+
+function _renderAudioSettings() {
+    const a = SETTINGS_STATE.audio;
+    const root = document.getElementById('settings-panel-audio');
+    if (!root) return;
+
+    root.innerHTML = `
+        ${_renderSettingsSectionCard('Volume Mix', `
+            ${_renderSettingsRow('Master Volume', `
+                <div style="display:flex;align-items:center;gap:12px;">
+                    <input id="settings-master-volume" type="range" min="0" max="1" step="0.01" value="${a.masterVolume}" class="range-slider" style="flex:1;">
+                    <span class="val-badge">${Math.round(a.masterVolume * 100)}%</span>
+                </div>
+            `)}
+            ${_renderSettingsRow('SFX Volume', `
+                <div style="display:flex;align-items:center;gap:12px;">
+                    <input id="settings-sfx-volume" type="range" min="0" max="1" step="0.01" value="${a.sfxVolume}" class="range-slider" style="flex:1;">
+                    <span class="val-badge">${Math.round(a.sfxVolume * 100)}%</span>
+                </div>
+            `)}
+            ${_renderSettingsRow('Ambience Volume', `
+                <div style="display:flex;align-items:center;gap:12px;">
+                    <input id="settings-ambience-volume" type="range" min="0" max="1" step="0.01" value="${a.ambienceVolume}" class="range-slider" style="flex:1;">
+                    <span class="val-badge">${Math.round(a.ambienceVolume * 100)}%</span>
+                </div>
+            `)}
+            ${_renderSettingsRow('Voice Volume', `
+                <div style="display:flex;align-items:center;gap:12px;">
+                    <input id="settings-voice-volume" type="range" min="0" max="1" step="0.01" value="${a.voiceVolume}" class="range-slider" style="flex:1;">
+                    <span class="val-badge">${Math.round(a.voiceVolume * 100)}%</span>
+                </div>
+            `)}
+        `)}
+
+        <div style="height:14px;"></div>
+
+        ${_renderSettingsSectionCard('Microphone Preview', `
+            ${_renderSettingsRow('Enable Mic Preview', `
+                <label style="display:flex;align-items:center;gap:10px;">
+                    <input id="settings-mic-enabled" type="checkbox" ${a.micEnabled ? 'checked' : ''}>
+                    <span style="font-weight:700;color:#e2e8f0;">Enable microphone monitoring</span>
+                </label>
+            `, 'This is for testing before voice chat is added.')}
+
+            ${_renderSettingsRow('Microphone Device', `
+                <button id="settings-mic-device" class="custom-input w-full p-3 text-base" type="button" style="display:flex;align-items:center;justify-content:space-between;text-align:left;">
+                    <span id="settings-mic-device-label">Loading microphones...</span>
+                    <span style="opacity:0.72;">▾</span>
+                </button>
+            `)}
+
+            ${_renderSettingsRow('Microphone Volume', `
+                <div style="display:flex;align-items:center;gap:12px;">
+                    <input id="settings-mic-volume" type="range" min="0" max="2" step="0.01" value="${a.micVolume}" class="range-slider" style="flex:1;">
+                    <span class="val-badge">${Math.round(a.micVolume * 100)}%</span>
+                </div>
+            `)}
+
+            ${_renderSettingsRow('Mic Level Meter', `
+                <div style="width:100%;height:18px;background:#111827;border:2px solid #374151;border-radius:9999px;overflow:hidden;">
+                    <div id="settings-mic-meter-fill" style="height:100%;width:0%;background:linear-gradient(90deg,#22c55e,#facc15,#ef4444);"></div>
+                </div>
+            `)}
+
+            ${_renderSettingsRow('Mute Hotkey', `
+                <button class="inventory-use-btn settings-rebind-btn" type="button" data-rebind-device="keyboardMouse" data-rebind-action="micMute">
+                    ${_settingsRebindState?.device === 'keyboardMouse' && _settingsRebindState?.action === 'micMute'
+                        ? `Press a key... ${Math.max(0, 10 - Math.floor((Date.now() - _settingsRebindState.startedAt) / 1000))}s`
+                        : _formatKeyboardBinding(SETTINGS_STATE.controls.keyboardMouse.micMute)
+                    }
+                </button>
+            `, a.micMuted ? 'Microphone is currently muted.' : 'Press this binding in-game to mute/unmute your mic.')}
+        `)}
+    `;
+
+    _refreshMicrophoneList();
+    if (!a.micEnabled) _stopMicMonitor();
+}
+
+function _renderControlsBindingRows(device, actions) {
+    return actions.map(({ action, label, hint }) => {
+        const binding = SETTINGS_STATE.controls[device][action];
+        const isRebinding = _settingsRebindState?.device === device && _settingsRebindState?.action === action;
+        const buttonLabel = device === 'controller'
+            ? _formatControllerBinding(binding)
+            : _formatKeyboardBinding(binding);
+
+        return _renderSettingsRow(label, `
+            <button class="inventory-use-btn settings-rebind-btn" type="button" data-rebind-device="${device}" data-rebind-action="${action}">
+                ${isRebinding ? `Press a ${device === 'controller' ? 'controller button' : 'key or mouse button'}... ${Math.max(0, 10 - Math.floor((Date.now() - _settingsRebindState.startedAt) / 1000))}s` : buttonLabel}
+            </button>
+        `, hint || '');
+    }).join('');
+}
+
+function _renderControlsSettings() {
+    const root = document.getElementById('settings-panel-controls');
+    if (!root) return;
+
+    const usingControllerLayout = _lastInputDevice === 'controller' && !!CONTROLLER_STATE.connected;
+    const c = SETTINGS_STATE.controls;
+
+    const keyboardActions = [
+        { action: 'moveForward', label: 'Move Forward' },
+        { action: 'moveBackward', label: 'Move Backward' },
+        { action: 'moveLeft', label: 'Move Left' },
+        { action: 'moveRight', label: 'Move Right' },
+        { action: 'sprint', label: 'Sprint' },
+        { action: 'jump', label: 'Jump' },
+        { action: 'crouch', label: 'Crouch' },
+        { action: 'interact', label: 'Interact' },
+        { action: 'inventory', label: 'Inventory' },
+        { action: 'friends', label: 'Friends' },
+        { action: 'pauseMenu', label: 'Pause Menu' },
+        { action: 'chat', label: 'Chat' },
+        { action: 'aim', label: 'Aim / Trace Hold', hint: 'Supports mouse buttons.' },
+    ];
+
+    const controllerActions = [
+        { action: 'sprint', label: 'Sprint (L3 default)' },
+        { action: 'jump', label: 'Jump' },
+        { action: 'crouch', label: 'Crouch' },
+        { action: 'interact', label: 'Interact' },
+        { action: 'inventory', label: 'Inventory Menu' },
+        { action: 'spellPrev', label: 'Previous Spell' },
+        { action: 'spellNext', label: 'Next Spell' },
+        { action: 'aim', label: 'Aim / Trace Hold' },
+        { action: 'pauseMenu', label: 'Pause Menu' },
+        { action: 'chat', label: 'Chat' },
+        { action: 'friends', label: 'Friends Menu' },
+    ];
+
+    root.innerHTML = `
+        ${_renderSettingsSectionCard('Input Mode', `
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:16px;padding:10px 0;">
+                <div>
+                    <div style="font-weight:800;color:#f8fafc;">Current Preferred Layout</div>
+                    <div style="font-size:13px;color:#cbd5e1;">${usingControllerLayout ? 'Last input was controller — showing gamepad bindings.' : 'Last input was keyboard or mouse — showing keyboard & mouse bindings.'}</div>
+                </div>
+                <div class="val-badge">${usingControllerLayout ? 'Controller' : 'Keyboard + Mouse'}</div>
+            </div>
+        `)}
+
+        <div style="height:14px;"></div>
+
+        ${usingControllerLayout
+            ? _renderSettingsSectionCard('Controller Layout', `
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:18px;">
+                    <div style="background:rgba(255,255,255,0.04);border-radius:14px;padding:14px;">
+                        <div style="font-weight:800;color:#e2e8f0;margin-bottom:8px;">Fixed Analog Functions</div>
+                        <div style="display:flex;flex-direction:column;gap:6px;color:#cbd5e1;font-size:13px;">
+                            <div>• Left Stick + D-Pad = Movement</div>
+                            <div>• Right Stick = Camera / Trace Cursor</div>
+                            <div>• Releasing Aim attempts the traced spell</div>
+                        </div>
+                    </div>
+                    <div style="background:rgba(255,255,255,0.04);border-radius:14px;padding:14px;">
+                        <div style="font-weight:800;color:#e2e8f0;margin-bottom:8px;">Sensitivity</div>
+                        ${_renderSettingsRow('Look Sensitivity', `
+                            <div style="display:flex;align-items:center;gap:12px;">
+                                <input id="settings-controller-look-sens" type="range" min="0.4" max="2.2" step="0.01" value="${c.controllerLookSensitivity}" class="range-slider" style="flex:1;">
+                                <span class="val-badge">${c.controllerLookSensitivity.toFixed(2)}</span>
+                            </div>
+                        `)}
+                        ${_renderSettingsRow('Aim Sensitivity', `
+                            <div style="display:flex;align-items:center;gap:12px;">
+                                <input id="settings-controller-aim-sens" type="range" min="0.4" max="2.2" step="0.01" value="${c.controllerAimSensitivity}" class="range-slider" style="flex:1;">
+                                <span class="val-badge">${c.controllerAimSensitivity.toFixed(2)}</span>
+                            </div>
+                        `)}
+                    </div>
+                </div>
+                <div style="height:14px;"></div>
+                ${_renderControlsBindingRows('controller', controllerActions)}
+            `)
+            : _renderSettingsSectionCard('Keyboard + Mouse Layout', `
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:18px;">
+                    <div style="background:rgba(255,255,255,0.04);border-radius:14px;padding:14px;">
+                        <div style="font-weight:800;color:#e2e8f0;margin-bottom:8px;">Sensitivity</div>
+                        ${_renderSettingsRow('Look Sensitivity', `
+                            <div style="display:flex;align-items:center;gap:12px;">
+                                <input id="settings-mouse-look-sens" type="range" min="0.4" max="2.2" step="0.01" value="${c.mouseLookSensitivity}" class="range-slider" style="flex:1;">
+                                <span class="val-badge">${c.mouseLookSensitivity.toFixed(2)}</span>
+                            </div>
+                        `)}
+                        ${_renderSettingsRow('Aim Sensitivity', `
+                            <div style="display:flex;align-items:center;gap:12px;">
+                                <input id="settings-mouse-aim-sens" type="range" min="0.4" max="2.2" step="0.01" value="${c.mouseAimSensitivity}" class="range-slider" style="flex:1;">
+                                <span class="val-badge">${c.mouseAimSensitivity.toFixed(2)}</span>
+                            </div>
+                        `)}
+                    </div>
+                    <div style="background:rgba(255,255,255,0.04);border-radius:14px;padding:14px;">
+                        <div style="font-weight:800;color:#e2e8f0;margin-bottom:8px;">Mouse Note</div>
+                        <div style="display:flex;flex-direction:column;gap:6px;color:#cbd5e1;font-size:13px;">
+                            <div>• Aim / trace can be bound to any mouse button</div>
+                            <div>• Releasing the aim button attempts the traced spell</div>
+                            <div>• Click a binding again to cancel rebinding</div>
+                        </div>
+                    </div>
+                </div>
+                <div style="height:14px;"></div>
+                ${_renderControlsBindingRows('keyboardMouse', keyboardActions)}
+            `)
+        }
+    `;
+}
+
+function _bindSettingsUIEvents() {
+    document.querySelectorAll('[data-settings-tab]').forEach(btn => {
+        btn.addEventListener('click', () => {
+            _settingsTab = btn.dataset.settingsTab;
+            renderSettingsUI();
+        });
+    });
+
+    document.querySelectorAll('.settings-rebind-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            _beginRebindInput(btn.dataset.rebindDevice, btn.dataset.rebindAction);
+        });
+    });
+
+    const quality = document.getElementById('settings-quality');
+    if (quality) quality.addEventListener('click', (e) => {
+        _markLastInputDevice('keyboardMouse');
+        _openSharedDropdown({
+            anchorEl: e.currentTarget,
+            title: 'Graphics Quality',
+            options: [
+                { value: 'low', label: 'Low' },
+                { value: 'medium', label: 'Medium' },
+                { value: 'high', label: 'High' },
+            ],
+            value: SETTINGS_STATE.graphics.quality,
+            onSelect: (opt) => {
+                SETTINGS_STATE.graphics.quality = opt.value;
+                _persistSettings();
+                _applyGraphicsSettings();
+                renderSettingsUI();
+            }
+        });
+    });
+
+    const renderScale = document.getElementById('settings-render-scale');
+    if (renderScale) renderScale.addEventListener('click', (e) => {
+        _markLastInputDevice('keyboardMouse');
+        _openSharedDropdown({
+            anchorEl: e.currentTarget,
+            title: 'Resolution Scale',
+            options: [
+                { value: 0.75, label: '75%' },
+                { value: 1, label: '100%' },
+                { value: 1.25, label: '125%' },
+            ],
+            value: SETTINGS_STATE.graphics.renderScale,
+            onSelect: (opt) => {
+                SETTINGS_STATE.graphics.renderScale = Number(opt.value);
+                _persistSettings();
+                _applyGraphicsSettings();
+                renderSettingsUI();
+            }
+        });
+    });
+
+    const brightness = document.getElementById('settings-brightness');
+    if (brightness) brightness.addEventListener('input', (e) => {
+        SETTINGS_STATE.graphics.brightness = Number(e.target.value);
+        _persistSettings();
+        _applyGraphicsSettings();
+        const label = document.getElementById('settings-brightness-value');
+        if (label) label.textContent = Number(e.target.value).toFixed(2);
+    });
+
+    const fullscreenBtn = document.getElementById('settings-fullscreen-btn');
+    if (fullscreenBtn) fullscreenBtn.addEventListener('click', async () => {
+        try {
+            if (document.fullscreenElement) {
+                await document.exitFullscreen();
+                SETTINGS_STATE.graphics.fullscreen = false;
+            } else {
+                await document.documentElement.requestFullscreen();
+                SETTINGS_STATE.graphics.fullscreen = true;
+            }
+            _persistSettings();
+            renderSettingsUI();
+        } catch {}
+    });
+
+    const sliderMap = [
+        ['settings-master-volume', 'masterVolume'],
+        ['settings-sfx-volume', 'sfxVolume'],
+        ['settings-ambience-volume', 'ambienceVolume'],
+        ['settings-voice-volume', 'voiceVolume'],
+    ];
+    sliderMap.forEach(([id, key]) => {
+        const el = document.getElementById(id);
+        if (el) el.addEventListener('input', (e) => {
+            SETTINGS_STATE.audio[key] = Number(e.target.value);
+            _persistSettings();
+            _applyAudioSettings();
+            renderSettingsUI();
+        });
+    });
+
+    const micEnabled = document.getElementById('settings-mic-enabled');
+    if (micEnabled) micEnabled.addEventListener('change', async (e) => {
+        SETTINGS_STATE.audio.micEnabled = !!e.target.checked;
+        _persistSettings();
+        if (SETTINGS_STATE.audio.micEnabled) await _startMicMonitor();
+        else _stopMicMonitor();
+        renderSettingsUI();
+    });
+
+    const micDevice = document.getElementById('settings-mic-device');
+    if (micDevice) micDevice.addEventListener('click', (e) => {
+        _markLastInputDevice('keyboardMouse');
+        _openSharedDropdown({
+            anchorEl: e.currentTarget,
+            title: 'Microphone Device',
+            options: SETTINGS_RUNTIME.microphoneOptions,
+            value: SETTINGS_STATE.audio.micDeviceId,
+            onSelect: async (opt) => {
+                SETTINGS_STATE.audio.micDeviceId = opt.value;
+                _persistSettings();
+                if (SETTINGS_STATE.audio.micEnabled) await _startMicMonitor();
+                renderSettingsUI();
+            }
+        });
+    });
+
+    const micVolume = document.getElementById('settings-mic-volume');
+    if (micVolume) micVolume.addEventListener('input', (e) => {
+        SETTINGS_STATE.audio.micVolume = Number(e.target.value);
+        _persistSettings();
+        renderSettingsUI();
+    });
+
+    const mouseLook = document.getElementById('settings-mouse-look-sens');
+    if (mouseLook) mouseLook.addEventListener('input', (e) => {
+        SETTINGS_STATE.controls.mouseLookSensitivity = Number(e.target.value);
+        _persistSettings();
+        renderSettingsUI();
+    });
+
+    const mouseAim = document.getElementById('settings-mouse-aim-sens');
+    if (mouseAim) mouseAim.addEventListener('input', (e) => {
+        SETTINGS_STATE.controls.mouseAimSensitivity = Number(e.target.value);
+        _persistSettings();
+        renderSettingsUI();
+    });
+
+    const controllerLook = document.getElementById('settings-controller-look-sens');
+    if (controllerLook) controllerLook.addEventListener('input', (e) => {
+        SETTINGS_STATE.controls.controllerLookSensitivity = Number(e.target.value);
+        _persistSettings();
+        renderSettingsUI();
+    });
+
+    const controllerAim = document.getElementById('settings-controller-aim-sens');
+    if (controllerAim) controllerAim.addEventListener('input', (e) => {
+        SETTINGS_STATE.controls.controllerAimSensitivity = Number(e.target.value);
+        _persistSettings();
+        renderSettingsUI();
+    });
+}
+
+function renderSettingsUI() {
+    const tabs = ['graphics', 'audio', 'controls'];
+    tabs.forEach(tab => {
+        const btn = document.getElementById(`settings-tab-${tab}`);
+        const panel = document.getElementById(`settings-panel-${tab}`);
+        if (btn) btn.classList.toggle('active', tab === _settingsTab);
+        if (panel) panel.classList.toggle('active', tab === _settingsTab);
+    });
+
+    _renderGraphicsSettings();
+    _renderAudioSettings();
+    _renderControlsSettings();
+    _bindSettingsUIEvents();
+}
+
+function openSettingsOverlay(source = 'menu', tab = 'graphics') {
+    _settingsSource = source;
+    _settingsTab = tab;
+
+    if (source === 'pause' && isPauseMenuOpen()) {
+        closePauseMenu(false);
+    }
+
+    const overlay = document.getElementById('settings-overlay');
+    if (!overlay) return;
+
+    overlay.style.display = 'flex';
+    renderSettingsUI();
+}
+
+function closeSettingsOverlay() {
+    const overlay = document.getElementById('settings-overlay');
+    if (overlay) overlay.style.display = 'none';
+
+    _cancelRebindInput();
+
+    if (_settingsSource === 'pause' && GAME_STATE.mode === 'world' && !isPauseMenuOpen()) {
+        openPauseMenu();
+    }
+}
 
 function isInventoryOpen() {
     return !!GAME_STATE.inventory.open;
@@ -9293,7 +12475,7 @@ function isSaveLoadOpen() {
 }
 
 function isGameMenuOpen() {
-    return isInventoryOpen() || isFriendsOpen() || isPauseMenuOpen() || isSaveLoadOpen();
+    return isInventoryOpen() || isFriendsOpen() || isPauseMenuOpen() || isSaveLoadOpen() || isSettingsOpen();
 }
 
 function _saveStorageKey(slotIndex) {
@@ -9326,17 +12508,99 @@ function _applySpellSlotSnapshot(slotSnapshot = []) {
     _refreshSpellBarHighlight();
 }
 
+function _initSaveThumbnailRenderer() {
+    if (_saveThumbRenderer) return;
+
+    const thumbCanvas = document.createElement('canvas');
+    thumbCanvas.width = 192;
+    thumbCanvas.height = 192;
+
+    _saveThumbRenderer = new THREE.WebGLRenderer({
+        canvas: thumbCanvas,
+        antialias: true,
+        alpha: true,
+        preserveDrawingBuffer: true
+    });
+    _saveThumbRenderer.setPixelRatio(1);
+    _saveThumbRenderer.setSize(192, 192, false);
+    _saveThumbRenderer.setClearColor(0x000000, 0);
+
+    _saveThumbScene = new THREE.Scene();
+    _saveThumbCamera = new THREE.PerspectiveCamera(34, 1, 0.1, 100);
+    _saveThumbCamera.position.set(0, 2.55, 6.0);
+    _saveThumbCamera.lookAt(0, 2.35, 0);
+
+    const amb = new THREE.AmbientLight(0xfff4dd, 1.0);
+    _saveThumbScene.add(amb);
+
+    const key = new THREE.DirectionalLight(0xffe8bf, 1.0);
+    key.position.set(4, 8, 5);
+    _saveThumbScene.add(key);
+
+    const rim = new THREE.PointLight(0xd4af37, 1.1, 18);
+    rim.position.set(-3, 5, -2);
+    _saveThumbScene.add(rim);
+
+    const stand = new THREE.Mesh(
+        new THREE.CylinderGeometry(1.35, 1.55, 0.24, 24),
+        new THREE.MeshStandardMaterial({ color: 0x3f2412, roughness: 0.85, metalness: 0.15 })
+    );
+    stand.position.y = -0.15;
+    _saveThumbScene.add(stand);
+}
+
+function _captureSaveThumbnail() {
+    if (!characterModel) return null;
+
+    try {
+        _initSaveThumbnailRenderer();
+        if (!_saveThumbRenderer || !_saveThumbScene || !_saveThumbCamera) return null;
+
+        const prevModel = _saveThumbScene.userData.previewModel;
+        if (prevModel) {
+            _saveThumbScene.remove(prevModel);
+            _saveThumbScene.userData.previewModel = null;
+        }
+
+        const clone = characterModel.clone(true);
+        clone.position.set(0, 0, 0);
+        clone.rotation.set(0, 0.42, 0);
+        clone.scale.set(1, 1, 1);
+
+        clone.traverse(obj => {
+            if (obj.isSprite) obj.visible = false;
+        });
+
+        _saveThumbScene.userData.previewModel = clone;
+        _saveThumbScene.add(clone);
+
+        _saveThumbRenderer.render(_saveThumbScene, _saveThumbCamera);
+        const dataUrl = _saveThumbRenderer.domElement.toDataURL('image/jpeg', 0.78);
+
+        _saveThumbScene.remove(clone);
+        _saveThumbScene.userData.previewModel = null;
+
+        return dataUrl;
+    } catch (err) {
+        console.warn('[SAVE] Thumbnail capture failed', err);
+        return null;
+    }
+}
+
 function _buildSavePayload(label = 'Save Slot') {
     const p = GAME_STATE.player;
     return {
-        version: 1,
+        version: 2,
         meta: {
             label,
             savedAt: Date.now(),
             name: GAME_STATE.char.name,
             magic: GAME_STATE.char.magic,
-            alignment: GAME_STATE.char.alignment
+            alignment: GAME_STATE.char.alignment,
+            thumbnail: _captureSaveThumbnail() || null
         },
+        attrPoints: Number(GAME_STATE.attrPoints ?? DEFAULT_ATTR_POINTS_TEMPLATE),
+        attributes: _deepClonePlain(GAME_STATE.attributes || DEFAULT_ATTRIBUTES_TEMPLATE),
         char: _deepClonePlain(GAME_STATE.char),
         inventory: _deepClonePlain(GAME_STATE.inventory),
         friends: _deepClonePlain(GAME_STATE.friends),
@@ -9371,6 +12635,12 @@ function _readSaveSlot(slotIndex) {
 function _applyLoadedSavePayload(payload) {
     if (!payload) return false;
 
+    GAME_STATE.attrPoints = Number(payload.attrPoints ?? DEFAULT_ATTR_POINTS_TEMPLATE);
+    GAME_STATE.attributes = {
+        ..._deepClonePlain(DEFAULT_ATTRIBUTES_TEMPLATE),
+        ...(payload.attributes || {})
+    };
+
     GAME_STATE.char = {
         ..._deepClonePlain(DEFAULT_PROFILE_TEMPLATE),
         ...(payload.char || {}),
@@ -9393,6 +12663,7 @@ function _applyLoadedSavePayload(payload) {
     _pendingLoadedSave = payload;
     computeStats();
     rebuildCharacter();
+    renderAttrUI();
     renderInventoryUI();
     renderFriendsUI();
     syncGameMenuButtons();
@@ -9447,22 +12718,36 @@ function renderSaveSlots() {
         const data = _readSaveSlot(slot.index);
         const row = document.createElement('div');
         row.className = 'inventory-row';
+        row.style.display = 'flex';
+        row.style.alignItems = 'center';
+        row.style.justifyContent = 'space-between';
+        row.style.gap = '14px';
 
         const saveName = data?.meta?.name || 'Empty Slot';
         const saveMagic = data?.meta?.magic ? String(data.meta.magic).toUpperCase() : '—';
         const saveAlignment = data?.meta?.alignment ? String(data.meta.alignment).toUpperCase() : '—';
         const saveTime = _formatSaveTime(data?.meta?.savedAt);
+        const saveThumb = data?.meta?.thumbnail || '';
 
         row.innerHTML = `
-            <div>
-                <div class="inventory-row-title">${slot.index === 0 ? '⟳' : '💾'} ${slot.title}</div>
-                <div class="inventory-row-desc">${saveName} • ${saveAlignment} ${saveMagic}</div>
-                <div class="inventory-row-desc">${saveTime}</div>
+            <div style="display:flex;align-items:center;gap:16px;min-width:0;flex:1;">
+                <div style="width:92px;height:92px;flex:0 0 92px;border-radius:12px;overflow:hidden;border:2px solid rgba(212,175,55,0.45);background:rgba(14,10,18,0.92);display:flex;align-items:center;justify-content:center;box-shadow:0 0 18px rgba(0,0,0,0.28);">
+                    ${saveThumb
+                        ? `<img src="${saveThumb}" alt="${saveName}" style="width:100%;height:100%;object-fit:cover;display:block;">`
+                        : `<span style="font-size:11px;letter-spacing:1px;color:#b8a37b;text-transform:uppercase;text-align:center;padding:8px;">No Preview</span>`
+                    }
+                </div>
+                <div style="min-width:0;">
+                    <div class="inventory-row-title">${slot.index === 0 ? '⟳' : '💾'} ${slot.title}</div>
+                    <div class="inventory-row-desc">${saveName} • ${saveAlignment} ${saveMagic}</div>
+                    <div class="inventory-row-desc">${saveTime}</div>
+                </div>
             </div>
         `;
 
         const action = document.createElement('button');
         action.className = 'inventory-use-btn';
+        action.style.flex = '0 0 auto';
 
         if (_saveLoadMode === 'load') {
             action.textContent = data ? 'Load' : 'Empty';
@@ -9535,6 +12820,7 @@ function returnToMainMenu() {
 
     closePauseMenu(false);
     closeSaveLoadOverlay();
+    closeSettingsOverlay();
     if (isInventoryOpen()) closeInventory();
     if (isFriendsOpen()) closeFriends();
 
@@ -9562,10 +12848,13 @@ function startNewCharacterPath() {
     GAME_STATE.char = _deepClonePlain(DEFAULT_PROFILE_TEMPLATE);
     GAME_STATE.inventory = _deepClonePlain(DEFAULT_INVENTORY_TEMPLATE);
     GAME_STATE.friends = _deepClonePlain(DEFAULT_FRIENDS_TEMPLATE);
+    GAME_STATE.attributes = _deepClonePlain(DEFAULT_ATTRIBUTES_TEMPLATE);
+    GAME_STATE.attrPoints = DEFAULT_ATTR_POINTS_TEMPLATE;
     _pendingLoadedSave = null;
 
     computeStats();
     rebuildCharacter();
+    renderAttrUI();
     renderInventoryUI();
     renderFriendsUI();
 
@@ -9608,17 +12897,39 @@ const _pauseSaveBtn = document.getElementById('pause-save-btn');
 if (_pauseSaveBtn) _pauseSaveBtn.addEventListener('click', () => openSaveLoadOverlay('save', 'pause'));
 
 const _pauseSettingsBtn = document.getElementById('pause-settings-btn');
-if (_pauseSettingsBtn) _pauseSettingsBtn.addEventListener('click', () => alert('Settings coming soon.'));
+if (_pauseSettingsBtn) _pauseSettingsBtn.addEventListener('click', () => openSettingsOverlay('pause', 'graphics'));
+
+const _settingsCloseBtn = document.getElementById('settings-close-btn');
+if (_settingsCloseBtn) _settingsCloseBtn.addEventListener('click', () => closeSettingsOverlay());
 
 const _pauseMainMenuBtn = document.getElementById('pause-mainmenu-btn');
 if (_pauseMainMenuBtn) _pauseMainMenuBtn.addEventListener('click', () => returnToMainMenu());
 
 function syncGameMenuButtons() {
+    const usingController = _lastInputDevice === 'controller' && !!CONTROLLER_STATE.connected;
+
+    const inventoryPrompt = usingController
+        ? _formatControllerBinding(SETTINGS_STATE.controls.controller.inventory)
+        : _formatKeyboardBinding(SETTINGS_STATE.controls.keyboardMouse.inventory);
+
+    const friendsPrompt = usingController
+        ? _formatControllerBinding(SETTINGS_STATE.controls.controller.friends)
+        : _formatKeyboardBinding(SETTINGS_STATE.controls.keyboardMouse.friends);
+
     const invBtn = document.getElementById('inventory-toggle-btn');
-    if (invBtn) invBtn.textContent = GAME_STATE.inventory.open ? 'Close Inventory [Tab]' : 'Inventory [Tab]';
+    if (invBtn) invBtn.textContent = GAME_STATE.inventory.open
+        ? `Close Inventory [${inventoryPrompt}]`
+        : `Inventory [${inventoryPrompt}]`;
 
     const friendsBtn = document.getElementById('friends-toggle-btn');
-    if (friendsBtn) friendsBtn.textContent = GAME_STATE.friends.open ? 'Close Friends [F1]' : 'Friends [F1]';
+    if (friendsBtn) friendsBtn.textContent = GAME_STATE.friends.open
+        ? `Close Friends [${friendsPrompt}]`
+        : `Friends [${friendsPrompt}]`;
+
+    const pauseFriends = document.getElementById('pause-mainmenu-btn');
+    if (pauseFriends) {
+        // no-op placeholder so sync function remains safe if layout changes later
+    }
 }
 
 function updateHudMeters() {
@@ -10310,7 +13621,9 @@ function startGame() {
     generateWorld();
     _startWorldAmbience();
     _resumeAudioContext();
+    _initChatUI();
     initMultiplayer();
+    initVoiceChat();
 
     if (_pendingLoadedSave && _pendingLoadedSave.spellSlots) {
         _applySpellSlotSnapshot(_pendingLoadedSave.spellSlots);
@@ -10441,16 +13754,26 @@ function updatePhysics(delta) {
     }
 
     // Movement relative to camera yaw
+    const controllerRight = (!isGameMenuOpen() && GAME_STATE.mode === 'world') ? (CONTROLLER_STATE.moveRight || 0) : 0;
+    const controllerForward = (!isGameMenuOpen() && GAME_STATE.mode === 'world') ? (CONTROLLER_STATE.moveForward || 0) : 0;
+    const controllerMoveMagnitude = Math.min(1, Math.hypot(controllerRight, controllerForward));
+    const digitalMoveMagnitude = (keys.w || keys.a || keys.s || keys.d) ? 1 : 0;
+
     const inputDir = new THREE.Vector3(0, 0, 0);
     if (keys.w) inputDir.z -= 1;
     if (keys.s) inputDir.z += 1;
     if (keys.a) inputDir.x -= 1;
     if (keys.d) inputDir.x += 1;
 
+    inputDir.x += controllerRight;
+    inputDir.z -= controllerForward;
+
     const menuLocked = isGameMenuOpen();
     const wasOnGround = p.onGround;
     if (menuLocked) inputDir.set(0, 0, 0);
-    inputDir.normalize();
+
+    const moveMagnitude = Math.max(digitalMoveMagnitude, controllerMoveMagnitude);
+    if (inputDir.lengthSq() > 1) inputDir.normalize();
 
     // Rotate input by camera yaw to get world direction
     const moveEuler = new THREE.Euler(0, yaw, 0, 'YXZ');
@@ -10460,24 +13783,33 @@ function updatePhysics(delta) {
     let currentSpeed = p.speed;
     const castLocked = isCastingSpell();
 
-    p.isSprinting = !castLocked && !menuLocked && keys.shift && keys.w && p.onGround;
-    p.isCrouching = !castLocked && !menuLocked && keys.ctrl;
-    
+    p.isSprinting = !castLocked && !menuLocked && p.onGround && (
+        (keys.shift && keys.w) ||
+        (CONTROLLER_STATE.sprintHeld && moveMagnitude > 0.45)
+    );
+    p.isCrouching = !castLocked && !menuLocked && (keys.ctrl || CONTROLLER_STATE.crouchHeld);
+
     if (p.isSprinting) currentSpeed *= p.sprintMultiplier;
     if (p.isCrouching) currentSpeed *= 0.5;
     if (isAiming)      currentSpeed *= 0.5;
-    if (castLocked || menuLocked) currentSpeed = 0;
+
+    if (castLocked || menuLocked) {
+        currentSpeed = 0;
+    } else {
+        currentSpeed *= moveMagnitude > 0 ? Math.max(0.35, moveMagnitude) : 0;
+    }
 
     // Horizontal Velocity
     p.velocity.x = moveDir.x * currentSpeed;
     p.velocity.z = moveDir.z * currentSpeed;
 
     // Jumping
-    if (!castLocked && !menuLocked && keys.space && p.onGround) {
+    if (!castLocked && !menuLocked && (keys.space || CONTROLLER_STATE.jumpPressed) && p.onGround) {
         p.velocity.y = p.jumpForce;
         p.onGround = false;
         p.airPeakY = characterModel.position.y;
     }
+    CONTROLLER_STATE.jumpPressed = false;
 
     // Gravity
     p.velocity.y += p.gravity * delta;
@@ -11357,9 +14689,12 @@ function animate() {
     updateBreastPhysics(delta);
     updateWandFloat(clock.getElapsedTime(), delta);
     updateWandTrail(delta);
+    updateGamepadInput(delta);
     updateCastState(delta);
     updatePlayerDeathState(delta);
     updateSpellRuntimeEffects(delta);
+    updateFloatingChatBubbles(delta);
+    updateVoiceChatVolumes();
     updateMultiplayer(delta);
     updateAutoSave(delta);
     updateSpellUI();
@@ -11452,6 +14787,8 @@ window.addEventListener('resize', () => {
     const w = window.innerWidth;
     const h = window.innerHeight;
     renderer.setSize(w, h);
+    _applyGraphicsSettings();
+
     uiCamera.aspect = w / h;
     uiCamera.updateProjectionMatrix();
     worldCamera.aspect = w / h;
