@@ -10,7 +10,10 @@ const wss = new WebSocketServer({ server });
 
 const PORT = process.env.PORT || 3000;
 const ROOT = __dirname;
+
 const players = new Map();
+const respawnTimers = new Map();
+const RESPAWN_MS = 10000;
 
 app.use(express.static(ROOT));
 app.use('/Sounds', express.static(path.join(ROOT, 'Sounds')));
@@ -32,6 +35,66 @@ function broadcast(type, payload, exclude = null) {
   }
 }
 
+function sanitizePlayer(playerId, payload = {}, existing = {}) {
+  return {
+    ...existing,
+    ...payload,
+    id: playerId,
+    name: payload.name ?? existing.name ?? 'Wizard',
+    magic: payload.magic ?? existing.magic ?? 'storm',
+    alignment: payload.alignment ?? existing.alignment ?? 'light',
+    hp: payload.hp ?? existing.hp ?? 100,
+    maxHP: payload.maxHP ?? existing.maxHP ?? 100,
+    energy: payload.energy ?? existing.energy ?? 100,
+    maxEnergy: payload.maxEnergy ?? existing.maxEnergy ?? 100,
+    dead: existing.dead ?? payload.dead ?? false,
+    respawnAt: existing.respawnAt ?? null,
+    position: payload.position ?? existing.position ?? { x: 0, y: 8, z: 0 },
+    velocity: payload.velocity ?? existing.velocity ?? { x: 0, y: 0, z: 0 },
+    rotationY: payload.rotationY ?? existing.rotationY ?? 0,
+    yaw: payload.yaw ?? existing.yaw ?? 0,
+    pitch: payload.pitch ?? existing.pitch ?? 0,
+    lastSpellId: payload.lastSpellId ?? existing.lastSpellId ?? null,
+    spawnPoint: payload.spawnPoint ?? existing.spawnPoint ?? { x: 0, y: 8, z: 0 },
+    updatedAt: Date.now(),
+  };
+}
+
+function clearRespawnTimer(playerId) {
+  const handle = respawnTimers.get(playerId);
+  if (handle) {
+    clearTimeout(handle);
+    respawnTimers.delete(playerId);
+  }
+}
+
+function scheduleRespawn(playerId) {
+  clearRespawnTimer(playerId);
+
+  const handle = setTimeout(() => {
+    const existing = players.get(playerId);
+    if (!existing) return;
+
+    const spawn = existing.spawnPoint || { x: 0, y: 8, z: 0 };
+    const player = {
+      ...existing,
+      dead: false,
+      respawnAt: null,
+      hp: existing.maxHP ?? 100,
+      energy: existing.maxEnergy ?? 100,
+      position: spawn,
+      velocity: { x: 0, y: 0, z: 0 },
+      updatedAt: Date.now(),
+    };
+
+    players.set(playerId, player);
+    respawnTimers.delete(playerId);
+    broadcast('player_respawn', { player });
+  }, RESPAWN_MS);
+
+  respawnTimers.set(playerId, handle);
+}
+
 wss.on('connection', (ws) => {
   const playerId = crypto.randomUUID();
   ws.playerId = playerId;
@@ -40,7 +103,7 @@ wss.on('connection', (ws) => {
     type: 'welcome',
     payload: {
       playerId,
-      players: Array.from(players.values())
+      players: Array.from(players.values()),
     }
   }));
 
@@ -57,12 +120,13 @@ wss.on('connection', (ws) => {
     switch (type) {
       case 'hello':
       case 'player_state': {
-        const player = {
-          ...(players.get(playerId) || {}),
-          ...payload,
-          id: playerId,
-          updatedAt: Date.now()
-        };
+        const existing = players.get(playerId) || {};
+        const player = sanitizePlayer(playerId, payload, existing);
+
+        if (existing.dead) {
+          player.dead = true;
+          player.respawnAt = existing.respawnAt ?? null;
+        }
 
         players.set(playerId, player);
         broadcast(type === 'hello' ? 'player_joined' : 'player_state', { player }, ws);
@@ -73,49 +137,39 @@ wss.on('connection', (ws) => {
         broadcast('player_cast', {
           playerId,
           ...payload,
-          at: Date.now()
+          at: Date.now(),
         }, ws);
         break;
       }
 
       case 'player_died': {
         const existing = players.get(playerId) || {};
+        const base = sanitizePlayer(playerId, payload.player || {}, existing);
+        const respawnAt = Date.now() + RESPAWN_MS;
+
         const player = {
-          ...existing,
-          ...(payload.player || {}),
-          id: playerId,
+          ...base,
           dead: true,
-          updatedAt: Date.now()
+          respawnAt,
+          updatedAt: Date.now(),
         };
+
         players.set(playerId, player);
+        scheduleRespawn(playerId);
 
         broadcast('player_died', {
           playerId,
           player,
           reason: payload.reason || 'defeated',
-          at: Date.now()
-        }, ws);
-        break;
-      }
-
-      case 'player_respawn': {
-        const existing = players.get(playerId) || {};
-        const player = {
-          ...existing,
-          ...(payload.player || {}),
-          id: playerId,
-          dead: false,
-          updatedAt: Date.now()
-        };
-        players.set(playerId, player);
-
-        broadcast('player_respawn', { player }, ws);
+          respawnAt,
+        });
         break;
       }
     }
   });
 
   ws.on('close', () => {
+    clearRespawnTimer(playerId);
     players.delete(playerId);
     broadcast('player_left', { playerId });
   });
