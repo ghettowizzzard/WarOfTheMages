@@ -1,0 +1,8 @@
+services:
+  - type: web
+    name: war-of-the-mages
+    runtime: node
+    plan: starter
+    buildCommand: npm install
+    startCommand: npm start
+    autoDeploy: true
