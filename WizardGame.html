@@ -152,6 +152,27 @@
         .chat-msg-system { color: rgba(192,192,192,0.55); font-style: italic; font-size: 0.74rem; }
         .chat-msg-private { color: #c084fc; }
         .chat-msg-private .chat-msg-name { color: #a855f7; }
+        .chat-action-btns { display: inline-flex; gap: 3px; margin-left: 6px; vertical-align: middle; opacity: 0; transition: opacity 0.15s; }
+        .chat-msg:hover .chat-action-btns { opacity: 1; }
+        .chat-action-btn { font-size: 0.67rem; padding: 1px 6px; border-radius: 4px; border: 1px solid rgba(255,255,255,0.18); cursor: pointer; background: rgba(255,255,255,0.08); color: #fff; line-height: 1.5; font-family: inherit; }
+        .chat-action-btn.add { border-color: rgba(74,222,128,0.5); color: #4ade80; }
+        .chat-action-btn.add:hover { background: rgba(74,222,128,0.18); }
+        .chat-action-btn.add.pending { border-color: rgba(250,204,21,0.5); color: #facc15; cursor: default; }
+        .chat-action-btn.add.friends-btn { border-color: rgba(129,140,248,0.4); color: #818cf8; cursor: default; }
+        .chat-action-btn.report { border-color: rgba(248,113,113,0.5); color: #f87171; }
+        .chat-action-btn.report:hover { background: rgba(248,113,113,0.18); }
+        #friend-toast { position:fixed; top:78px; left:50%; transform:translateX(-50%); background:rgba(15,5,30,0.96); border:1.5px solid #7c3aed; color:#e9d5ff; padding:10px 22px; border-radius:10px; font-family:'Rajdhani',sans-serif; font-size:14px; font-weight:700; pointer-events:none; z-index:9999999; text-align:center; box-shadow:0 4px 20px rgba(124,58,237,0.4); transition:opacity 0.3s; opacity:0; }
+        #friend-toast.show { opacity:1; }
+        #hud-xp-track { margin-top:7px; width:210px; }
+        #hud-xp-label { font-size:0.67rem; color:#a78bfa; font-weight:700; display:flex; justify-content:space-between; margin-bottom:2px; }
+        #hud-xp-wrap { width:210px; height:7px; background:#111827; border-radius:9999px; overflow:hidden; border:1px solid #374151; }
+        #hud-xp-bar  { height:100%; width:0%; background:linear-gradient(90deg,#7c3aed,#c084fc); transition:width 0.45s ease; }
+        #hud-cash    { font-size:0.78rem; color:#fde68a; font-weight:700; margin-top:5px; letter-spacing:0.03em; }
+        #levelup-notice { position:fixed; top:50%; left:50%; transform:translate(-50%,-50%) scale(0.6); background:linear-gradient(160deg,rgba(20,5,40,0.97),rgba(10,2,20,0.97)); border:2px solid #a855f7; border-radius:16px; padding:22px 36px; text-align:center; font-family:'Cinzel Decorative',serif; pointer-events:none; z-index:9999998; box-shadow:0 0 60px rgba(168,85,247,0.6),0 0 120px rgba(124,58,237,0.25); opacity:0; transition:opacity 0.3s, transform 0.35s; }
+        #levelup-notice.show { opacity:1; transform:translate(-50%,-50%) scale(1); }
+        #levelup-notice .lu-title { font-size:1.5rem; color:#f0abfc; font-weight:900; letter-spacing:2px; text-shadow:0 0 18px rgba(240,171,252,0.7); }
+        #levelup-notice .lu-level { font-size:2.6rem; color:#facc15; font-weight:900; text-shadow:0 0 24px rgba(250,204,21,0.8); margin:4px 0; }
+        #levelup-notice .lu-sub   { font-size:0.85rem; color:#d8b4fe; font-family:'Rajdhani',sans-serif; font-weight:700; letter-spacing:1px; }
         #chat-private-friends {
             border-bottom: 1px solid rgba(255,94,0,0.18);
             max-height: 110px;
@@ -273,6 +294,110 @@
         body.game-active #chat-toggle-hint {
             display: block;
         }
+
+        /* ─────────────────── EMOTE MENU ─────────────────── */
+        #emote-menu {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0.92);
+            width: 490px;
+            max-height: 72vh;
+            background: linear-gradient(145deg, rgba(14,7,35,0.97), rgba(24,11,50,0.97));
+            border: 1px solid rgba(180,100,255,0.35);
+            border-radius: 18px;
+            padding: 18px 20px 22px;
+            z-index: 2147483641;
+            display: none;
+            flex-direction: column;
+            gap: 12px;
+            box-shadow: 0 10px 60px rgba(130,0,255,0.32), 0 0 0 1px rgba(255,255,255,0.04);
+            font-family: 'Rajdhani', sans-serif;
+            color: #e8d8ff;
+            overflow-y: auto;
+            user-select: none;
+            opacity: 0;
+            transition: opacity 0.18s ease, transform 0.18s cubic-bezier(0.34, 1.56, 0.64, 1);
+            pointer-events: auto;
+        }
+        #emote-menu.emote-visible {
+            opacity: 1;
+            transform: translate(-50%, -50%) scale(1.0);
+        }
+        #emote-menu h2 {
+            font-size: 1.05rem;
+            font-weight: 700;
+            letter-spacing: 0.14em;
+            color: rgba(220,170,255,0.95);
+            margin: 0 0 2px;
+            text-transform: uppercase;
+            text-align: center;
+        }
+        .emote-tabs {
+            display: flex;
+            gap: 6px;
+            border-bottom: 1px solid rgba(180,100,255,0.22);
+            padding-bottom: 8px;
+        }
+        .emote-tab-btn {
+            flex: 1;
+            padding: 6px 8px;
+            background: rgba(255,255,255,0.06);
+            border: 1px solid rgba(180,100,255,0.25);
+            border-radius: 8px;
+            color: rgba(220,180,255,0.65);
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 0.80rem;
+            font-weight: 600;
+            letter-spacing: 0.08em;
+            cursor: pointer;
+            transition: background 0.13s, color 0.13s, border-color 0.13s;
+        }
+        .emote-tab-btn:hover { background: rgba(180,100,255,0.18); color: #fff; }
+        .emote-tab-btn.emote-active { background: rgba(180,100,255,0.28); color: #fff; border-color: rgba(200,130,255,0.55); }
+        .emote-pane { display: none; flex-direction: column; gap: 12px; }
+        .emote-pane.emote-show { display: flex; }
+        .emote-section-label {
+            font-size: 0.68rem;
+            letter-spacing: 0.14em;
+            color: rgba(200,160,255,0.48);
+            text-transform: uppercase;
+            margin-bottom: 3px;
+        }
+        .emote-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 6px;
+        }
+        .emote-btn {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 3px;
+            padding: 9px 4px 8px;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(180,100,255,0.20);
+            border-radius: 10px;
+            color: rgba(220,200,255,0.80);
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 0.68rem;
+            font-weight: 600;
+            letter-spacing: 0.05em;
+            cursor: pointer;
+            transition: background 0.12s, border-color 0.12s, transform 0.10s, color 0.12s;
+        }
+        .emote-btn:hover { background: rgba(180,100,255,0.20); border-color: rgba(200,130,255,0.48); transform: scale(1.05); color: #fff; }
+        .emote-btn.emote-selected { background: rgba(180,100,255,0.36); border-color: rgba(220,150,255,0.70); color: #fff; }
+        .emote-btn .ei { font-size: 1.35rem; line-height: 1; }
+        .emote-subsection { display: flex; flex-direction: column; gap: 5px; }
+        .emote-hint {
+            font-size: 0.62rem;
+            color: rgba(190,150,255,0.38);
+            text-align: center;
+            margin-top: 2px;
+            letter-spacing: 0.07em;
+        }
+        body.game-active #emote-menu.emote-visible { display: flex; }
 
         #fireCanvas {
             position: absolute;
@@ -1246,6 +1371,41 @@
             100% { opacity: 1; text-shadow: 0 0 15px #000, 0 0 30px var(--highlight); }
         }
         @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* ── HUD CLOCK (Day/Night) ── */
+        #hud-clock {
+            display: none;
+            position: fixed;
+            top: 18px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 2147483645;
+            font-family: 'Cinzel Decorative', serif;
+            font-size: clamp(0.72rem, 1.4vw, 0.90rem);
+            font-weight: 700;
+            letter-spacing: 0.10em;
+            color: #fde68a;
+            text-shadow: 0 0 12px rgba(255,180,0,0.65), 0 2px 6px rgba(0,0,0,0.9);
+            background: linear-gradient(135deg, rgba(12,5,2,0.82), rgba(25,10,5,0.82));
+            border: 1px solid rgba(255,140,0,0.35);
+            border-radius: 22px;
+            padding: 6px 20px 5px;
+            pointer-events: none;
+            white-space: nowrap;
+            backdrop-filter: blur(4px);
+        }
+        body.game-active #hud-clock { display: block; }
+    </style>
+        /* ── SCREEN SHAKE FLASH OVERLAY ── */
+        #screen-flash {
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            z-index: 2147483629;
+            opacity: 0;
+            mix-blend-mode: screen;
+            will-change: opacity;
+        }
     </style>
 </head>
 <body>
@@ -1348,7 +1508,8 @@
                     <div>
                         <label class="block mb-2 text-sm">Wizard Name</label>
                         <div class="flex gap-2 items-center">
-                            <input type="text" id="char-name" value="Merlin Novice" class="custom-input flex-1 p-2 text-center text-lg">
+<input type="text" id="char-name" value="Merlin Novice" class="custom-input flex-1 p-2 text-center text-lg">
+<div id="char-name-warn" style="display:none;color:#ff4444;font-size:12px;margin-top:2px;text-align:center;"></div>
                             <div style="display:flex;flex-direction:column;align-items:center;gap:2px;">
                                 <label style="font-size:10px;opacity:0.7;">Tag Color</label>
                                 <input type="color" id="nametag-color" value="#ffe066"
@@ -1612,7 +1773,104 @@
         </div>
         <div id="chat-emoji-picker" class="chat-hidden"></div>
     </div>
-    <div id="chat-toggle-hint">T — Chat</div>
+    <div id="chat-toggle-hint">T — Chat&nbsp;&nbsp;|&nbsp;&nbsp;Q — Emotes</div>
+
+    <!-- ══ EMOTE MENU (Q-hold) ══ -->
+    <div id="emote-menu">
+        <h2>✨ Emotes</h2>
+        <div class="emote-tabs">
+            <button class="emote-tab-btn emote-active" data-emote-tab="poses">🎭 Poses</button>
+            <button class="emote-tab-btn" data-emote-tab="expressions">😊 Expressions</button>
+            <button class="emote-tab-btn" data-emote-tab="animation">🏃 Animation</button>
+        </div>
+
+        <!-- POSES -->
+        <div class="emote-pane emote-show" id="emote-pane-poses">
+            <div class="emote-subsection">
+                <div class="emote-section-label">Looped Poses — Move to cancel</div>
+                <div class="emote-grid">
+                    <button class="emote-btn" data-pose="sit"><span class="ei">🪑</span>Sit</button>
+                    <button class="emote-btn" data-pose="crossleg"><span class="ei">🧘</span>Crossleg</button>
+                    <button class="emote-btn" data-pose="laydown"><span class="ei">😴</span>Lay Down</button>
+                    <button class="emote-btn" data-pose="pushups"><span class="ei">💪</span>Push-Ups</button>
+                    <button class="emote-btn" data-pose="jumpingjacks"><span class="ei">⭐</span>Jacks</button>
+                    <button class="emote-btn" data-pose="crabwalk"><span class="ei">🦀</span>Crab Walk</button>
+                    <button class="emote-btn" data-pose="dance1"><span class="ei">🕺</span>Dance</button>
+                    <button class="emote-btn" data-pose="salute"><span class="ei">🫡</span>Salute</button>
+                </div>
+                <div class="emote-hint">Click a pose to toggle it on/off — walk away to auto-cancel</div>
+            </div>
+        </div>
+
+        <!-- EXPRESSIONS -->
+        <div class="emote-pane" id="emote-pane-expressions">
+            <div class="emote-subsection">
+                <div class="emote-section-label">Eye Style — Persistent</div>
+                <div class="emote-grid">
+                    <button class="emote-btn emote-selected" data-eye="normal"><span class="ei">👁</span>Normal</button>
+                    <button class="emote-btn" data-eye="soft"><span class="ei">🥺</span>Soft</button>
+                    <button class="emote-btn" data-eye="sharp"><span class="ei">😤</span>Sharp</button>
+                </div>
+            </div>
+            <div class="emote-subsection">
+                <div class="emote-section-label">Face Expression — Persistent</div>
+                <div class="emote-grid">
+                    <button class="emote-btn emote-selected" data-mouth="happy"><span class="ei">😊</span>Happy</button>
+                    <button class="emote-btn" data-mouth="smile"><span class="ei">🙂</span>Smile</button>
+                    <button class="emote-btn" data-mouth="surprised"><span class="ei">😮</span>Surprised</button>
+                    <button class="emote-btn" data-mouth="sad"><span class="ei">😢</span>Sad</button>
+                    <button class="emote-btn" data-mouth="pouty"><span class="ei">🥺</span>Pouty</button>
+                    <button class="emote-btn" data-mouth="smirk"><span class="ei">😏</span>Smirk</button>
+                    <button class="emote-btn" data-mouth="confused"><span class="ei">😵</span>Confused</button>
+                </div>
+            </div>
+            <div class="emote-subsection">
+                <div class="emote-section-label">Triggered Expressions — 3 sec then return</div>
+                <div class="emote-grid">
+                    <button class="emote-btn" data-expr="laugh"><span class="ei">😂</span>Laugh</button>
+                    <button class="emote-btn" data-expr="cry"><span class="ei">😭</span>Cry</button>
+                    <button class="emote-btn" data-expr="shock"><span class="ei">😱</span>Shock</button>
+                    <button class="emote-btn" data-expr="wink"><span class="ei">😉</span>Wink</button>
+                    <button class="emote-btn" data-expr="angry"><span class="ei">😠</span>Angry</button>
+                    <button class="emote-btn" data-expr="blush"><span class="ei">😳</span>Blush</button>
+                    <button class="emote-btn" data-expr="heart"><span class="ei">💖</span>Heart Eyes</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ANIMATION STYLES -->
+        <div class="emote-pane" id="emote-pane-animation">
+            <div class="emote-subsection">
+                <div class="emote-section-label">Idle Style</div>
+                <div class="emote-grid">
+                    <button class="emote-btn emote-selected" data-idle="normal"><span class="ei">🧍</span>Normal</button>
+                    <button class="emote-btn" data-idle="handsOnHips"><span class="ei">🤷</span>Hands Hip</button>
+                    <button class="emote-btn" data-idle="armsCrossed"><span class="ei">🙅</span>Arms Cross</button>
+                    <button class="emote-btn" data-idle="relaxed"><span class="ei">😌</span>Relaxed</button>
+                </div>
+            </div>
+            <div class="emote-subsection">
+                <div class="emote-section-label">Walk Style</div>
+                <div class="emote-grid">
+                    <button class="emote-btn emote-selected" data-walk="normal"><span class="ei">🚶</span>Normal</button>
+                    <button class="emote-btn" data-walk="strut"><span class="ei">💃</span>Strut</button>
+                    <button class="emote-btn" data-walk="sneak"><span class="ei">🐱</span>Sneak</button>
+                    <button class="emote-btn" data-walk="skip"><span class="ei">🥳</span>Skip</button>
+                </div>
+            </div>
+            <div class="emote-subsection">
+                <div class="emote-section-label">Sprint Style</div>
+                <div class="emote-grid">
+                    <button class="emote-btn emote-selected" data-run="normal"><span class="ei">🏃</span>Normal</button>
+                    <button class="emote-btn" data-run="heroLean"><span class="ei">🦸</span>Hero Lean</button>
+                    <button class="emote-btn" data-run="magicSprint"><span class="ei">⚡</span>Magic Sprint</button>
+                    <button class="emote-btn" data-run="femmeSprint"><span class="ei">💃</span>Femme Sprint</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="hud-clock">☀️ 8:30 AM</div>
 
     <div id="hud-crosshair" style="display:none;position:fixed;top:50%;left:50%;width:18px;height:18px;background:#ffe600;border:3px solid #7a1a00;border-radius:50%;transform:translate(-50%,-50%);box-shadow:0 0 14px #ff3c00,0 0 28px rgba(255,230,0,0.55);z-index:2147483647;pointer-events:none;"></div>
 
@@ -1625,6 +1883,17 @@
         <div style="margin-top:6px;width:210px;height:14px;background:#111827;border-radius:9999px;overflow:hidden;border:2px solid #374151;">
             <div id="hud-mp-bar" style="height:100%;width:100%;background:#3b82f6;"></div>
         </div>
+        <div id="hud-xp-track">
+            <div id="hud-xp-label"><span id="hud-xp-text">XP 0 / 100</span><span id="hud-level-badge">Lvl 1</span></div>
+            <div id="hud-xp-wrap"><div id="hud-xp-bar"></div></div>
+        </div>
+        <div id="hud-cash">💰 0 Gold</div>
+    </div>
+
+    <div id="levelup-notice">
+        <div class="lu-title">✨ LEVEL UP! ✨</div>
+        <div class="lu-level" id="lu-level-num">2</div>
+        <div class="lu-sub" id="lu-sub-text">+1 Upgrade Point Awarded!</div>
     </div>
 
     <div id="spell-cast-status" style="display:none;position:fixed;bottom:120px;left:50%;transform:translateX(-50%);background:rgba(10,2,2,0.94);color:#fde68a;padding:10px 18px;border-radius:10px;text-align:center;font-size:15px;font-weight:700;letter-spacing:1.5px;border:2px solid #7c3aed;box-shadow:0 4px 0 rgba(0,0,0,0.7),0 0 18px rgba(168,85,247,0.35);white-space:nowrap;font-family:'Rajdhani',sans-serif;z-index:2147483647;pointer-events:none;"></div>
@@ -2004,6 +2273,11 @@ const GAME_STATE = {
         }
     },
 
+    // Player economy & progression
+    level:  1,
+    xp:     0,
+    cash:   0,
+
     // Attribute point pool + per-attribute levels (max 20 each)
     attrPoints: 12,
     attributes: {
@@ -2066,9 +2340,217 @@ const GAME_STATE = {
     friends: {
         open: false,
         activeTab: 'list',
-        list: [],
-        requests: []
+        list: [],         // [{id, name}]
+        requests: [],     // [{id, name}] — incoming requests
+        sentRequests: []  // [id] — outgoing requests we sent, awaiting acceptance
     }
+};
+
+// ── SCREEN SHAKE STATE ──────────────────────────────────────────────────────
+const SCREEN_SHAKE = {
+    intensity: 0,   // peak offset magnitude (world units)
+    duration:  0,   // total duration of this shake event
+    age:       0,   // elapsed time since shake started
+    offsetX:   0,   // current frame offset — applied to camera right axis
+    offsetY:   0,   // current frame offset — applied to camera up axis
+};
+
+/**
+ * Trigger a screen shake. A new call only overrides if stronger than what's
+ * currently remaining, so rapid impacts can't reset a big shake mid-flight.
+ * @param {number} intensity  Peak camera offset in world units (0.1 = subtle, 0.8 = heavy)
+ * @param {number} duration   How long the shake lasts in seconds
+ */
+function triggerScreenShake(intensity = 0.25, duration = 0.35) {
+    if (!(intensity > 0)) return;
+    const remaining = SCREEN_SHAKE.intensity *
+        Math.pow(Math.max(0, 1 - SCREEN_SHAKE.age / Math.max(0.001, SCREEN_SHAKE.duration)), 2);
+    if (intensity > remaining) {
+        SCREEN_SHAKE.intensity = intensity;
+        SCREEN_SHAKE.duration  = duration;
+        SCREEN_SHAKE.age       = 0;
+    }
+}
+
+/**
+ * Brief full-screen color flash — fades out automatically via CSS transition.
+ * @param {number} r,g,b  RGB 0-255
+ * @param {number} maxAlpha  0-1, peak opacity of the flash
+ */
+function triggerImpactFlash(r = 255, g = 80, b = 20, maxAlpha = 0.28) {
+    const el = document.getElementById('screen-flash');
+    if (!el) return;
+    el.style.transition = 'none';
+    el.style.background = `rgb(${r|0},${g|0},${b|0})`;
+    el.style.opacity    = String(Math.min(0.75, maxAlpha));
+    // Next frame: begin fade
+    requestAnimationFrame(() => {
+        el.style.transition = 'opacity 0.42s ease-out';
+        el.style.opacity    = '0';
+    });
+}
+
+// ── PUSH / SHOVE STATE ──────────────────────────────────────────────────────
+const PUSH_STATE = {
+    phase:        'idle',  // 'idle' | 'windup' | 'thrust' | 'recover' | 'cooldown'
+    elapsed:      0,
+    cooldownLeft: 0,
+    pendingFire:  false,
+    // Phase durations (seconds)
+    WINDUP_DUR:  0.44,
+    THRUST_DUR:  0.20,
+    RECOVER_DUR: 0.38,
+    COOLDOWN:    1.50,
+};
+
+/** Returns true when the current world zone is a safe home — no combat allowed. */
+function isHomeZone() { return GAME_STATE.isHomeZone === true; }
+
+/** Muscle-density-scaled push stats. muscle ranges 0.7→1.4. */
+function _shovePower() {
+    const muscle = Math.max(0.7, Math.min(1.4, GAME_STATE.char.muscle ?? 1.0));
+    const t = (muscle - 0.7) / 0.7;      // 0.0 at weakest → 1.0 at max
+    return {
+        horizForce: 8   + t * 18,         // 8–26 horizontal impulse
+        liftForce:  4.5 + t * 7.5,        // 4.5–12 vertical launch  
+        damage:     Math.round(3 + t * 6), // 3–9 HP (small — it's a shove)
+        range:      1.9 + t * 0.6,        // 1.9–2.5 unit melee reach
+    };
+}
+
+/** Fire the actual push — called at the midpoint of the thrust phase. */
+function _executeShove() {
+    if (GAME_STATE.mode !== 'world' || !characterModel) return;
+    const pow = _shovePower();
+
+    // Push direction = where the camera is looking (horizontal only)
+    const pushDir = new THREE.Vector3(-Math.sin(yaw), 0, -Math.cos(yaw)).normalize();
+    const myPos   = characterModel.position.clone();
+
+    let hitCount = 0;
+    NETWORK_STATE.players.forEach((snap, pid) => {
+        if (!snap || !snap.position) return;
+        const remPos = _vec3FromNet(snap.position);
+        const dist   = myPos.distanceTo(remPos);
+        if (dist > pow.range) return;
+
+        // Full power up to 70% of range, then fall off
+        const falloff = Math.max(0.4, 1 - (dist / pow.range) * 0.45);
+
+        _sendNetworkMessage('player_shove', {
+            targetId: pid,
+            fromId:   NETWORK_STATE.playerId,
+            impulse: {
+                x: pushDir.x * pow.horizForce * falloff,
+                y: pow.liftForce * falloff,
+                z: pushDir.z * pow.horizForce * falloff,
+            },
+            damage: Math.max(1, Math.round(pow.damage * falloff)),
+        });
+        hitCount++;
+    });
+
+    // Small recoil shake + XP reward for the shover when they actually land it
+    if (hitCount > 0) {
+        if (typeof triggerScreenShake === 'function') triggerScreenShake(0.07, 0.15);
+        addXP(12 * hitCount);
+    }
+}
+
+/**
+ * Drive the shove animation — called every frame from updatePhysics.
+ * While active it fully overrides the standard idle/walk arm rotations.
+ */
+function updateShoveAnimation(delta) {
+    const ps = PUSH_STATE;
+    if (ps.phase === 'idle') return;
+    if (!charParts.upperArmL) return;
+
+    const lrp = THREE.MathUtils.lerp;
+    const L   = charParts;
+    ps.elapsed += delta;
+
+    // Helper: fast lerp suitable for a very short thrust window (~12 frames)
+    const snap = (cur, tgt) => lrp(cur, tgt, Math.min(1, delta * 26));
+    const ease = (cur, tgt, spd) => lrp(cur, tgt, Math.min(1, delta * spd));
+
+    if (ps.phase === 'windup') {
+        // ── LOAD: arms swing FORWARD in front of the player, elbows bent,
+        //    hands coiled at chest height ready to shove. ──
+        const t   = Math.min(1, ps.elapsed / ps.WINDUP_DUR);
+        const spd = 5.5 * t + 2.5;
+
+        // NEGATIVE x = arm rotates FORWARD (in front of character). Confirmed by wand IK.
+        L.upperArmL.rotation.x = ease(L.upperArmL.rotation.x, -0.58, spd);
+        L.upperArmR.rotation.x = ease(L.upperArmR.rotation.x, -0.58, spd);
+        // Draw arms together toward centerline for a two-handed shove position
+        L.upperArmL.rotation.z = ease(L.upperArmL.rotation.z,  0.18, spd);
+        L.upperArmR.rotation.z = ease(L.upperArmR.rotation.z, -0.18, spd);
+        // Forearm bent high (positive) = elbow folded, hands pulled toward chest
+        L.foreArmL.rotation.x  = ease(L.foreArmL.rotation.x,   0.82, spd);
+        L.foreArmR.rotation.x  = ease(L.foreArmR.rotation.x,   0.82, spd);
+
+        // Slight forward lean while loading
+        if (L.bodyRoot) L.bodyRoot.rotation.x = ease(L.bodyRoot.rotation.x || 0, 0.06, spd * 0.45);
+
+        if (ps.elapsed >= ps.WINDUP_DUR) { ps.phase = 'thrust'; ps.elapsed = 0; ps.pendingFire = true; }
+
+    } else if (ps.phase === 'thrust') {
+        // ── SHOVE: both arms shoot straight out in FRONT. Upper arm swings further
+        //    forward (more negative x), forearm straightens toward 0 = fully extended. ──
+
+        // Arms push further forward to shoulder-height horizontal shove
+        L.upperArmL.rotation.x = snap(L.upperArmL.rotation.x, -0.92);
+        L.upperArmR.rotation.x = snap(L.upperArmR.rotation.x, -0.92);
+        // Keep arms parallel to each other
+        L.upperArmL.rotation.z = snap(L.upperArmL.rotation.z,  0.12);
+        L.upperArmR.rotation.z = snap(L.upperArmR.rotation.z, -0.12);
+        // Forearm extends: drops from ~0.82 toward 0 = elbow opens, arm straightens forward
+        L.foreArmL.rotation.x  = snap(L.foreArmL.rotation.x,   0.06);
+        L.foreArmR.rotation.x  = snap(L.foreArmR.rotation.x,   0.06);
+
+        // Body commits into the push with a forward lean (positive bodyRoot x = forward)
+        if (L.bodyRoot) L.bodyRoot.rotation.x = snap(L.bodyRoot.rotation.x || 0, 0.22);
+
+        // Fire at midpoint — arms half-extended, impact lands naturally
+        if (ps.pendingFire && ps.elapsed >= ps.THRUST_DUR * 0.45) {
+            ps.pendingFire = false;
+            _executeShove();
+        }
+        if (ps.elapsed >= ps.THRUST_DUR) { ps.phase = 'recover'; ps.elapsed = 0; }
+
+    } else if (ps.phase === 'recover') {
+        // ── RETRACT: arms spring back to natural idle hang ──
+        const spd = 6.5;
+        L.upperArmL.rotation.x = ease(L.upperArmL.rotation.x,  0.08, spd);
+        L.upperArmR.rotation.x = ease(L.upperArmR.rotation.x,  0.08, spd);
+        L.upperArmL.rotation.z = ease(L.upperArmL.rotation.z,  0.00, spd);
+        L.upperArmR.rotation.z = ease(L.upperArmR.rotation.z,  0.00, spd);
+        L.foreArmL.rotation.x  = ease(L.foreArmL.rotation.x,   0.14, spd);
+        L.foreArmR.rotation.x  = ease(L.foreArmR.rotation.x,   0.14, spd);
+        if (L.bodyRoot) L.bodyRoot.rotation.x = ease(L.bodyRoot.rotation.x || 0, 0.00, spd * 0.7);
+
+        if (ps.elapsed >= ps.RECOVER_DUR) { ps.phase = 'cooldown'; ps.elapsed = 0; ps.cooldownLeft = ps.COOLDOWN; }
+
+    } else if (ps.phase === 'cooldown') {
+        ps.cooldownLeft -= delta;
+        if (ps.cooldownLeft <= 0) { ps.phase = 'idle'; ps.cooldownLeft = 0; }
+    }
+}
+
+// ── KNEE-SLIDE STATE ──────────────────────────────────────────────────────────
+// Physics-based momentum slide triggered by pressing crouch while moving.
+// Sprint speed or jumping into crouch gives a stronger launch momentum.
+const SLIDE_STATE = {
+    active:         false,
+    velX:           0,         // current slide horizontal velocity X
+    velZ:           0,         // current slide horizontal velocity Z
+    friction:       5.5,       // speed units lost per second (linear drag on ground)
+    MIN_SPEED:      1.0,       // below this → slide exhausts and enters crouch/idle
+    prevCrouchHeld: false,     // rising-edge detection for crouch key
+    jumpQueued:     false,     // crouch pressed while airborne → slide on landing
+    queuedVelX:     0,         // slide velocity to apply when jump-queued slide lands
+    queuedVelZ:     0,
 };
 
 // Maps magic types to hex colors for environments and effects
@@ -3945,8 +4427,8 @@ function _handleNetworkMessage(message) {
         }
 
         case 'chat_public': {
-            const { sender, text } = message.payload || {};
-            if (sender && text) _chatReceivePublic(sender, text);
+            const { sender, senderId, text } = message.payload || {};
+            if (sender && text) _chatReceivePublic(sender, text, null, senderId);
             break;
         }
 
@@ -4005,6 +4487,77 @@ function _handleNetworkMessage(message) {
             if (playerId) {
                 NETWORK_STATE.players.delete(playerId);
                 _removeRemotePlayerVisual(playerId);
+            }
+            break;
+        }
+
+        case 'time_sync': {
+            // Soft-sync game clock toward the received value — avoids hard jumps.
+            // The real-time seed keeps players within a second of each other anyway;
+            // this corrects any drift that accumulates over long sessions.
+            const recv = message.payload?.gameTime;
+            if (typeof recv === 'number') {
+                let diff = recv - DAY_NIGHT.time;
+                if (diff >  12) diff -= 24;   // handle midnight wrap
+                if (diff < -12) diff += 24;
+                DAY_NIGHT.time = ((DAY_NIGHT.time + diff * 0.12) % 24 + 24) % 24;
+            }
+            break;
+        }
+
+        case 'friend_request': {
+            const { fromId, fromName } = message.payload || {};
+            if (fromId && fromId !== NETWORK_STATE.playerId && fromName) {
+                _handleFriendRequest(fromId, fromName);
+            }
+            break;
+        }
+
+        case 'friend_accept': {
+            const { fromId, fromName } = message.payload || {};
+            if (fromId && fromId !== NETWORK_STATE.playerId && fromName) {
+                _handleFriendAccept(fromId, fromName);
+            }
+            break;
+        }
+
+        case 'friend_remove': {
+            const { fromId, fromName } = message.payload || {};
+            if (fromId && fromId !== NETWORK_STATE.playerId && fromName) {
+                _handleFriendRemove(fromId, fromName);
+            }
+            break;
+        }
+
+        case 'player_shove': {
+            const { targetId, fromId, impulse, damage } = message.payload || {};
+            if (targetId === NETWORK_STATE.playerId && impulse) {
+                // Friends cannot harm each other
+                if (fromId && _isFriendById(fromId)) break;
+                const p = GAME_STATE.player;
+                if (p && !p.dead) {
+                    // Apply the incoming push impulse — launch us accordingly
+                    p.velocity.x += impulse.x ?? 0;
+                    p.velocity.y  = Math.max(p.velocity.y, impulse.y ?? 0); // don't cancel existing upward momentum
+                    p.velocity.z += impulse.z ?? 0;
+                    p.onGround    = false;
+
+                    // Small shove damage
+                    if (damage > 0) {
+                        _applyDamageToPlayer(damage, {
+                            reason:    'pushed',
+                            playVoice: true,
+                            showStatus: true,
+                        });
+                    }
+
+                    // Screen reaction — being shoved feels impactful
+                    if (typeof triggerScreenShake === 'function') {
+                        const pow = Math.max(0.15, Math.min(0.55, (Math.abs(impulse.x ?? 0) + Math.abs(impulse.z ?? 0)) / 30));
+                        triggerScreenShake(pow, 0.28);
+                        triggerImpactFlash(180, 60, 220, 0.14);
+                    }
+                }
             }
             break;
         }
@@ -4876,14 +5429,93 @@ function rebuildCharacter() {
     faceCanvas.height = 256;
     const fCtx = faceCanvas.getContext('2d');
 
-    const faceType = s.faceType || 'happy';
-    const eyeStyle = s.eyeStyle || 'normal';
+    const getFaceType = () => charParts._exprFaceType ?? GAME_STATE.char.faceType ?? s.faceType ?? 'happy';
+    const getEyeStyle = () => charParts._exprEyeStyle ?? GAME_STATE.char.eyeStyle ?? s.eyeStyle ?? 'normal';
+    const getBrowExpression = () => charParts._exprBrowExpression ?? GAME_STATE.char.browExpression ?? s.browExpression ?? 'neutral';
+    const getFaceAccessory = () => charParts._exprFaceAccessory ?? GAME_STATE.char.faceAccessory ?? s.faceAccessory ?? 'none';
     const eyeColor = c.eyes;
     const hairColor = c.hair;
     const browHex = (c.brow && c.brow !== '')
         ? c.brow
         : '#' + new THREE.Color(hairColor).multiplyScalar(0.82).getHexString();
     const eyeLX = 76, eyeRX = 180, eyeY = 102;
+
+    function drawHeartEyeOverlay(cx, cy, blinkAmt, phase, isLeft) {
+        const open = 1 - (blinkAmt || 0);
+        if (open <= 0.08) return;
+
+        const bob   = Math.sin(phase * 4.8 + (isLeft ? 0 : 0.7)) * 1.0;
+        const pulse = 1.00 + Math.sin(phase * 6.0) * 0.06;
+
+        fCtx.save();
+        fCtx.translate(cx, cy - 7 + bob);
+        fCtx.scale(pulse, pulse * open);
+
+        fCtx.beginPath();
+        fCtx.moveTo(0, 16);
+        fCtx.bezierCurveTo(22, -2, 30, -16, 18, -28);
+        fCtx.bezierCurveTo(10, -36, 2, -33, 0, -24);
+        fCtx.bezierCurveTo(-2, -33, -10, -36, -18, -28);
+        fCtx.bezierCurveTo(-30, -16, -22, -2, 0, 16);
+        fCtx.closePath();
+
+        const grad = fCtx.createLinearGradient(0, -32, 0, 16);
+        grad.addColorStop(0.0, '#ffe3f4');
+        grad.addColorStop(0.35, '#ff8fca');
+        grad.addColorStop(0.72, '#ff4ea1');
+        grad.addColorStop(1.0, '#c91568');
+        fCtx.fillStyle = grad;
+        fCtx.fill();
+
+        fCtx.strokeStyle = 'rgba(255,255,255,0.82)';
+        fCtx.lineWidth = 2.4;
+        fCtx.stroke();
+
+        fCtx.restore();
+    }
+
+    function drawHeartAura(phase, strength = 1) {
+        const alpha = Math.max(0, Math.min(1, strength));
+        if (alpha <= 0.02) return;
+
+        const hearts = [
+            { x: 44,  y: 122, s: 0.88, p: 0.0 },
+            { x: 212, y: 118, s: 0.82, p: 0.8 },
+            { x: 26,  y: 96,  s: 0.68, p: 1.5 },
+            { x: 230, y: 92,  s: 0.68, p: 2.1 },
+            { x: 78,  y: 58,  s: 0.62, p: 2.7 },
+            { x: 180, y: 54,  s: 0.62, p: 3.2 },
+            { x: 128, y: 30,  s: 0.76, p: 3.8 }
+        ];
+
+        hearts.forEach(h => {
+            const rise   = ((phase * 28 + h.p * 10) % 34);
+            const yOff   = -rise;
+            const driftX = Math.sin(phase * 2.8 + h.p) * 4.5;
+            const pulse  = h.s * (0.96 + Math.sin(phase * 4.4 + h.p) * 0.10);
+
+            fCtx.save();
+            fCtx.translate(h.x + driftX, h.y + yOff);
+            fCtx.scale(pulse, pulse);
+
+            fCtx.beginPath();
+            fCtx.moveTo(0, 10);
+            fCtx.bezierCurveTo(14, -1, 22, -12, 14, -22);
+            fCtx.bezierCurveTo(8, -29, 2, -27, 0, -20);
+            fCtx.bezierCurveTo(-2, -27, -8, -29, -14, -22);
+            fCtx.bezierCurveTo(-22, -12, -14, -1, 0, 10);
+            fCtx.closePath();
+
+            fCtx.fillStyle = `rgba(255, 70, 155, ${0.60 * alpha})`;
+            fCtx.fill();
+
+            fCtx.strokeStyle = `rgba(255, 215, 235, ${0.78 * alpha})`;
+            fCtx.lineWidth = 1.6;
+            fCtx.stroke();
+
+            fCtx.restore();
+        });
+    }
 
     // ── drawEye: 3 styles + blink support ──
     // blinkAmt: 0 = fully open, 1 = fully closed.
@@ -5455,23 +6087,32 @@ function rebuildCharacter() {
     }
 
     // ── Face accessory canvas drawings ──
-    function drawBlush() {
+    function drawBlush(intensity = 1) {
+        const outerW = 34 + intensity * 6;
+        const outerH = 18 + intensity * 3;
+        const innerW = 25 + intensity * 5;
+        const innerH = 14 + intensity * 2;
+        const outerA = 0.10 + intensity * 0.07;
+        const innerA = 0.22 + intensity * 0.14;
+
         [[eyeLX, eyeY + 34], [eyeRX, eyeY + 34]].forEach(([cx, cy]) => {
             fCtx.save();
-            // Outer soft glow
+
             fCtx.beginPath();
-            fCtx.ellipse(cx, cy, 36, 20, 0, 0, Math.PI * 2);
-            fCtx.fillStyle = 'rgba(255, 130, 150, 0.22)';
+            fCtx.ellipse(cx, cy, outerW, outerH, 0, 0, Math.PI * 2);
+            fCtx.fillStyle = `rgba(255, 130, 150, ${Math.min(0.30, outerA)})`;
             fCtx.fill();
-            // Inner rosy centre — gradient in same unscaled space as ellipse
-            const grad = fCtx.createRadialGradient(cx, cy, 1, cx, cy, 22);
-            grad.addColorStop(0,   'rgba(255, 110, 130, 0.50)');
-            grad.addColorStop(0.5, 'rgba(255, 100, 125, 0.30)');
+
+            const grad = fCtx.createRadialGradient(cx, cy, 1, cx, cy, 20 + intensity * 3);
+            grad.addColorStop(0,   `rgba(255, 105, 125, ${Math.min(0.60, innerA)})`);
+            grad.addColorStop(0.5, `rgba(255, 100, 125, ${Math.min(0.34, 0.14 + intensity * 0.12)})`);
             grad.addColorStop(1,   'rgba(255, 100, 120, 0.00)');
+
             fCtx.beginPath();
-            fCtx.ellipse(cx, cy, 28, 16, 0, 0, Math.PI * 2);
+            fCtx.ellipse(cx, cy, innerW, innerH, 0, 0, Math.PI * 2);
             fCtx.fillStyle = grad;
             fCtx.fill();
+
             fCtx.restore();
         });
     }
@@ -5510,13 +6151,17 @@ function rebuildCharacter() {
 
     // ── redrawFace — full canvas redraw called every blink frame ──
     function redrawFace(blinkAmt) {
-        charParts._blinkAmt = blinkAmt; // preserve for pupil-gaze redraws
+        charParts._blinkAmt = blinkAmt;
 
-        const expr = charParts._mouthExpression ?? 'idle';
-        const exprBlend = charParts._mouthExpressionBlend ?? 0;
+        const expr = charParts._exprMouthExpression ?? charParts._mouthExpression ?? 'idle';
+        const exprBlend = charParts._exprMouthBlend ?? charParts._mouthExpressionBlend ?? 0;
+
+        const faceType = getFaceType();
+        const eyeStyle = getEyeStyle();
+        const faceAccessory = getFaceAccessory();
 
         let forcedBlinkAmt = 0;
-        let browExpr = s.browExpression || 'neutral';
+        let browExpr = getBrowExpression();
 
         if (exprBlend > 0.04) {
             if (expr === 'yawn') {
@@ -5532,24 +6177,47 @@ function rebuildCharacter() {
             }
         }
 
-        const finalBlinkAmt = Math.min(1, Math.max(blinkAmt || 0, forcedBlinkAmt));
+        const leftBlink = Math.min(
+            1,
+            Math.max(blinkAmt || 0, forcedBlinkAmt, charParts._exprLeftBlink ?? 0)
+        );
+        const rightBlink = Math.min(
+            1,
+            Math.max(blinkAmt || 0, forcedBlinkAmt, charParts._exprRightBlink ?? 0)
+        );
 
         fCtx.clearRect(0, 0, 256, 256);
-        if (s.faceAccessory === 'blush')    drawBlush();
-        if (s.faceAccessory === 'freckles') drawFreckles();
 
-        drawEye(eyeLX, eyeY, eyeColor, true,  eyeStyle, finalBlinkAmt);
-        drawEye(eyeRX, eyeY, eyeColor, false, eyeStyle, finalBlinkAmt);
+        if (faceAccessory === 'blush')       drawBlush(0.55);
+        if (faceAccessory === 'blushStrong') drawBlush(1.90);
+        if (faceAccessory === 'freckles')    drawFreckles();
 
-        const bStyle = s.browStyle || 'thick';
+        const renderEyeStyle = eyeStyle === 'heart' ? 'soft' : eyeStyle;
+
+        drawEye(eyeLX, eyeY, eyeColor, true,  renderEyeStyle, leftBlink);
+        drawEye(eyeRX, eyeY, eyeColor, false, renderEyeStyle, rightBlink);
+
+        if (eyeStyle === 'heart') {
+            const heartPhase = charParts._exprHeartPhase ?? charParts._mouthExpressionPhase ?? 0;
+            drawHeartEyeOverlay(eyeLX, eyeY, leftBlink, heartPhase, true);
+            drawHeartEyeOverlay(eyeRX, eyeY, rightBlink, heartPhase, false);
+        }
+
+        const bStyle = GAME_STATE.char.browStyle || s.browStyle || 'thick';
         const browOffY = 64;
         drawBrow(eyeLX, eyeY - browOffY, browHex, bStyle, browExpr, true);
         drawBrow(eyeRX, eyeY - browOffY, browHex, bStyle, browExpr, false);
 
-        if (s.faceAccessory !== 'mask') {
+        if (faceAccessory !== 'mask') {
             drawNose(128, 148);
             drawMouth(faceType);
         }
+
+        if (faceAccessory === 'heartAura') {
+            const heartPhase = charParts._exprHeartPhase ?? charParts._mouthExpressionPhase ?? 0;
+            drawHeartAura(heartPhase, exprBlend);
+        }
+
         if (charParts.faceTex) charParts.faceTex.needsUpdate = true;
     }
 
@@ -6567,6 +7235,441 @@ function rebuildCharacter() {
     }
 }
 
+// ═══════════════════════════════════════════════════════════════════════════════
+// ─── DAY & NIGHT SYSTEM ────────────────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════════════════════════
+
+// ── Sky Dome Vertex Shader ───────────────────────────────────────────────────
+const _SKY_VERT = `
+varying vec3 vDir;
+void main() {
+    vDir = normalize((modelMatrix * vec4(position, 0.0)).xyz);
+    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+}`;
+
+// ── Sky Dome Fragment Shader ─────────────────────────────────────────────────
+const _SKY_FRAG = `
+varying vec3 vDir;
+uniform vec3  uZenith;
+uniform vec3  uHorizon;
+uniform vec3  uNadir;
+uniform vec3  uSunDir;
+uniform vec3  uSunColor;
+uniform float uSunSize;
+uniform float uSunVisible;
+uniform vec3  uMoonDir;
+uniform float uMoonVis;
+
+void main() {
+    vec3 d = normalize(vDir);
+    float h = d.y;
+
+    // Three-stop gradient: nadir → horizon → zenith
+    vec3 col = mix(uHorizon, uZenith, smoothstep(-0.06, 0.50, h));
+    col = mix(uNadir, col, smoothstep(-0.22, 0.05, h));
+
+    // Subtle horizon darkening band (gives depth)
+    float rim = smoothstep(0.0, 0.08, abs(h));
+    col = mix(col * 0.82, col, rim);
+
+    // Sun disk with inner glow + wide atmospheric halo
+    float sd      = dot(d, uSunDir);
+    float sunDisk  = smoothstep(uSunSize - 0.003, uSunSize + 0.003, sd) * uSunVisible;
+    float sunGlow  = pow(max(0.0, sd), 22.0) * 0.60 * uSunVisible;
+    float sunHalo  = pow(max(0.0, sd), 4.5)  * 0.14 * uSunVisible;
+    col += uSunColor * (sunDisk + sunGlow + sunHalo);
+
+    // Moon disk + gentle silver glow
+    float md       = dot(d, uMoonDir);
+    float moonDisk = smoothstep(0.9978, 0.9992, md) * uMoonVis;
+    float moonGlow = pow(max(0.0, md), 10.0) * 0.10 * uMoonVis;
+    col += vec3(0.86, 0.91, 1.00) * (moonDisk + moonGlow);
+
+    gl_FragColor = vec4(col, 1.0);
+}`;
+
+// ── Star Vertex Shader ───────────────────────────────────────────────────────
+const _STAR_VERT = `
+attribute float aBrightness;
+attribute float aBlinkPhase;
+attribute vec3  aColor;
+varying   float vBrightness;
+varying   vec3  vColor;
+uniform   float uTime;
+uniform   float uNightFade;
+
+void main() {
+    vColor      = aColor;
+    float b     = 0.68 + 0.32 * sin(uTime * 2.80 + aBlinkPhase);
+    vBrightness = aBrightness * b * uNightFade;
+    gl_PointSize    = clamp(aBrightness * 3.2 * uNightFade, 0.5, 4.0);
+    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+}`;
+
+// ── Star Fragment Shader ─────────────────────────────────────────────────────
+const _STAR_FRAG = `
+varying float vBrightness;
+varying vec3  vColor;
+void main() {
+    vec2  uv   = gl_PointCoord - 0.5;
+    float dist = length(uv);
+    if (dist > 0.5) discard;
+    float fade = smoothstep(0.50, 0.04, dist);
+    gl_FragColor = vec4(vColor * fade, fade * vBrightness);
+}`;
+
+// ── DAY/NIGHT State ──────────────────────────────────────────────────────────
+// Game clock synced by real-world Unix time so all players share the same time
+// automatically, with a soft network correction on top.
+const _dn_realSec   = (Date.now() / 1000) % 720;   // position in the 12-min cycle
+const DAY_NIGHT = {
+    time:        (_dn_realSec / 720) * 24,   // 0–24 game hours, derived from real time
+    dayDuration: 720,                         // 12 real minutes = 1 full game day
+    objects:     {},
+    skyU:        null,    // sky shader uniforms
+    starU:       null,    // star shader uniforms
+    cloudMeshes: [],
+    worldAmbient:null,
+    worldSun:    null,
+    _clockEl:    null,
+    netTimer:    0,
+};
+
+// ── Time phase palette ───────────────────────────────────────────────────────
+// Each entry: [zenith, horizon, nadir, sunColor, fogColor, ambientHex, sunIntensity]
+const _DN_PAL = {
+    night:   { z:'#03050f', h:'#0b0b26', n:'#000008', s:'#b0b8ff', f:'#04050f', a:'#14142e', si:0.00 },
+    dawn:    { z:'#0e0a2c', h:'#3e1c5c', n:'#090210', s:'#ff8055', f:'#180e30', a:'#2a1840', si:0.35 },
+    sunrise: { z:'#1a3875', h:'#ff7830', n:'#3a1406', s:'#ffc060', f:'#4a2010', a:'#8860b0', si:0.70 },
+    day:     { z:'#1870c8', h:'#82c4e8', n:'#d5edf8', s:'#fff5d0', f:'#72b8e0', a:'#ffffff', si:1.00 },
+    sunset:  { z:'#1a3878', h:'#ff6030', n:'#4c1808', s:'#ffb040', f:'#5a2010', a:'#ffb844', si:0.70 },
+    dusk:    { z:'#0e0a2a', h:'#4a1040', n:'#100408', s:'#ff4020', f:'#190820', a:'#4a2060', si:0.30 },
+};
+const _DN_TIMES   = [0,    4.5,   6.5,     8.5,  16.5,    18.5,  22.5, 24 ];
+const _DN_PHASES  = ['night','dawn','sunrise','day','sunset','dusk','night'];
+
+function _dnGetPalette(hour) {
+    for (let i = 0; i < _DN_TIMES.length - 1; i++) {
+        if (hour >= _DN_TIMES[i] && hour < _DN_TIMES[i + 1]) {
+            const blend = (hour - _DN_TIMES[i]) / (_DN_TIMES[i + 1] - _DN_TIMES[i]);
+            const A = _DN_PAL[_DN_PHASES[i]];
+            const B = _DN_PAL[_DN_PHASES[i + 1]] || _DN_PAL['night'];
+            const lh = (ha, hb) => new THREE.Color(ha).lerp(new THREE.Color(hb), blend);
+            return {
+                z:  lh(A.z, B.z), h: lh(A.h, B.h), n: lh(A.n, B.n),
+                s:  lh(A.s, B.s), f: lh(A.f, B.f), a: lh(A.a, B.a),
+                si: A.si + (B.si - A.si) * blend,
+            };
+        }
+    }
+    return { z:new THREE.Color(_DN_PAL.night.z), h:new THREE.Color(_DN_PAL.night.h),
+             n:new THREE.Color(_DN_PAL.night.n), s:new THREE.Color(_DN_PAL.night.s),
+             f:new THREE.Color(_DN_PAL.night.f), a:new THREE.Color(_DN_PAL.night.a), si:0 };
+}
+
+function _dnGetPhase(hour) {
+    if (hour < 4.5  || hour >= 22.5) return 'night';
+    if (hour < 6.5)  return 'dawn';
+    if (hour < 8.5)  return 'sunrise';
+    if (hour < 16.5) return 'day';
+    if (hour < 18.5) return 'sunset';
+    if (hour < 20.5) return 'dusk';
+    return 'night';
+}
+
+// ── Build Sky System ─────────────────────────────────────────────────────────
+function _buildSkySystem() {
+    const DN = DAY_NIGHT;
+    DN.objects    = {};
+    DN.cloudMeshes = [];
+
+    // — Sky dome (large inside-out sphere) —
+    const skyUniforms = {
+        uZenith:     { value: new THREE.Color(0x1870c8) },
+        uHorizon:    { value: new THREE.Color(0x82c4e8) },
+        uNadir:      { value: new THREE.Color(0xd5edf8) },
+        uSunDir:     { value: new THREE.Vector3(0, 1, 0) },
+        uSunColor:   { value: new THREE.Color(0xfff5d0) },
+        uSunSize:    { value: 0.9988 },   // cos ≈ 2.8° — sun angular radius in dot-space
+        uSunVisible: { value: 1.0 },
+        uMoonDir:    { value: new THREE.Vector3(0, -1, 0) },
+        uMoonVis:    { value: 0.0 },
+    };
+    DN.skyU = skyUniforms;
+
+    const skyGeo = new THREE.SphereGeometry(450, 48, 24);
+    const skyMat = new THREE.ShaderMaterial({
+        vertexShader:   _SKY_VERT,
+        fragmentShader: _SKY_FRAG,
+        uniforms:       skyUniforms,
+        side:           THREE.BackSide,
+        depthWrite:     false,
+        fog:            false,
+    });
+    const skydome = new THREE.Mesh(skyGeo, skyMat);
+    skydome.renderOrder = -100;
+    skydome.name = 'skydome';
+    worldScene.add(skydome);
+    DN.objects.skydome = skydome;
+
+    // — Stars (THREE.Points, 2800 points on a sphere) —
+    const STAR_N = 2800;
+    const sPos = new Float32Array(STAR_N * 3);
+    const sBrt = new Float32Array(STAR_N);
+    const sPhs = new Float32Array(STAR_N);
+    const sCol = new Float32Array(STAR_N * 3);
+    // Tint palette: mostly white, subtle blue/warm variance for realism
+    const TINTS = [
+        [1.00,1.00,1.00],[0.94,0.97,1.00],[1.00,0.97,0.92],
+        [0.89,0.94,1.00],[1.00,0.99,0.95],[0.87,0.91,1.00],
+        [1.00,0.95,0.88],[0.96,1.00,0.98],
+    ];
+    for (let i = 0; i < STAR_N; i++) {
+        // Uniform distribution on sphere, weighted toward upper hemisphere
+        let x, y, z, len;
+        do {
+            x = Math.random()*2-1; y = Math.random()*2-1; z = Math.random()*2-1;
+            len = Math.sqrt(x*x+y*y+z*z);
+        } while (len < 0.001 || y < -0.08);
+        const R = 380;
+        sPos[i*3]=x/len*R; sPos[i*3+1]=y/len*R; sPos[i*3+2]=z/len*R;
+        sBrt[i] = 0.28 + Math.pow(Math.random(), 1.8) * 0.72;
+        sPhs[i] = Math.random() * Math.PI * 2;
+        const t = TINTS[Math.floor(Math.random() * TINTS.length)];
+        sCol[i*3]=t[0]; sCol[i*3+1]=t[1]; sCol[i*3+2]=t[2];
+    }
+    const starGeo = new THREE.BufferGeometry();
+    starGeo.setAttribute('position',    new THREE.BufferAttribute(sPos, 3));
+    starGeo.setAttribute('aBrightness', new THREE.BufferAttribute(sBrt, 1));
+    starGeo.setAttribute('aBlinkPhase', new THREE.BufferAttribute(sPhs, 1));
+    starGeo.setAttribute('aColor',      new THREE.BufferAttribute(sCol, 3));
+
+    const starUniforms = { uTime: { value: 0 }, uNightFade: { value: 0 } };
+    DN.starU = starUniforms;
+    const starMat = new THREE.ShaderMaterial({
+        vertexShader:   _STAR_VERT,
+        fragmentShader: _STAR_FRAG,
+        uniforms:       starUniforms,
+        transparent:    true,
+        depthWrite:     false,
+        blending:       THREE.AdditiveBlending,
+        fog:            false,
+    });
+    const stars = new THREE.Points(starGeo, starMat);
+    stars.renderOrder = -99;
+    stars.name = 'stars';
+    worldScene.add(stars);
+    DN.objects.stars = stars;
+
+    // — Clouds: volumetric sprite puffs — always billboard to camera, never squared —
+
+    // Single shared puff texture: pure circular radial gradient, alpha = 0 at edge
+    (function _buildCloudPuffTexture() {
+        const R   = 128;
+        const cvs = document.createElement('canvas');
+        cvs.width = cvs.height = R * 2;
+        const cx  = cvs.getContext('2d');
+        const grd = cx.createRadialGradient(R, R, 0, R, R, R);
+        grd.addColorStop(0.00, 'rgba(255,255,255,0.96)');
+        grd.addColorStop(0.28, 'rgba(250,253,255,0.80)');
+        grd.addColorStop(0.55, 'rgba(238,245,255,0.44)');
+        grd.addColorStop(0.80, 'rgba(230,240,255,0.14)');
+        grd.addColorStop(1.00, 'rgba(240,246,255,0.00)');
+        cx.fillStyle = grd;
+        // Only draw a circle — no fillRect — guarantees 0 alpha at corners
+        cx.beginPath();
+        cx.arc(R, R, R, 0, Math.PI * 2);
+        cx.fill();
+        DN.objects._puffTex = new THREE.CanvasTexture(cvs);
+    })();
+
+    const _puffTex = DN.objects._puffTex;
+
+    const CLOUD_DEFS = [
+        { alt:62, spd: 0.90, w:110, puffs:11 },
+        { alt:72, spd:-0.65, w: 85, puffs: 9 },
+        { alt:80, spd: 1.10, w:125, puffs:13 },
+        { alt:57, spd:-0.80, w: 72, puffs: 7 },
+        { alt:68, spd: 0.75, w: 95, puffs:10 },
+        { alt:86, spd:-1.20, w:135, puffs:14 },
+        { alt:53, spd: 0.55, w: 78, puffs: 8 },
+        { alt:76, spd:-0.95, w:108, puffs:11 },
+        { alt:65, spd: 1.30, w: 90, puffs: 9 },
+        { alt:74, spd: 0.42, w: 62, puffs: 6 },
+    ];
+
+    CLOUD_DEFS.forEach((def, ci) => {
+        const group = new THREE.Group();
+        group.position.set(
+            (Math.random() - 0.5) * 420,
+            def.alt,
+            (Math.random() - 0.5) * 420
+        );
+        group.userData.spd    = def.spd;
+        group.userData.wrap   = 290;
+        group.userData.baseOp = 0.55 + Math.random() * 0.25; // per-cloud opacity personality
+        group.name = 'cloud_' + ci;
+
+        // Ellipsoidal puff placement — Gaussian-ish distribution via averaged randoms
+        // gives natural density that peaks at center and thins toward edges.
+        const hw = def.w * 0.50;   // half-width (X)
+        const hd = def.w * 0.32;   // half-depth (Z) — slightly less deep than wide
+        const hh = def.w * 0.14;   // half-height  — clouds are wide, not tall
+
+        for (let p = 0; p < def.puffs; p++) {
+            // Averaged two randoms → soft Gaussian without tails reaching the hard edge
+            const rx = ((Math.random() + Math.random()) * 0.5 - 0.5) * 2.0 * hw;
+            const rz = ((Math.random() + Math.random()) * 0.5 - 0.5) * 2.0 * hd;
+            // Slight upward bias — bottom of cloud is flatter, top is domed
+            const ry = ((Math.random() + Math.random()) * 0.5)       * 1.8 * hh - hh * 0.15;
+
+            // Puffs near edges are smaller → forms the classic cumulus silhouette
+            const normEdge = Math.sqrt((rx / hw) ** 2 + (rz / hd) ** 2);
+            const scaleMul = Math.max(0.42, 1.0 - normEdge * 0.55);
+            const puffSize = Math.max(10, def.w * 0.30 * scaleMul * (0.72 + Math.random() * 0.56));
+
+            // Slight blue-grey tint on edge puffs simulates shaded underside
+            const shade = 0.88 + normEdge * 0.12;
+            const puffMat = new THREE.SpriteMaterial({
+                map:        _puffTex,
+                transparent:true,
+                opacity:    (0.52 + Math.random() * 0.28) * scaleMul,
+                depthWrite: false,
+                blending:   THREE.NormalBlending,
+                color:      new THREE.Color(shade, shade, 1.0),
+            });
+            const sprite = new THREE.Sprite(puffMat);
+            sprite.position.set(rx, ry, rz);
+            sprite.scale.setScalar(puffSize);
+            // Subtle random rotation offset so puffs don't all look identical
+            sprite.material.rotation = Math.random() * Math.PI * 2;
+            group.add(sprite);
+        }
+
+        worldScene.add(group);
+        DN.cloudMeshes.push(group);
+    });
+
+    // — World lights (managed by updateDayNight each frame) —
+    const ambient = new THREE.AmbientLight(0xffffff, 0.60);
+    ambient.name = 'dn_ambient';
+    worldScene.add(ambient);
+    DN.worldAmbient = ambient;
+
+    const sunLight = new THREE.DirectionalLight(0xfff5d0, 1.0);
+    sunLight.position.set(50, 100, 50);
+    sunLight.castShadow = true;
+    sunLight.shadow.camera.top    =  50;
+    sunLight.shadow.camera.bottom = -50;
+    sunLight.shadow.camera.left   = -50;
+    sunLight.shadow.camera.right  =  50;
+    sunLight.shadow.mapSize.set(2048, 2048);
+    sunLight.name = 'dn_sunlight';
+    worldScene.add(sunLight);
+    DN.worldSun = sunLight;
+}
+
+// ── Update Day/Night (called every frame from animate) ───────────────────────
+function updateDayNight(delta) {
+    if (GAME_STATE.mode !== 'world') return;
+    const DN = DAY_NIGHT;
+    if (!DN.objects.skydome) return;
+
+    // Advance time
+    DN.time = (DN.time + delta / (DN.dayDuration / 24)) % 24;
+
+    // Sun orbit: rises in east (+X) at hour 6, zenith at noon, sets west at 18
+    const sunAngle = ((DN.time - 6) / 24) * Math.PI * 2;
+    const sunDir = new THREE.Vector3(
+        Math.cos(sunAngle),
+        Math.sin(sunAngle),
+        0.18
+    ).normalize();
+    const moonDir = sunDir.clone().negate();
+
+    // How far sun is above horizon (−1 below, +1 fully up)
+    const nightFade = Math.max(0, Math.min(1, (-sunDir.y + 0.14) * 5.0));
+
+    // Palette interpolated from time of day
+    const pal = _dnGetPalette(DN.time);
+
+    // Sky dome uniforms
+    if (DN.skyU) {
+        DN.skyU.uZenith.value.copy(pal.z);
+        DN.skyU.uHorizon.value.copy(pal.h);
+        DN.skyU.uNadir.value.copy(pal.n);
+        DN.skyU.uSunDir.value.copy(sunDir);
+        DN.skyU.uSunColor.value.copy(pal.s);
+        // Fade out sun disk as it dips below horizon
+        DN.skyU.uSunVisible.value = Math.max(0, Math.min(1, (sunDir.y + 0.05) * 14));
+        DN.skyU.uMoonDir.value.copy(moonDir);
+        // Moon appears as night deepens
+        DN.skyU.uMoonVis.value = Math.max(0, Math.min(1, (moonDir.y + 0.05) * 14)) * nightFade;
+    }
+
+    // Stars fade in with night
+    if (DN.starU) {
+        DN.starU.uTime.value      = clock.getElapsedTime();
+        DN.starU.uNightFade.value = nightFade;
+    }
+
+    // Skydome + stars always centered on camera
+    if (DN.objects.skydome) DN.objects.skydome.position.copy(worldCamera.position);
+    if (DN.objects.stars)   DN.objects.stars.position.copy(worldCamera.position);
+
+    // Cloud drift + night-time opacity fade (iterate sprite children, not mesh material)
+    const cloudDayOp = Math.max(0.12, 1.0 - nightFade * 0.62);
+    DN.cloudMeshes.forEach(c => {
+        c.position.x += c.userData.spd * delta;
+        if (c.position.x >  c.userData.wrap) c.position.x = -c.userData.wrap;
+        if (c.position.x < -c.userData.wrap) c.position.x =  c.userData.wrap;
+        // Scale each sprite's opacity relative to its per-cloud base personality
+        const groupBase = (c.userData.baseOp ?? 0.70) * cloudDayOp;
+        c.children.forEach(s => {
+            if (s.material && s.isSprite) {
+                // Preserve the puff's original opacity ratio that was baked in at build time
+                if (s.userData._baseOp === undefined) s.userData._baseOp = s.material.opacity;
+                s.material.opacity = s.userData._baseOp * cloudDayOp * (groupBase / (c.userData.baseOp ?? 0.70));
+            }
+        });
+    });
+
+    // World lighting
+    if (DN.worldAmbient) {
+        DN.worldAmbient.color.copy(pal.a);
+        DN.worldAmbient.intensity = 0.30 + pal.si * 0.55;
+    }
+    if (DN.worldSun) {
+        DN.worldSun.color.copy(pal.s);
+        DN.worldSun.intensity = pal.si * 1.25;
+        DN.worldSun.position.copy(sunDir.clone().multiplyScalar(100));
+    }
+
+    // Fog
+    if (worldScene.fog) worldScene.fog.color.copy(pal.f);
+
+    // HUD clock
+    if (!DN._clockEl) DN._clockEl = document.getElementById('hud-clock');
+    if (DN._clockEl) {
+        const h   = Math.floor(DN.time);
+        const m   = Math.floor((DN.time % 1) * 60);
+        const h12 = (h % 12) || 12;
+        const am  = h < 12 ? 'AM' : 'PM';
+        const ph  = _dnGetPhase(DN.time);
+        const ico = { night:'🌙', dawn:'🌅', sunrise:'🌄', day:'☀️', sunset:'🌇', dusk:'🌆' };
+        DN._clockEl.textContent = `${ico[ph] || '☀️'} ${h12}:${String(m).padStart(2,'0')} ${am}`;
+    }
+
+    // Soft network time sync — broadcast every 10 s to keep players in step
+    DN.netTimer += delta;
+    if (DN.netTimer >= 10.0) {
+        DN.netTimer = 0;
+        _sendNetworkMessage('time_sync', { gameTime: DN.time });
+    }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+
 // --- 4. PROCEDURAL ENVIRONMENT BUILDER ---
 
 let worldColliderMeshes = [];
@@ -6599,21 +7702,10 @@ function generateWorld() {
         fogColor = new THREE.Color(0x110d18);
     }
 
-    worldScene.background = skyColor;
-    worldScene.fog = new THREE.FogExp2(fogColor, 0.015);
-
-    // Lights
-    const ambient = new THREE.AmbientLight(ambientColor, 0.6);
-    worldScene.add(ambient);
-    const dirLight = new THREE.DirectionalLight(lightColor, 1.0);
-    dirLight.position.set(50, 100, 50);
-    dirLight.castShadow = true;
-    dirLight.shadow.camera.top = 50;
-    dirLight.shadow.camera.bottom = -50;
-    dirLight.shadow.camera.left = -50;
-    dirLight.shadow.camera.right = 50;
-    dirLight.shadow.mapSize.set(2048, 2048);
-    worldScene.add(dirLight);
+    // Sky, lighting, clouds, and stars are all driven by the Day/Night system
+    worldScene.background = null;
+    worldScene.fog = new THREE.FogExp2(new THREE.Color(0x72b8e0), 0.010);
+    _buildSkySystem();
 
     // Ground Plane (Simple grid for physics ease, textured visually)
     const groundGeo = new THREE.PlaneGeometry(200, 200, 32, 32);
@@ -6750,6 +7842,13 @@ document.addEventListener('keydown', (e) => {
         return;
     }
 
+    // Q — Hold to open emote menu (free cursor while held)
+    if (e.code === 'KeyQ' && !e.repeat && GAME_STATE.mode === 'world' && !isPauseMenuOpen() && !isSaveLoadOpen() && !isSettingsOpen() && !isInventoryOpen() && !_isChatInputFocused()) {
+        e.preventDefault();
+        _openEmoteMenu();
+        return;
+    }
+
     if (_isBoundKeyboardAction(e, 'interact') && GAME_STATE.mode === 'world' && !isGameMenuOpen()) {
         e.preventDefault();
         triggerPrimaryInteraction('keyboard');
@@ -6782,6 +7881,7 @@ document.addEventListener('keydown', (e) => {
 });
 
 document.addEventListener('keyup', (e) => {
+    if (e.code === 'KeyQ') { _closeEmoteMenu(); return; }
     if (_isChatInputFocused()) return;
     if (_isBoundKeyboardAction(e, 'moveForward')) keys.w = false;
     if (_isBoundKeyboardAction(e, 'moveBackward')) keys.s = false;
@@ -7107,6 +8207,9 @@ function _getControllerMenuRoot() {
     const colorPopup = document.getElementById('color-popup');
     if (colorPopup && colorPopup.classList.contains('open') && _isControllerVisible(colorPopup)) return colorPopup;
 
+    const emoteMenu = document.getElementById('emote-menu');
+    if (emoteMenu && emoteMenu.classList.contains('emote-visible')) return emoteMenu;
+
     const ids = [
         'settings-overlay',
         'save-slot-overlay',
@@ -7258,6 +8361,25 @@ function _activateControllerFocus() {
 }
 
 function _cycleControllerTabs(delta) {
+    if (EMOTE_STATE.menuOpen) {
+        const tabs = ['poses', 'expressions', 'animation'];
+        const cur  = EMOTE_STATE.menuTab || 'poses';
+        const next = tabs[(tabs.indexOf(cur) + delta + tabs.length) % tabs.length];
+        EMOTE_STATE.menuTab = next;
+        const menu = document.getElementById('emote-menu');
+        if (menu) {
+            menu.querySelectorAll('.emote-tab-btn').forEach(b =>
+                b.classList.toggle('emote-active', b.dataset.emoteTab === next));
+            menu.querySelectorAll('.emote-pane').forEach(p => p.classList.remove('emote-show'));
+            const pane = document.getElementById(`emote-pane-${next}`);
+            if (pane) pane.classList.add('emote-show');
+        }
+        // Reset focus to first button of the newly-shown tab
+        CONTROLLER_STATE.menuFocusIndex = 0;
+        _ensureControllerMenuFocus();
+        return true;
+    }
+
     if (isSettingsOpen()) {
         const tabs = ['graphics', 'audio', 'controls'];
         const i = tabs.indexOf(_settingsTab);
@@ -7284,6 +8406,11 @@ function _cycleControllerTabs(delta) {
 }
 
 function _closeCurrentControllerMenu() {
+    if (EMOTE_STATE.menuOpen) {
+        _closeEmoteMenu();
+        return true;
+    }
+
     if (SHARED_DROPDOWN_STATE.popup?.style.display === 'block') {
         _closeSharedDropdown();
         return true;
@@ -7371,7 +8498,7 @@ function _resetAimPresentation(options = {}) {
 }
 
 function _enterAimMode(source = 'mouse') {
-    if (GAME_STATE.mode !== 'world' || isCastingSpell() || isGameMenuOpen() || isPlayerDead()) return false;
+    if (GAME_STATE.mode !== 'world' || isCastingSpell() || isGameMenuOpen() || isPlayerDead() || isHomeZone()) return false;
 
     _resumeAudioContext();
 
@@ -7455,6 +8582,732 @@ function triggerPrimaryInteraction(source = 'keyboard') {
 }
 
 // ══════════════════════════════════════════════════════════════════
+// EMOTE SYSTEM
+// ══════════════════════════════════════════════════════════════════
+const EMOTE_STATE = {
+    activePose:    null,      // 'sit'|'crossleg'|'laydown'|'pushups'|'jumpingjacks'|'crabwalk'|'dance1'|'salute'|null
+    poseT:         0,         // accumulated time for looped pose animations
+    poseOrigin:    null,      // THREE.Vector3 — position when pose started
+    poseCancel:    1.5,       // metres player must move to auto-cancel pose
+    idleStyle:     'normal',  // 'normal'|'handsOnHips'|'armsCrossed'|'relaxed'
+    walkStyle:     'normal',  // 'normal'|'strut'|'sneak'|'skip'
+    runStyle:      'normal',  // 'normal'|'heroLean'|'magicSprint'|'femmeSprint'
+    triggeredExpr: null,      // active triggered expression string
+    exprTimer:     0,
+    exprDuration:  3.0,
+    menuOpen:      false,
+    menuTab:       'poses',
+};
+
+function _startEmote(pose) {
+    EMOTE_STATE.activePose = pose;
+    EMOTE_STATE.poseT      = 0;
+    EMOTE_STATE.poseOrigin = characterModel ? characterModel.position.clone() : null;
+
+    const cp = charParts;
+    if (cp.bodyRoot) {
+        cp.bodyRoot.rotation.y = 0;
+        cp.bodyRoot.rotation.z = 0;
+    }
+    if (cp.hips) cp.hips.rotation.y = 0;
+    if (cp.headGroup) cp.headGroup.rotation.set(0, 0, 0);
+    if (cp.upperArmL) {
+        cp.upperArmL.rotation.y = 0;
+        cp.upperArmR.rotation.y = 0;
+    }
+    if (cp.foreArmL) {
+        cp.foreArmL.rotation.y = 0;
+        cp.foreArmR.rotation.y = 0;
+    }
+}
+
+function _cancelEmote() {
+    EMOTE_STATE.activePose = null;
+    EMOTE_STATE.poseOrigin = null;
+
+    const cp = charParts;
+    if (cp.legPivotL)  { cp.legPivotL.rotation.z   = 0; cp.legPivotR.rotation.z   = 0; }
+    if (cp.kneePivotL) { cp.kneePivotL.rotation.z  = 0; cp.kneePivotR.rotation.z  = 0; }
+
+    if (cp.foreArmL) {
+        cp.foreArmL.rotation.y = 0;
+        cp.foreArmR.rotation.y = 0;
+        cp.foreArmL.rotation.z = 0;
+        cp.foreArmR.rotation.z = 0;
+    }
+
+    if (cp.upperArmL) {
+        cp.upperArmL.rotation.y = 0;
+        cp.upperArmR.rotation.y = 0;
+        cp.upperArmL.rotation.z = 0;
+        cp.upperArmR.rotation.z = 0;
+    }
+
+    if (cp.hips) {
+        cp.hips.rotation.x = 0;
+        cp.hips.rotation.y = 0;
+        cp.hips.rotation.z = 0;
+    }
+
+    if (cp.bodyRoot) {
+        cp.bodyRoot.rotation.x = 0;
+        cp.bodyRoot.rotation.y = 0;
+        cp.bodyRoot.rotation.z = 0;
+        cp.bodyRoot.position.set(0, 0, 0);
+    }
+
+    if (cp.headGroup) cp.headGroup.rotation.set(0, 0, 0);
+}
+
+function _triggerExpression(expr) {
+    EMOTE_STATE.triggeredExpr = expr;
+    EMOTE_STATE.exprTimer     = 0;
+}
+
+// ── Per-frame emote pose animation ─────────────────────────────────────────
+// RIG NOTES (verified against sprint lean and ragdoll code):
+//   legPivotL/R.rotation.x  NEGATIVE = leg swings FORWARD (+Z), POSITIVE = BACKWARD (-Z)
+//   kneePivotL.rotation.x   POSITIVE = knee bends (shin folds beneath thigh)
+//   bodyRoot.rotation.x     POSITIVE = body tips FORWARD (face toward ground, sprint-like)
+//                           NEGATIVE = body tips BACKWARD (face toward sky, face-up lie-down)
+//   upperArmL/R.rotation.x  POSITIVE = arm swings FORWARD; NEGATIVE = hangs/swings back
+//   upperArmR.rotation.z    NEGATIVE = right arm raises UPWARD (Z lifts the hanging arm)
+//   upperArmL.rotation.z    POSITIVE = left arm raises UPWARD
+//   Legs: z-spread for L = NEGATIVE (left leg goes LEFT/outward), R = POSITIVE (right goes RIGHT)
+//   IMPORTANT: bodyRoot pivot is at y=0 in charModel space. Leg pivots are at y=hipsBaseY≈1.08.
+//   For lying/plank poses, set bodyRoot.position.y = charParts.hipsBaseY so both pivots
+//   share the same world-space height, making body+legs meet at the hip joint.
+function _runEmotePoseFrame(delta, t) {
+    if (!charParts.legPivotL) return;
+    const pose  = EMOTE_STATE.activePose;
+    const poseT = EMOTE_STATE.poseT;
+    const lrp   = THREE.MathUtils.lerp;
+    const spd   = 0.11;
+
+    // The hip joint is at this Y in characterModel local space (same as legPivot.position.y).
+    // Raising bodyRoot.position.y to this value aligns the bodyRoot rotation pivot with the
+    // leg pivot point, so body and legs appear connected when both are rotated horizontal.
+    const hipY = charParts.hipsBaseY || 1.08;
+
+    function setLegs(lHip, rHip, lKnee, rKnee, lAnkle, rAnkle, lHipZ, rHipZ) {
+        charParts.legPivotL.rotation.x   = lrp(charParts.legPivotL.rotation.x,   lHip,     spd);
+        charParts.legPivotR.rotation.x   = lrp(charParts.legPivotR.rotation.x,   rHip,     spd);
+        charParts.kneePivotL.rotation.x  = lrp(charParts.kneePivotL.rotation.x,  lKnee,    spd);
+        charParts.kneePivotR.rotation.x  = lrp(charParts.kneePivotR.rotation.x,  rKnee,    spd);
+        charParts.anklePivotL.rotation.x = lrp(charParts.anklePivotL.rotation.x, lAnkle,   spd);
+        charParts.anklePivotR.rotation.x = lrp(charParts.anklePivotR.rotation.x, rAnkle,   spd);
+        charParts.legPivotL.rotation.z   = lrp(charParts.legPivotL.rotation.z || 0, lHipZ || 0, spd);
+        charParts.legPivotR.rotation.z   = lrp(charParts.legPivotR.rotation.z || 0, rHipZ || 0, spd);
+    }
+    function setArms(lUpX, rUpX, lForeX, rForeX, lUpZ, rUpZ, lForeZ, rForeZ) {
+        if (!charParts.upperArmL) return;
+        charParts.upperArmL.rotation.x = lrp(charParts.upperArmL.rotation.x, lUpX,   spd);
+        charParts.upperArmR.rotation.x = lrp(charParts.upperArmR.rotation.x, rUpX,   spd);
+        charParts.foreArmL.rotation.x  = lrp(charParts.foreArmL.rotation.x,  lForeX, spd);
+        charParts.foreArmR.rotation.x  = lrp(charParts.foreArmR.rotation.x,  rForeX, spd);
+        charParts.upperArmL.rotation.z = lrp(charParts.upperArmL.rotation.z, lUpZ  || 0, spd);
+        charParts.upperArmR.rotation.z = lrp(charParts.upperArmR.rotation.z, rUpZ  || 0, spd);
+        charParts.foreArmL.rotation.z  = lrp(charParts.foreArmL.rotation.z  || 0, lForeZ || 0, spd);
+        charParts.foreArmR.rotation.z  = lrp(charParts.foreArmR.rotation.z  || 0, rForeZ || 0, spd);
+    }
+    function setBody(y, rx, ry, rz, z, lockToHips) {
+        if (!charParts.bodyRoot) return;
+
+        const pinY = lockToHips ? hipY * (1 - Math.cos(rx)) : 0;
+        const pinZ = lockToHips ? -hipY * Math.sin(rx) : 0;
+
+        charParts.bodyRoot.position.y = lrp(
+            charParts.bodyRoot.position.y,
+            pinY + (y || 0),
+            0.10
+        );
+        charParts.bodyRoot.position.z = lrp(
+            charParts.bodyRoot.position.z || 0,
+            pinZ + (z || 0),
+            0.10
+        );
+        charParts.bodyRoot.rotation.x = lrp(charParts.bodyRoot.rotation.x || 0, rx, 0.10);
+        charParts.bodyRoot.rotation.y = lrp(charParts.bodyRoot.rotation.y || 0, ry || 0, 0.10);
+        charParts.bodyRoot.rotation.z = lrp(charParts.bodyRoot.rotation.z || 0, rz || 0, 0.10);
+    }
+
+    function setHead(rx, ry, rz) {
+        if (!charParts.headGroup) return;
+        charParts.headGroup.rotation.x = lrp(charParts.headGroup.rotation.x || 0, rx || 0, 0.10);
+        charParts.headGroup.rotation.y = lrp(charParts.headGroup.rotation.y || 0, ry || 0, 0.10);
+        charParts.headGroup.rotation.z = lrp(charParts.headGroup.rotation.z || 0, rz || 0, 0.10);
+    }
+    function setHips(rx, rz) {
+        if (!charParts.hips) return;
+        charParts.hips.rotation.x = lrp(charParts.hips.rotation.x, rx || 0, spd);
+        charParts.hips.rotation.z = lrp(charParts.hips.rotation.z, rz || 0, spd);
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    if (pose === 'sit') {
+        // Upright chair sit.
+        setLegs(-1.10, -1.10, 1.76, 1.76, -0.24, -0.24, -0.03, 0.03);
+        setArms(0.26, 0.26, 0.92, 0.92, 0.14, -0.14, 0.04, -0.04);
+        setBody(-0.32, 0.00, 0, 0);
+        setHips(0.00, 0);
+        setHead(0.00, 0, 0);
+
+    // ─────────────────────────────────────────────────────────────
+    } else if (pose === 'crossleg') {
+        // Upright crossleg sit.
+        setLegs(-0.82, -0.82, 1.62, 1.62, -0.36, -0.36,
+                -0.82, 0.82);
+        setArms(0.24, 0.24, 0.98, 0.98, 0.36, -0.36, -0.08, 0.08);
+        setBody(-0.24, 0.00, 0, 0);
+        setHips(0.00, 0);
+        setHead(0.00, 0, 0);
+
+    // ─────────────────────────────────────────────────────────────
+    } else if (pose === 'laydown') {
+        // Hip-locked floor pose so torso and legs stay connected.
+        setLegs(-1.55, -1.55, 0.08, 0.08, 0.06, 0.06, -0.01, 0.01);
+        setArms(0.10, 0.10, 0.12, 0.12, 0.14, -0.14, 0.02, -0.02);
+        setBody(-0.01, -1.55, 0, 0, 0, true);
+        setHips(-0.02, 0);
+        setHead(0.06, 0, 0);
+
+    // ─────────────────────────────────────────────────────────────
+    } else if (pose === 'pushups') {
+        // Hip-locked plank. Elbows now curl the opposite direction.
+        const cycle          = Math.sin(poseT * 1.9);
+        const dip            = (1.0 - cycle) * 0.5;
+        const foreAng        = -0.52 - dip * 0.98;
+        const upperArm       = -1.02 + dip * 0.10;
+        const bodyDip        = dip * 0.10;
+        const shoulderSpread = 0.10;
+
+        setLegs(1.50, 1.50, 0.10, 0.10, -0.22, -0.22, -0.01, 0.01);
+        setArms(upperArm, upperArm, foreAng, foreAng,
+                shoulderSpread, -shoulderSpread, 0, 0);
+        setBody(-0.02 - bodyDip, 1.50, 0, 0, 0, true);
+        setHips(0.04, 0);
+        setHead(-0.04, 0, 0);
+
+    // ─────────────────────────────────────────────────────────────
+    } else if (pose === 'jumpingjacks') {
+        // Smoother jumping jacks using a cosine-smoothed hop curve.
+        const cy        = Math.sin(poseT * 3.4);
+        const openT     = Math.max(0, cy);
+        const spread    = openT * 0.84;
+        const armUp     = openT * -1.48;
+        const kneeBend  = (1 - openT) * 0.26;
+        const ankleTilt = kneeBend * -0.24;
+
+        // Smooth 0 → 1 → 0 hop, no sharp snap like Math.abs(sin()).
+        const hopWave   = 0.5 - 0.5 * Math.cos(poseT * 6.8);
+        const hopEase   = hopWave * hopWave * (3 - 2 * hopWave); // smoothstep
+        const fullHop   = hopWave * 1.56;
+        const torsoHop  = hopWave * 0.12;
+
+        setLegs(-kneeBend * 0.22, -kneeBend * 0.22,
+                kneeBend, kneeBend,
+                ankleTilt, ankleTilt,
+                -spread, spread);
+
+        setArms(armUp, armUp, 0.10, 0.10,
+                0.18 - spread * 0.22,
+               -(0.18 - spread * 0.22));
+
+        setBody(torsoHop, 0, 0, 0, 0, false);
+        setHips(0, 0);
+
+        if (characterModel && EMOTE_STATE.poseOrigin) {
+            characterModel.position.y = lrp(
+                characterModel.position.y,
+                EMOTE_STATE.poseOrigin.y + fullHop,
+                0.20
+            );
+        }
+
+    // ─────────────────────────────────────────────────────────────
+    } else if (pose === 'crabwalk') {
+        // Arms now drive downward under the body instead of upward above it.
+        const scuttle    = Math.sin(poseT * 2.5);
+        const opposite   = Math.sin(poseT * 2.5 + Math.PI);
+        const bridgeLift = Math.abs(Math.sin(poseT * 5.0)) * 0.018;
+
+        setLegs(-0.90, -0.90, 1.68, 1.68, -0.28, -0.28,
+                scuttle * 0.04, -scuttle * 0.04);
+
+        setArms(0.92 + opposite * 0.03, 0.92 + scuttle * 0.03,
+                1.12, 1.12,
+                -0.72, 0.72,
+                0.04, -0.04);
+
+        if (charParts.upperArmL) {
+            charParts.upperArmL.rotation.order = 'YXZ';
+            charParts.upperArmR.rotation.order = 'YXZ';
+            charParts.foreArmL.rotation.order  = 'YXZ';
+            charParts.foreArmR.rotation.order  = 'YXZ';
+
+            charParts.upperArmL.rotation.y = lrp(charParts.upperArmL.rotation.y || 0,  0.42, 0.10);
+            charParts.upperArmR.rotation.y = lrp(charParts.upperArmR.rotation.y || 0, -0.42, 0.10);
+            charParts.foreArmL.rotation.y  = lrp(charParts.foreArmL.rotation.y  || 0,  0.10, 0.10);
+            charParts.foreArmR.rotation.y  = lrp(charParts.foreArmR.rotation.y  || 0, -0.10, 0.10);
+        }
+
+        setBody(-0.06 + bridgeLift, -1.50, 0, 0, 0, true);
+        setHips(0.06, scuttle * 0.03);
+        setHead(0.30, 0, 0);
+
+    // ─────────────────────────────────────────────────────────────
+    } else if (pose === 'dance1') {
+        // TWO-PHASE DANCE cycling every 4 seconds:
+        //   Phase 0: Floss — wide alternating arm swings + hip sway + hop
+        //   Phase 1: Groove squat — half-crouch bounce with arm pumps
+        const PHASE = 4.0;
+        const phase  = Math.floor(poseT / PHASE) % 2;
+        const beat   = Math.sin(poseT * 5.0);
+        const beat2  = Math.cos(poseT * 5.0);
+
+        if (phase === 0) {
+            const hop = Math.abs(beat) * 0.07;
+            setLegs(-0.10, 0.10, 0.06, 0.06, 0, 0, 0.06, -0.06);
+            setArms( beat * 1.12, -beat * 1.12,
+                     Math.abs(beat) * 0.44, Math.abs(beat) * 0.44,
+                     0.12 + beat2 * 0.46, -(0.12 + beat2 * 0.46));
+            setBody(hop, 0);
+            setHips(0, beat * 0.26);
+            if (charParts.hips) charParts.hips.rotation.y = lrp(charParts.hips.rotation.y || 0, beat * 0.18, 0.14);
+        } else {
+            const bounce = Math.abs(Math.sin(poseT * 4.8)) * 0.09;
+            const pump   = Math.sin(poseT * 4.8);
+            const pump2  = Math.cos(poseT * 4.8);
+            setLegs(-0.36, -0.36, 0.60, 0.60, -0.14, -0.14, 0.08, -0.08);
+            setArms(-pump * 0.82,  pump * 0.82,
+                     0.38 + Math.abs(pump) * 0.32, 0.38 + Math.abs(pump) * 0.32,
+                     0.20 + pump2 * 0.32, -(0.20 + pump2 * 0.32));
+            setBody(-0.20 + bounce, 0.08);
+            setHips(0, pump * 0.18);
+            if (charParts.hips) charParts.hips.rotation.y = lrp(charParts.hips.rotation.y || 0, pump2 * 0.24, 0.14);
+        }
+
+    // ─────────────────────────────────────────────────────────────
+    } else if (pose === 'salute') {
+        // Right hand lifted high and in front of the face to the forehead.
+        setLegs(0, 0, 0.02, 0.02, 0, 0);
+
+        const saluteUpperArmX = 5.52;  // up/down forward arc
+        const saluteUpperArmY = 0.60;   // pushes whole arm forward/back in front of face
+        const saluteUpperArmZ = -1.88;  // raises/lowers upper arm toward forehead
+
+        const saluteForeArmX  = 0.00;   // elbow bend; keep near 0 for straight arm
+        const saluteForeArmY  = 0.54;   // pushes forearm forward/back
+        const saluteForeArmZ  = 0.00;   // forearm roll/twist
+
+        setArms(
+            /*lUpX*/   0.06,             /*rUpX*/   0.22,
+            /*lForeX*/ 0.10,             /*rForeX*/ 0.00,
+            /*lUpZ*/   0.06,             /*rUpZ*/   -2.42,
+            /*lForeZ*/ 0,                /*rForeZ*/ 0.00
+        );
+
+        if (charParts.upperArmR) {
+            charParts.upperArmR.rotation.order = 'YXZ';
+            charParts.foreArmR.rotation.order  = 'YXZ';
+
+            charParts.upperArmR.rotation.y = lrp(charParts.upperArmR.rotation.y || 0, saluteUpperArmY, 0.12);
+            charParts.foreArmR.rotation.y  = lrp(charParts.foreArmR.rotation.y  || 0, saluteForeArmY, 0.12);
+        }            charParts.upperArmR.rotation.y = lrp(charParts.upperArmR.rotation.y || 0, 0.32, 0.12);
+            charParts.foreArmR.rotation.y  = lrp(charParts.foreArmR.rotation.y  || 0, 0.16, 0.12);
+
+        if (charParts.upperArmL) {
+            charParts.upperArmL.rotation.y = lrp(charParts.upperArmL.rotation.y || 0, 0, 0.10);
+            charParts.foreArmL.rotation.y  = lrp(charParts.foreArmL.rotation.y  || 0, 0, 0.10);
+        }
+
+        setBody(0, -0.01);
+        setHips(0, 0);
+        setHead(0.01, 0, 0);
+    }
+}
+
+// ── Triggered 3-second expression override ─────────────────────────────────
+function _updateEmoteExpressionFrame(delta) {
+    const es = EMOTE_STATE;
+    if (!es.triggeredExpr) return;
+
+    es.exprTimer += delta;
+    const progress = Math.min(es.exprTimer / es.exprDuration, 1);
+    const fadeOut  = progress > 0.74 ? 1 - ((progress - 0.74) / 0.26) : 1;
+    const pulse    = Math.sin(progress * Math.PI);
+
+    if (!charParts.redrawFace) {
+        if (progress >= 1) es.triggeredExpr = null;
+        return;
+    }
+
+    const maps = {
+        laugh: {
+            eye: 'soft',
+            face: 'happy',
+            brow: 'surprised',
+            mouthExpr: 'fang',
+            mouthBlend: 0.75 + pulse * 0.25,
+            leftBlink: 0.28 * fadeOut,
+            rightBlink: 0.28 * fadeOut,
+            accessory: 'none'
+        },
+        cry: {
+            eye: 'soft',
+            face: 'sad',
+            brow: 'sad',
+            mouthExpr: 'yawn',
+            mouthBlend: 0.55 + pulse * 0.20,
+            leftBlink: 0.10 * fadeOut,
+            rightBlink: 0.10 * fadeOut,
+            accessory: 'blushStrong'
+        },
+        shock: {
+            eye: 'normal',
+            face: 'surprised',
+            brow: 'surprised',
+            mouthExpr: 'shock',
+            mouthBlend: 1.0,
+            leftBlink: 0.0,
+            rightBlink: 0.0,
+            accessory: 'none'
+        },
+        wink: {
+            eye: 'soft',
+            face: 'smirk',
+            brow: 'neutral',
+            mouthExpr: 'idle',
+            mouthBlend: 0.0,
+            leftBlink: 0.0,
+            rightBlink: 0.94 * fadeOut,
+            accessory: 'none'
+        },
+        angry: {
+            eye: 'sharp',
+            face: 'smirk',
+            brow: 'angry',
+            mouthExpr: 'fang',
+            mouthBlend: 0.90,
+            leftBlink: 0.0,
+            rightBlink: 0.0,
+            accessory: 'none'
+        },
+        blush: {
+            eye: 'soft',
+            face: 'pouty',
+            brow: 'surprised',
+            mouthExpr: 'idle',
+            mouthBlend: 0.0,
+            leftBlink: 0.04 * fadeOut,
+            rightBlink: 0.04 * fadeOut,
+            accessory: 'blushStrong'
+        },
+        heart: {
+            eye: 'heart',
+            face: 'smile',
+            brow: 'surprised',
+            mouthExpr: 'idle',
+            mouthBlend: 0.0,
+            leftBlink: 0.0,
+            rightBlink: 0.0,
+            accessory: 'heartAura'
+        }
+    };
+
+    const map = maps[es.triggeredExpr];
+    if (!map) {
+        es.triggeredExpr = null;
+        return;
+    }
+
+    charParts._exprEyeStyle = map.eye;
+    charParts._exprFaceType = map.face;
+    charParts._exprBrowExpression = map.brow;
+    charParts._exprFaceAccessory = map.accessory;
+    charParts._exprMouthExpression = map.mouthExpr;
+    charParts._exprMouthBlend = (map.mouthBlend ?? 0) * fadeOut;
+    charParts._exprLeftBlink = (map.leftBlink ?? 0);
+    charParts._exprRightBlink = (map.rightBlink ?? 0);
+
+    if (es.triggeredExpr === 'heart') {
+        charParts._exprHeartPhase = (charParts._exprHeartPhase ?? 0) + delta * 3.4;
+    } else {
+        charParts._exprHeartPhase = 0;
+    }
+
+    charParts.redrawFace(charParts._blinkAmt ?? 0);
+
+    if (progress >= 1) {
+        es.triggeredExpr = null;
+        charParts._blinkAmt = 0;
+        charParts._exprEyeStyle = null;
+        charParts._exprFaceType = null;
+        charParts._exprBrowExpression = null;
+        charParts._exprFaceAccessory = null;
+        charParts._exprMouthExpression = null;
+        charParts._exprMouthBlend = 0;
+        charParts._exprLeftBlink = 0;
+        charParts._exprRightBlink = 0;
+        charParts._exprHeartPhase = 0;
+        charParts.redrawFace(0);
+    }
+}
+
+// ── Open / Close emote menu ─────────────────────────────────────────────────
+function _openEmoteMenu() {
+    if (EMOTE_STATE.menuOpen) return;
+    EMOTE_STATE.menuOpen = true;
+    const el = document.getElementById('emote-menu');
+    if (el) {
+        el.style.display = 'flex';
+        requestAnimationFrame(() => el.classList.add('emote-visible'));
+    }
+    if (document.pointerLockElement) document.exitPointerLock();
+}
+
+function _closeEmoteMenu() {
+    if (!EMOTE_STATE.menuOpen) return;
+    EMOTE_STATE.menuOpen = false;
+    const el = document.getElementById('emote-menu');
+    if (el) {
+        el.classList.remove('emote-visible');
+        setTimeout(() => { if (!EMOTE_STATE.menuOpen) el.style.display = 'none'; }, 210);
+    }
+    // Re-acquire pointer lock when returning to world
+    if (GAME_STATE.mode === 'world' && !isLocked) {
+        canvas.requestPointerLock();
+    }
+}
+
+// ── Wire up all emote menu buttons ─────────────────────────────────────────
+function _initEmoteMenu() {
+    const menu = document.getElementById('emote-menu');
+    if (!menu) return;
+
+    // Tab switching
+    menu.querySelectorAll('[data-emote-tab]').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const tab = btn.dataset.emoteTab;
+            EMOTE_STATE.menuTab = tab;
+            menu.querySelectorAll('.emote-tab-btn').forEach(b => b.classList.toggle('emote-active', b === btn));
+            menu.querySelectorAll('.emote-pane').forEach(p => p.classList.remove('emote-show'));
+            const pane = document.getElementById(`emote-pane-${tab}`);
+            if (pane) pane.classList.add('emote-show');
+        });
+    });
+
+    // Pose buttons — click to toggle on/off
+    menu.querySelectorAll('[data-pose]').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const pose = btn.dataset.pose;
+            if (EMOTE_STATE.activePose === pose) {
+                _cancelEmote();
+                menu.querySelectorAll('[data-pose]').forEach(b => b.classList.remove('emote-selected'));
+            } else {
+                _startEmote(pose);
+                menu.querySelectorAll('[data-pose]').forEach(b => b.classList.toggle('emote-selected', b === btn));
+            }
+        });
+    });
+
+    // Eye type — persistent
+    menu.querySelectorAll('[data-eye]').forEach(btn => {
+        btn.addEventListener('click', () => {
+            GAME_STATE.char.eyeStyle = btn.dataset.eye;
+            EMOTE_STATE.eyeType = btn.dataset.eye;
+            menu.querySelectorAll('[data-eye]').forEach(b => b.classList.toggle('emote-selected', b === btn));
+            if (charParts.redrawFace) charParts.redrawFace(charParts._blinkAmt ?? 0);
+        });
+    });
+
+    // Mouth type — persistent
+    menu.querySelectorAll('[data-mouth]').forEach(btn => {
+        btn.addEventListener('click', () => {
+            GAME_STATE.char.faceType = btn.dataset.mouth;
+            EMOTE_STATE.mouthType = btn.dataset.mouth;
+            menu.querySelectorAll('[data-mouth]').forEach(b => b.classList.toggle('emote-selected', b === btn));
+            if (charParts.redrawFace) charParts.redrawFace(charParts._blinkAmt ?? 0);
+        });
+    });
+
+    // Triggered expressions
+    menu.querySelectorAll('[data-expr]').forEach(btn => {
+        btn.addEventListener('click', () => _triggerExpression(btn.dataset.expr));
+    });
+
+    // Idle, Walk, Run style selectors
+    ['idle', 'walk', 'run'].forEach(kind => {
+        menu.querySelectorAll(`[data-${kind}]`).forEach(btn => {
+            btn.addEventListener('click', () => {
+                EMOTE_STATE[`${kind}Style`] = btn.dataset[kind];
+                menu.querySelectorAll(`[data-${kind}]`).forEach(b => b.classList.toggle('emote-selected', b === btn));
+            });
+        });
+    });
+}
+
+// ══════════════════════════════════════════════════════════════════
+// CONTENT FILTER  (chat messages + character names)
+// ══════════════════════════════════════════════════════════════════
+const _CENSOR = (() => {
+    // ── Mild words that are ALLOWED through (not in any block list) ──
+    // 'shit','ass','hell','crap','damn','dammit','piss','bastard'
+
+    // ── Severe words → first letter + '###' ──────────────────────────
+    const SEVERE = [
+        // F-bomb
+        /\bf+u+c+k+(e[rd]|ing|e[rn]|ers|s)?\b/gi,
+        /\bmother\s*f+u+c+k+(e[rd]|ing|er|ers|s)?\b/gi,
+        // C-word
+        /\bc+u+n+t+s?\b/gi,
+        // B-word
+        /\bb+i+t+c+h+(e[sd]|in|ing)?\b/gi,
+        // Cock (profanity)
+        /\bcock(s|head|sucker|sucking)?\b/gi,
+        // Twat
+        /\btwat+s?\b/gi,
+        // Whore / slut / skank
+        /\bwhor+(e+s?|ing)\b/gi,
+        /\bslut+s?\b/gi,
+        /\bskank+s?\b/gi,
+        // Dick as insult
+        /\bdick(head|s)?\b/gi,
+        // Asshole (bare 'ass' is allowed, asshole is not)
+        /\bass\s*h+o+l+e+s?\b/gi,
+        // ── Racial / ethnic slurs ─────────────────────────────────────
+        /\bn+[i1!]+g+[gq]*[ae3@]+[rz]?\b/gi,
+        /\bn+[i1!]+g+[gq]?a\b/gi,
+        /\bk+[i1!]+k+[e3]?\b/gi,
+        /\bsp+[i1!]+c+k?\b/gi,
+        /\bch+[i1!]+n+k+\b/gi,
+        /\bg+[o0]+[o0]+k+\b/gi,
+        /\bwetb+a+c+k+\b/gi,
+        /\bw+[o0]+p+\b/gi,
+        /\bp+[a@]+k+[i1!]\b/gi,
+        /\bzipper.?head\b/gi,
+        /\bbeaner+s?\b/gi,
+        /\bspear.?chucker\b/gi,
+        /\btowel.?head\b/gi,
+        /\bsand.?n+[i1!]+g+\w*/gi,
+        // ── Orientation / gender slurs ────────────────────────────────
+        /\bf+a+g+g+[o0]t+s?\b/gi,
+        /\bf+a+g+s?\b/gi,
+        /\bd+[y]+k+[e3]+s?\b/gi,
+        /\btr+a+n+n+[y]+\b/gi,
+        /\b(she|he).?male\b/gi,
+        // ── R-slur ────────────────────────────────────────────────────
+        /\br+[e3]+t+[a@4]+r+d+(ed|s|ing)?\b/gi,
+        // ── Explicit sexual ───────────────────────────────────────────
+        /\bporn(o|hub|ography)?\b/gi,
+        /\banal\b/gi,
+        /\banus\b/gi,
+    ];
+
+    // ── Blocked platform / social media names → '[blocked]' ──────────
+    // YouTube, Twitch, Roblox, Minecraft are explicitly allowed.
+    const BLOCKED_PLATFORMS = [
+        /\bfacebook\b/gi,
+        /\bfb\.com\b/gi,
+        /\binstagram\b/gi,
+        /\bdiscord(\.gg|\.com)?\b/gi,
+        /\btwitter\b/gi,
+        /\bx\.com\b/gi,
+        /\btiktok\b/gi,
+        /\bsnapchat\b/gi,
+        /\bonlyfans\b/gi,
+        /\btelegram\b/gi,
+        /\bwhatsapp\b/gi,
+        /\blinkedin\b/gi,
+        /\bpinterest\b/gi,
+        /\breddit\b/gi,
+        /\b4chan\b/gi,
+        /\bkik\b/gi,
+        /\btumblr\b/gi,
+        /\bmyspace\b/gi,
+        /\bbereal\b/gi,
+        /\bthreads\.net\b/gi,
+        /\bmastodon\.social\b/gi,
+    ];
+
+    // URL patterns
+    const URL_RE   = /https?:\/\/\S+/gi;
+    const WWW_RE   = /www\.\S+/gi;
+    const BARE_URL = /\b\w[\w-]+\.(?:com|net|org|io|gg|tv|xyz|me|co|app|dev|info|biz|club|live|site)(\/\S*)?\b/gi;
+
+    // @ handle pattern
+    const AT_RE = /@\w+/gi;
+
+    function _censorWord(match) {
+        if (!match || match.length === 0) return match;
+        return match[0].toUpperCase() + '###';
+    }
+
+    function _resetAll() {
+        [...SEVERE, ...BLOCKED_PLATFORMS, URL_RE, WWW_RE, BARE_URL, AT_RE]
+            .forEach(r => { r.lastIndex = 0; });
+    }
+
+    /**
+     * Filter a chat message.
+     * • URLs / bare domains → '[link removed]'
+     * • @handles           → '[handle removed]'
+     * • Blocked platforms  → '[blocked]'
+     * • Severe words       → first-letter + '###'
+     * Mild words (shit, ass, damn, hell, crap, piss, bastard) pass through.
+     */
+    function process(text) {
+        if (!text) return text;
+        _resetAll();
+        text = text.replace(URL_RE,   '[link removed]');
+        text = text.replace(WWW_RE,   '[link removed]');
+        text = text.replace(BARE_URL, '[link removed]');
+        text = text.replace(AT_RE,    '[handle removed]');
+        for (const re of BLOCKED_PLATFORMS) text = text.replace(re, '[blocked]');
+        for (const re of SEVERE)            text = text.replace(re, _censorWord);
+        _resetAll();
+        return text;
+    }
+
+    /**
+     * Validate / clean a character name.
+     * Returns { cleaned: string, blocked: boolean, reason: string }
+     * blocked=true → reject, prompt user to change it.
+     */
+    function validateName(raw) {
+        if (!raw || !raw.trim()) return { cleaned: 'Wizard', blocked: false };
+        let name = raw.trim();
+        _resetAll();
+
+        // Reject names with URLs or @ handles entirely
+        if (URL_RE.test(name) || WWW_RE.test(name) || BARE_URL.test(name)) {
+            _resetAll();
+            return { cleaned: '', blocked: true, reason: 'Names cannot contain links.' };
+        }
+        if (AT_RE.test(name)) {
+            _resetAll();
+            return { cleaned: '', blocked: true, reason: 'Names cannot contain @ handles.' };
+        }
+
+        // Reject names that mention blocked platforms
+        for (const re of BLOCKED_PLATFORMS) {
+            if (re.test(name)) { _resetAll(); return { cleaned: '', blocked: true, reason: 'That name is not allowed.' }; }
+        }
+
+        // Censor severe words within the name
+        for (const re of SEVERE) name = name.replace(re, _censorWord);
+
+        // Strip control characters, collapse spaces, enforce max length
+        name = name.replace(/[\x00-\x1F\x7F]/g, '').replace(/\s+/g, ' ').trim();
+        _resetAll();
+        if (!name) return { cleaned: 'Wizard', blocked: false };
+        return { cleaned: name.slice(0, 24), blocked: false };
+    }
+
+    return { process, validateName };
+})();
+
+// ══════════════════════════════════════════════════════════════════
 // CHAT SYSTEM
 // ══════════════════════════════════════════════════════════════════
 const CHAT_STATE = {
@@ -7478,6 +9331,159 @@ const CHAT_EMOJIS = [
     '😎','😈','🤔','😮','😡','🥳','🧙','🪄','⚔️','🛡️',
     '🐉','🌙','☀️','🌊','🌪️','💥','🎯','🔮','📜','🏆',
 ];
+
+// ── FRIEND SYSTEM ─────────────────────────────────────────────────────────
+function _isFriendById(id) {
+    if (!id) return false;
+    return GAME_STATE.friends.list.some(f => (f?.id ?? f) === id);
+}
+function _isFriendRequestSentTo(id) {
+    return (GAME_STATE.friends.sentRequests || []).includes(id);
+}
+function _isFriendRequestPendingFrom(id) {
+    return GAME_STATE.friends.requests.some(f => (f?.id ?? f) === id);
+}
+
+function _showFriendToast(msg) {
+    let el = document.getElementById('friend-toast');
+    if (!el) {
+        el = document.createElement('div');
+        el.id = 'friend-toast';
+        document.body.appendChild(el);
+    }
+    el.textContent = msg;
+    el.classList.add('show');
+    clearTimeout(el._tt);
+    el._tt = setTimeout(() => el.classList.remove('show'), 3400);
+}
+
+function _sendFriendRequest(id, name) {
+    if (!id || _isFriendById(id) || _isFriendRequestSentTo(id)) return;
+    // If they already sent us a request, auto-accept instead
+    if (_isFriendRequestPendingFrom(id)) { _acceptFriendRequest(id, name); return; }
+    if (!GAME_STATE.friends.sentRequests) GAME_STATE.friends.sentRequests = [];
+    GAME_STATE.friends.sentRequests.push(id);
+    const myName = GAME_STATE?.char?.name || 'Wizard';
+    _sendNetworkMessage('friend_request', { toId: id, fromId: NETWORK_STATE.playerId, fromName: myName });
+    _showFriendToast(`✉️ Friend request sent to ${name}!`);
+    if (CHAT_STATE.open) _chatRenderMessages();
+}
+
+function _acceptFriendRequest(id, name) {
+    if (!id || _isFriendById(id)) return;
+    GAME_STATE.friends.requests = GAME_STATE.friends.requests.filter(f => (f?.id ?? f) !== id);
+    GAME_STATE.friends.list.push({ id, name });
+    const myName = GAME_STATE?.char?.name || 'Wizard';
+    _sendNetworkMessage('friend_accept', { toId: id, fromId: NETWORK_STATE.playerId, fromName: myName });
+    if (!CHAT_STATE.friends.some(f => f.id === id)) CHAT_STATE.friends.push({ id, name, online: true });
+    _showFriendToast(`🤝 You and ${name} are now friends!`);
+    if (isFriendsOpen()) renderFriendsUI();
+    if (CHAT_STATE.open) { _chatRenderFriends(); _chatRenderMessages(); }
+}
+
+function _declineFriendRequest(id) {
+    GAME_STATE.friends.requests = GAME_STATE.friends.requests.filter(f => (f?.id ?? f) !== id);
+    if (isFriendsOpen()) renderFriendsUI();
+}
+
+function _unfriend(id, name) {
+    GAME_STATE.friends.list = GAME_STATE.friends.list.filter(f => (f?.id ?? f) !== id);
+    CHAT_STATE.friends = CHAT_STATE.friends.filter(f => f.id !== id);
+    if (CHAT_STATE.selectedFriend === id) { CHAT_STATE.selectedFriend = null; }
+    const myName = GAME_STATE?.char?.name || 'Wizard';
+    _sendNetworkMessage('friend_remove', { toId: id, fromId: NETWORK_STATE.playerId, fromName: myName });
+    _showFriendToast(`💔 You unfriended ${name}.`);
+    if (isFriendsOpen()) renderFriendsUI();
+    if (CHAT_STATE.open) { _chatRenderFriends(); _chatRenderMessages(); }
+}
+
+function _handleFriendRequest(fromId, fromName) {
+    if (!fromId || _isFriendById(fromId) || _isFriendRequestPendingFrom(fromId)) return;
+    // Mutual — we already sent to them, so auto-accept both sides
+    if (_isFriendRequestSentTo(fromId)) {
+        GAME_STATE.friends.sentRequests = (GAME_STATE.friends.sentRequests || []).filter(id => id !== fromId);
+        _acceptFriendRequest(fromId, fromName);
+        return;
+    }
+    GAME_STATE.friends.requests.push({ id: fromId, name: fromName });
+    _showFriendToast(`📜 ${fromName} sent you a friend request! Open Friends to accept.`);
+    if (isFriendsOpen()) renderFriendsUI();
+}
+
+function _handleFriendAccept(fromId, fromName) {
+    if (!fromId || _isFriendById(fromId)) return;
+    GAME_STATE.friends.sentRequests = (GAME_STATE.friends.sentRequests || []).filter(id => id !== fromId);
+    GAME_STATE.friends.list.push({ id: fromId, name: fromName });
+    if (!CHAT_STATE.friends.some(f => f.id === fromId)) CHAT_STATE.friends.push({ id: fromId, name: fromName, online: true });
+    _showFriendToast(`🤝 ${fromName} accepted your friend request!`);
+    if (isFriendsOpen()) renderFriendsUI();
+    if (CHAT_STATE.open) _chatRenderFriends();
+}
+
+function _handleFriendRemove(fromId, fromName) {
+    GAME_STATE.friends.list = GAME_STATE.friends.list.filter(f => (f?.id ?? f) !== fromId);
+    CHAT_STATE.friends = CHAT_STATE.friends.filter(f => f.id !== fromId);
+    if (CHAT_STATE.selectedFriend === fromId) CHAT_STATE.selectedFriend = null;
+    _showFriendToast(`💔 ${fromName} removed you from their friends list.`);
+    if (isFriendsOpen()) renderFriendsUI();
+    if (CHAT_STATE.open) _chatRenderFriends();
+}
+
+// ── PLAYER ECONOMY & LEVELING ────────────────────────────────────────────────
+// XP required to go FROM level n TO level n+1.
+// Formula: floor(100 * n^1.7) — gently exponential; doubles roughly every 3–4 levels.
+// Level 1→2: 100 | Level 5→6: ~1570 | Level 10→11: ~5012 | Level 20→21: ~13000
+function _xpForLevel(n) {
+    return Math.floor(100 * Math.pow(Math.max(1, n), 1.7));
+}
+
+function _showLevelUpNotice(newLevel) {
+    const el  = document.getElementById('levelup-notice');
+    const num = document.getElementById('lu-level-num');
+    const sub = document.getElementById('lu-sub-text');
+    if (!el) return;
+    if (num) num.textContent = newLevel;
+    if (sub) sub.textContent = '+1 Upgrade Point Awarded!';
+    el.classList.add('show');
+    clearTimeout(el._lt);
+    el._lt = setTimeout(() => el.classList.remove('show'), 4200);
+}
+
+/**
+ * Grant XP to the local player. Handles level-ups automatically.
+ * @param {number} amount
+ */
+function addXP(amount) {
+    if (!amount || amount <= 0 || GAME_STATE.mode !== 'world') return;
+    GAME_STATE.xp = (GAME_STATE.xp || 0) + Math.round(amount);
+
+    let leveled = false;
+    while (GAME_STATE.xp >= _xpForLevel(GAME_STATE.level)) {
+        GAME_STATE.xp  -= _xpForLevel(GAME_STATE.level);
+        GAME_STATE.level++;
+        GAME_STATE.attrPoints = (GAME_STATE.attrPoints || 0) + 1; // +1 upgrade point
+        leveled = true;
+        _showLevelUpNotice(GAME_STATE.level);
+    }
+
+    updateHudMeters();
+    if (leveled) {
+        renderInventorySummary();
+        renderAttrUI();
+        renderAttrUI('inventory-upgrade-panel', 'inventory-upgrade-points');
+    }
+}
+
+/**
+ * Add gold/cash to the local player.
+ * @param {number} amount
+ */
+function addCash(amount) {
+    if (!amount || GAME_STATE.mode !== 'world') return;
+    GAME_STATE.cash = Math.max(0, (GAME_STATE.cash || 0) + Math.round(amount));
+    updateHudMeters();
+    renderInventorySummary();
+}
 
 function isChatOpen() { return CHAT_STATE.open; }
 function _isChatInputFocused() {
@@ -7577,6 +9583,40 @@ function _chatRenderMessages() {
             nameSpan.textContent = m.sender + ':';
             div.appendChild(nameSpan);
             div.appendChild(document.createTextNode(' ' + m.text));
+
+            // ── Add / Report action buttons (hover-visible, non-self public messages) ──
+            if (!isMe && CHAT_STATE.tab === 'public' && m.senderId) {
+                const row = document.createElement('span');
+                row.className = 'chat-action-btns';
+
+                const addBtn = document.createElement('button');
+                addBtn.className = 'chat-action-btn add';
+                if (_isFriendById(m.senderId)) {
+                    addBtn.textContent = '👥 Friends';
+                    addBtn.classList.add('friends-btn');
+                } else if (_isFriendRequestSentTo(m.senderId)) {
+                    addBtn.textContent = '⏳ Pending';
+                    addBtn.classList.add('pending');
+                } else {
+                    addBtn.textContent = '+ Add';
+                    addBtn.addEventListener('click', (ev) => {
+                        ev.stopPropagation();
+                        _sendFriendRequest(m.senderId, m.sender);
+                    });
+                }
+
+                const reportBtn = document.createElement('button');
+                reportBtn.className = 'chat-action-btn report';
+                reportBtn.textContent = '⚑ Report';
+                reportBtn.addEventListener('click', (ev) => {
+                    ev.stopPropagation();
+                    _showFriendToast(`🚫 ${m.sender} has been reported. Thank you.`);
+                });
+
+                row.appendChild(addBtn);
+                row.appendChild(reportBtn);
+                div.appendChild(row);
+            }
         }
         box.appendChild(div);
     });
@@ -7656,8 +9696,9 @@ function _chatSendMessage() {
 
     const inp = document.getElementById('chat-input');
     if (!inp) return;
-    const text = inp.value.trim();
-    if (!text) return;
+    const rawText = inp.value.trim();
+    if (!rawText) return;
+    const text = _CENSOR.process(rawText);
 
     const myName = GAME_STATE?.char?.name || 'Wizard';
     const msg = { sender: myName, text, time: Date.now(), type: 'chat' };
@@ -7665,7 +9706,7 @@ function _chatSendMessage() {
     if (CHAT_STATE.tab === 'public') {
         CHAT_STATE.messages.public.push(msg);
         // Broadcast to multiplayer when connected
-        _sendNetworkMessage('chat_public', { sender: myName, text });
+        _sendNetworkMessage('chat_public', { sender: myName, senderId: NETWORK_STATE.playerId || '', text });
     } else if (CHAT_STATE.tab === 'private' && CHAT_STATE.selectedFriend) {
         if (!CHAT_STATE.messages.private[CHAT_STATE.selectedFriend]) {
             CHAT_STATE.messages.private[CHAT_STATE.selectedFriend] = [];
@@ -7686,8 +9727,8 @@ function _chatSendMessage() {
     if (!CHAT_STATE.cooldownRaf) _chatUpdateCooldownBar();
 }
 
-function _chatReceivePublic(sender, text, senderModel) {
-    CHAT_STATE.messages.public.push({ sender, text, time: Date.now(), type: 'chat' });
+function _chatReceivePublic(sender, text, senderModel, senderId) {
+    CHAT_STATE.messages.public.push({ sender, text, time: Date.now(), type: 'chat', senderId: senderId || null });
     // Cap history
     if (CHAT_STATE.messages.public.length > 200) CHAT_STATE.messages.public.shift();
     if (CHAT_STATE.open && CHAT_STATE.tab === 'public') {
@@ -8166,7 +10207,9 @@ function updateGamepadInput(delta) {
     CONTROLLER_STATE.jumpPressed = _controllerActionEdge(gamepad, 'jump');
 
     if (_controllerActionEdge(gamepad, 'interact')) triggerPrimaryInteraction('controller');
-    if (_controllerActionEdge(gamepad, 'chat')) _showSpellCastStatus('Chat UI coming soon', true, 900);
+    if (_controllerActionEdge(gamepad, 'chat')) {
+        if (EMOTE_STATE.menuOpen) _closeEmoteMenu(); else _openEmoteMenu();
+    }
     if (_controllerActionEdge(gamepad, 'friends') && !isPauseMenuOpen() && !isSaveLoadOpen() && !isSettingsOpen()) toggleFriends();
     if (_controllerActionEdge(gamepad, 'inventory') && !isPauseMenuOpen() && !isSaveLoadOpen() && !isSettingsOpen()) toggleInventory();
 
@@ -9958,6 +12001,31 @@ function _spawnPulseRing(position, school, radius = 2.0, life = 0.55, yOffset = 
     });
 }
 
+// Reusable proximity shake — called by any spell delivery that doesn't
+// route through _spawnImpactEffect (wave, chain, ground zone, etc.)
+function _doSpellImpactShake(manifest, position) {
+    if (typeof triggerScreenShake !== 'function' || !worldCamera || !position) return;
+    const radius      = Math.max(1.0, manifest.impactRadius ?? 1.2);
+    const isHeavy     = manifest.effectIds.includes('explode') ||
+                        (manifest.castType && manifest.castType.family === 'aoe');
+    const shakeRadius = Math.max(8, radius * (isHeavy ? 11 : 7));
+    const dist        = worldCamera.position.distanceTo(position);
+    const falloff     = Math.max(0, 1 - dist / shakeRadius);
+    if (falloff <= 0) return;
+    const intensity = (isHeavy ? 0.46 : 0.22) * falloff * Math.max(1, radius * 0.5);
+    if (intensity < 0.016) return;
+    triggerScreenShake(intensity, isHeavy ? 0.50 : 0.28);
+    if (falloff > 0.20) {
+        const pal = {
+            fire:[255,65,10], storm:[165,85,255], ice:[75,215,255], water:[35,155,255],
+            earth:[100,205,70], death:[155,35,240], time:[255,215,55], plasma:[255,75,175],
+            light:[255,245,190], dark:[75,55,205], myth:[230,175,55], balance:[200,150,85],
+        };
+        const [r,g,b] = pal[manifest.school] || [255,120,50];
+        triggerImpactFlash(r, g, b, Math.min(0.38, falloff * (isHeavy ? 0.44 : 0.22)));
+    }
+}
+
 function _spawnImpactEffect(manifest, position, scale = 1.0) {
     const radius = Math.max(1.0, (manifest.impactRadius || 1.2) * scale);
     const soundProfile = _getSpellSoundProfile(manifest);
@@ -9996,6 +12064,41 @@ function _spawnImpactEffect(manifest, position, scale = 1.0) {
             directionalBias: new THREE.Vector3(0, 1, 0),
             spread: 1.8,
         });
+    }
+
+    // ── Proximity-based screen shake & flash ─────────────────────────────────
+    // Works for both local AND remote spell impacts — every client that is
+    // close enough to the explosion position will shake on their own screen.
+    if (typeof triggerScreenShake === 'function' && worldCamera) {
+        const distToImpact = worldCamera.position.distanceTo(position);
+        const isHeavy      = manifest.effectIds.includes('explode') ||
+                             (manifest.castType && manifest.castType.family === 'aoe');
+        const shakeRadius  = Math.max(8, radius * (isHeavy ? 11 : 7));
+        const falloff      = Math.max(0, 1 - distToImpact / shakeRadius);
+
+        if (falloff > 0) {
+            const baseIntensity  = isHeavy ? 0.46 : 0.18;
+            const shakeIntensity = baseIntensity * falloff * Math.max(1, radius * 0.5);
+
+            if (shakeIntensity > 0.018) {
+                triggerScreenShake(shakeIntensity, isHeavy ? 0.50 : 0.26);
+
+                if (isHeavy && falloff > 0.22) {
+                    // Tint flash to the spell's school color
+                    const _impactFlashPalette = {
+                        fire:    [255, 65,  10],   storm:   [165, 85, 255],
+                        ice:     [ 75, 215, 255],   water:   [ 35, 155, 255],
+                        earth:   [100, 205,  70],   life:    [ 70, 255, 125],
+                        death:   [155,  35, 240],   time:    [255, 215,  55],
+                        plasma:  [255,  75, 175],   light:   [255, 245, 190],
+                        dark:    [ 75,  55, 205],   myth:    [230, 175,  55],
+                        balance: [200, 150,  85],
+                    };
+                    const [fr, fg, fb] = _impactFlashPalette[manifest.school] || [255, 120, 50];
+                    triggerImpactFlash(fr, fg, fb, Math.min(0.40, falloff * 0.48));
+                }
+            }
+        }
     }
 }
 
@@ -10313,6 +12416,7 @@ function _spawnChainEffect(manifest) {
         speed: 1.1,
         gravity: -0.2,
     });
+    _doSpellImpactShake(manifest, end);
 
     return _trackSpellFx({
         object: line,
@@ -10394,6 +12498,7 @@ function _spawnGroundZoneEffect(manifest, overrideCenter = null) {
     });
 
     _spawnSchoolAccentVfx(manifest, center.clone(), 'zone');
+    _doSpellImpactShake(manifest, center);
 
     return _trackSpellFx({
         object: group,
@@ -10724,6 +12829,7 @@ function _spawnWaveEffect(manifest) {
     });
 
     _spawnSchoolAccentVfx(manifest, origin, 'impact');
+    _doSpellImpactShake(manifest, origin);
 }
 
 function _spawnSpellVisualByManifest(manifest) {
@@ -11449,6 +13555,16 @@ document.addEventListener('mousedown', (e) => {
             e.preventDefault();
         }
     }
+
+    // ── LEFT CLICK (not aiming) → Push/Shove ──────────────────────────────────
+    if (e.button === 0 && GAME_STATE.mode === 'world' && isLocked && !isAiming) {
+        if (!isHomeZone() && !GAME_STATE.player?.dead && PUSH_STATE.phase === 'idle') {
+            PUSH_STATE.phase   = 'windup';
+            PUSH_STATE.elapsed = 0;
+            PUSH_STATE.pendingFire = false;
+            e.preventDefault();
+        }
+    }
 });
 
 document.addEventListener('mouseup', (e) => {
@@ -11526,8 +13642,28 @@ function setupUI() {
     });
 
     // Inputs (Name + Nametag color)
+    const _nameWarnEl = document.getElementById('char-name-warn');
     document.getElementById('char-name').addEventListener('input', (e) => {
-        GAME_STATE.char.name = e.target.value;
+        const { cleaned, blocked, reason } = _CENSOR.validateName(e.target.value);
+        if (blocked) {
+            // Revert field and show warning
+            e.target.value = GAME_STATE.char.name || 'Wizard';
+            if (_nameWarnEl) {
+                _nameWarnEl.textContent = reason || 'That name is not allowed.';
+                _nameWarnEl.style.display = 'block';
+                clearTimeout(_nameWarnEl._hideTimer);
+                _nameWarnEl._hideTimer = setTimeout(() => { _nameWarnEl.style.display = 'none'; }, 3000);
+            }
+            return;
+        }
+        if (_nameWarnEl) _nameWarnEl.style.display = 'none';
+        // If severe words were auto-censored, push the cleaned value back into the field
+        if (cleaned !== e.target.value) {
+            const pos = e.target.selectionStart;
+            e.target.value = cleaned;
+            try { e.target.setSelectionRange(pos, pos); } catch(_) {}
+        }
+        GAME_STATE.char.name = cleaned;
         if (charParts._renderNametagCanvas && charParts._nametagSprite) {
             charParts._renderNametagCanvas();
             charParts._nametagSprite.material.map.needsUpdate = true;
@@ -12601,6 +14737,9 @@ function _buildSavePayload(label = 'Save Slot') {
         },
         attrPoints: Number(GAME_STATE.attrPoints ?? DEFAULT_ATTR_POINTS_TEMPLATE),
         attributes: _deepClonePlain(GAME_STATE.attributes || DEFAULT_ATTRIBUTES_TEMPLATE),
+        level:  Number(GAME_STATE.level  ?? 1),
+        xp:     Number(GAME_STATE.xp     ?? 0),
+        cash:   Number(GAME_STATE.cash   ?? 0),
         char: _deepClonePlain(GAME_STATE.char),
         inventory: _deepClonePlain(GAME_STATE.inventory),
         friends: _deepClonePlain(GAME_STATE.friends),
@@ -12636,6 +14775,9 @@ function _applyLoadedSavePayload(payload) {
     if (!payload) return false;
 
     GAME_STATE.attrPoints = Number(payload.attrPoints ?? DEFAULT_ATTR_POINTS_TEMPLATE);
+    GAME_STATE.level      = Number(payload.level  ?? 1);
+    GAME_STATE.xp         = Number(payload.xp     ?? 0);
+    GAME_STATE.cash       = Number(payload.cash   ?? 0);
     GAME_STATE.attributes = {
         ..._deepClonePlain(DEFAULT_ATTRIBUTES_TEMPLATE),
         ...(payload.attributes || {})
@@ -12938,6 +15080,31 @@ function updateHudMeters() {
     const mpBar = document.getElementById('hud-mp-bar');
     if (hpBar && p.maxHP) hpBar.style.width = `${Math.max(0, Math.min(100, (p.hp / p.maxHP) * 100))}%`;
     if (mpBar && p.maxEnergy) mpBar.style.width = `${Math.max(0, Math.min(100, (p.energy / p.maxEnergy) * 100))}%`;
+
+    // XP & Level
+    const lv      = GAME_STATE.level  || 1;
+    const curXP   = GAME_STATE.xp     || 0;
+    const needed  = _xpForLevel(lv);
+    const xpPct   = Math.min(100, (curXP / needed) * 100);
+    const xpBar   = document.getElementById('hud-xp-bar');
+    const xpText  = document.getElementById('hud-xp-text');
+    const lvBadge = document.getElementById('hud-level-badge');
+    const hudCls  = document.getElementById('hud-class');
+    if (xpBar)   xpBar.style.width  = xpPct + '%';
+    if (xpText)  xpText.textContent = `XP ${curXP} / ${needed}`;
+    if (lvBadge) lvBadge.textContent = `Lvl ${lv}`;
+
+    // Update class line (top of HUD card)
+    if (hudCls) {
+        const alignLabel = GAME_STATE.char?.alignment === 'light' ? 'Light' : 'Dark';
+        const magicLabel = (GAME_STATE.char?.magic || 'Novice');
+        const classStr   = magicLabel.charAt(0).toUpperCase() + magicLabel.slice(1);
+        hudCls.textContent = `Lvl ${lv}  ${alignLabel} ${classStr} Wizard`;
+    }
+
+    // Cash
+    const cashEl = document.getElementById('hud-cash');
+    if (cashEl) cashEl.textContent = `💰 ${(GAME_STATE.cash || 0).toLocaleString()} Gold`;
 }
 
 function isPlayerDead() {
@@ -13135,6 +15302,16 @@ function _applyDamageToPlayer(amount, options = {}) {
         _playPlayerVoice('hurt');
     }
 
+    // ── Hit reaction: shake + red flash scaled to damage severity ──
+    if (typeof triggerScreenShake === 'function') {
+        const maxHP        = p.maxHP ?? 100;
+        const severity     = Math.min(1, applied / Math.max(1, maxHP) * 6);
+        const shakeAmt     = 0.20 + severity * 0.60;
+        const shakeDur     = 0.30 + severity * 0.25;
+        triggerScreenShake(shakeAmt, shakeDur);
+        triggerImpactFlash(255, 25, 25, 0.18 + severity * 0.28);
+    }
+
     return applied;
 }
 
@@ -13314,9 +15491,16 @@ function renderInventorySummary() {
     const alignLabel = GAME_STATE.char.alignment === 'light' ? 'Light' : 'Dark';
     const classLabel = GAME_STATE.char.magic.charAt(0).toUpperCase() + GAME_STATE.char.magic.slice(1);
 
+    const lv     = GAME_STATE.level || 1;
+    const curXP  = GAME_STATE.xp    || 0;
+    const needed = _xpForLevel(lv);
+    const xpPct  = Math.min(100, Math.round((curXP / needed) * 100));
     root.innerHTML = `
         <h3>${GAME_STATE.char.name}</h3>
-        <div style="color:#d7b774;font-weight:700;">Lvl 1 ${alignLabel} ${classLabel} Wizard</div>
+        <div style="color:#d7b774;font-weight:700;">Lvl ${lv}  ${alignLabel} ${classLabel} Wizard</div>
+        <div class="inventory-statline"><span>💰 Gold</span><span style="color:#fde68a;">${(GAME_STATE.cash || 0).toLocaleString()}</span></div>
+        <div class="inventory-statline"><span>⭐ XP</span><span>${curXP} / ${needed} (${xpPct}%)</span></div>
+        <div class="inventory-statline" style="margin-bottom:8px;"><span style="font-size:0.68rem;color:#a78bfa;">Next Level</span><span><div style="width:120px;height:6px;background:#1f2937;border-radius:9999px;overflow:hidden;display:inline-block;vertical-align:middle;"><div style="width:${xpPct}%;height:100%;background:linear-gradient(90deg,#7c3aed,#c084fc);"></div></div></span></div>
         <div class="inventory-statline"><span>HP</span><span>${Math.round(p.hp || 0)} / ${Math.round(p.maxHP || 0)}</span></div>
         <div class="inventory-statline"><span>Energy</span><span>${Math.round(p.energy || 0)} / ${Math.round(p.maxEnergy || 0)}</span></div>
         <div class="inventory-statline"><span>Stamina</span><span>${Math.round(p.stamina || 0)} / ${Math.round(p.maxStamina || 0)}</span></div>
@@ -13460,31 +15644,70 @@ function renderFriendsUI() {
     const requestsPanel = document.getElementById('friends-requests-panel');
 
     if (listPanel) {
-        listPanel.innerHTML = GAME_STATE.friends.list.length
-            ? GAME_STATE.friends.list.map(name => `
-                <div class="inventory-row">
-                    <div>
-                        <div class="inventory-row-title">🧙 ${name}</div>
-                        <div class="inventory-row-desc">Currently on your friends list.</div>
-                    </div>
-                </div>
-            `).join('')
-            : `<span class="big">Nobodies here! :(</span><span class="small">Your friends list is empty for now.</span>`;
-        listPanel.className = GAME_STATE.friends.list.length ? '' : 'friends-empty-state';
+        if (GAME_STATE.friends.list.length) {
+            listPanel.innerHTML = '';
+            listPanel.className = '';
+            GAME_STATE.friends.list.forEach(friend => {
+                const name = friend?.name ?? friend;
+                const id   = friend?.id   ?? friend;
+                const row  = document.createElement('div');
+                row.className = 'inventory-row';
+                row.style.cssText = 'display:flex; align-items:center; justify-content:space-between;';
+                const info = document.createElement('div');
+                info.innerHTML = `<div class="inventory-row-title">🧙 ${name}</div><div class="inventory-row-desc">Currently on your friends list.</div>`;
+                const unfriendBtn = document.createElement('button');
+                unfriendBtn.className = 'inventory-use-btn';
+                unfriendBtn.textContent = 'Unfriend';
+                unfriendBtn.style.cssText = 'background:linear-gradient(180deg,#7f1d1d,#450a0a); min-width:90px; flex-shrink:0;';
+                unfriendBtn.addEventListener('click', () => {
+                    if (confirm(`Remove ${name} from your friends list?`)) _unfriend(id, name);
+                });
+                row.appendChild(info);
+                row.appendChild(unfriendBtn);
+                listPanel.appendChild(row);
+            });
+        } else {
+            listPanel.innerHTML = '<span class="big">Nobodies here! :(</span><span class="small">Your friends list is empty for now.</span>';
+            listPanel.className = 'friends-empty-state';
+        }
     }
 
     if (requestsPanel) {
-        requestsPanel.innerHTML = GAME_STATE.friends.requests.length
-            ? GAME_STATE.friends.requests.map(name => `
-                <div class="inventory-row">
-                    <div>
-                        <div class="inventory-row-title">📜 ${name}</div>
-                        <div class="inventory-row-desc">Sent you a friend request.</div>
-                    </div>
-                </div>
-            `).join('')
-            : `<span class="big">No requests yet.</span><span class="small">When another wizard reaches out, it will appear here.</span>`;
-        requestsPanel.className = GAME_STATE.friends.requests.length ? '' : 'friends-empty-state';
+        if (GAME_STATE.friends.requests.length) {
+            requestsPanel.innerHTML = '';
+            requestsPanel.className = '';
+            GAME_STATE.friends.requests.forEach(req => {
+                const name = req?.name ?? req;
+                const id   = req?.id   ?? null;
+                const row  = document.createElement('div');
+                row.className = 'inventory-row';
+                row.style.cssText = 'display:flex; align-items:center; justify-content:space-between;';
+                const info = document.createElement('div');
+                info.innerHTML = `<div class="inventory-row-title">📜 ${name}</div><div class="inventory-row-desc">Sent you a friend request.</div>`;
+                const btnGroup = document.createElement('div');
+                btnGroup.style.cssText = 'display:flex; gap:6px; flex-shrink:0;';
+                const acceptBtn = document.createElement('button');
+                acceptBtn.className = 'inventory-use-btn';
+                acceptBtn.textContent = 'Accept';
+                acceptBtn.style.minWidth = '75px';
+                const declineBtn = document.createElement('button');
+                declineBtn.className = 'inventory-use-btn';
+                declineBtn.textContent = 'Decline';
+                declineBtn.style.cssText = 'background:linear-gradient(180deg,#7f1d1d,#450a0a); min-width:75px;';
+                if (id) {
+                    acceptBtn.addEventListener('click',  () => _acceptFriendRequest(id, name));
+                    declineBtn.addEventListener('click', () => _declineFriendRequest(id));
+                }
+                btnGroup.appendChild(acceptBtn);
+                btnGroup.appendChild(declineBtn);
+                row.appendChild(info);
+                row.appendChild(btnGroup);
+                requestsPanel.appendChild(row);
+            });
+        } else {
+            requestsPanel.innerHTML = '<span class="big">No requests yet.</span><span class="small">When another wizard reaches out, it will appear here.</span>';
+            requestsPanel.className = 'friends-empty-state';
+        }
     }
 }
 
@@ -13622,6 +15845,7 @@ function startGame() {
     _startWorldAmbience();
     _resumeAudioContext();
     _initChatUI();
+    _initEmoteMenu();
     initMultiplayer();
     initVoiceChat();
 
@@ -13789,6 +16013,42 @@ function updatePhysics(delta) {
     );
     p.isCrouching = !castLocked && !menuLocked && (keys.ctrl || CONTROLLER_STATE.crouchHeld);
 
+    // ── SLIDE TRIGGER DETECTION ──
+    // Detect crouch key rising edge (pressed this frame, not held last frame).
+    const crouchHeldNow     = p.isCrouching;
+    const crouchJustPressed = crouchHeldNow && !SLIDE_STATE.prevCrouchHeld;
+    SLIDE_STATE.prevCrouchHeld = crouchHeldNow;
+
+    // Intended pre-penalty speed — used as the slide launch speed.
+    const _baseSlideSpd = (castLocked || menuLocked) ? 0
+        : (p.isSprinting ? p.speed * p.sprintMultiplier : p.speed)
+          * (moveMagnitude > 0 ? Math.max(0.35, moveMagnitude) : 0);
+
+    if (crouchJustPressed && !isHomeZone() && !SLIDE_STATE.active) {
+        if (p.onGround && _baseSlideSpd > 1.0) {
+            // Moving on ground + crouch pressed → start knee-slide immediately
+            SLIDE_STATE.active     = true;
+            SLIDE_STATE.jumpQueued = false;
+            const boost = p.isSprinting ? 1.25 : 1.05;
+            SLIDE_STATE.velX = moveDir.x * _baseSlideSpd * boost;
+            SLIDE_STATE.velZ = moveDir.z * _baseSlideSpd * boost;
+        } else if (!p.onGround && moveMagnitude > 0.1) {
+            // Airborne + crouch pressed → queue slide for when we land
+            SLIDE_STATE.jumpQueued = true;
+            const airMul = ((keys.shift || CONTROLLER_STATE.sprintHeld) && !castLocked)
+                ? p.sprintMultiplier : 1.0;
+            const airSpd = p.speed * airMul * Math.max(0.35, moveMagnitude);
+            SLIDE_STATE.queuedVelX = moveDir.x * airSpd;
+            SLIDE_STATE.queuedVelZ = moveDir.z * airSpd;
+        }
+    }
+
+    // While sliding, disable sprint/crouch so their speed penalties don't apply
+    if (SLIDE_STATE.active) {
+        p.isSprinting = false;
+        p.isCrouching = false;
+    }
+
     if (p.isSprinting) currentSpeed *= p.sprintMultiplier;
     if (p.isCrouching) currentSpeed *= 0.5;
     if (isAiming)      currentSpeed *= 0.5;
@@ -13800,8 +16060,31 @@ function updatePhysics(delta) {
     }
 
     // Horizontal Velocity
-    p.velocity.x = moveDir.x * currentSpeed;
-    p.velocity.z = moveDir.z * currentSpeed;
+    if (SLIDE_STATE.active) {
+        // ── SLIDE PHYSICS: friction-based momentum decay ──
+        const slideSpeed = Math.hypot(SLIDE_STATE.velX, SLIDE_STATE.velZ);
+        if (slideSpeed < SLIDE_STATE.MIN_SPEED) {
+            // Momentum exhausted — drop into crouch/idle
+            SLIDE_STATE.active = false;
+            p.isCrouching = !castLocked && !menuLocked && (keys.ctrl || CONTROLLER_STATE.crouchHeld);
+            p.velocity.x  = moveDir.x * currentSpeed * (p.isCrouching ? 0.5 : 1);
+            p.velocity.z  = moveDir.z * currentSpeed * (p.isCrouching ? 0.5 : 1);
+        } else {
+            // Apply friction only while grounded (airborne slides keep full momentum)
+            if (p.onGround) {
+                const decel    = SLIDE_STATE.friction * delta;
+                const newSpeed = Math.max(0, slideSpeed - decel);
+                const sc       = newSpeed / slideSpeed;
+                SLIDE_STATE.velX *= sc;
+                SLIDE_STATE.velZ *= sc;
+            }
+            p.velocity.x = SLIDE_STATE.velX;
+            p.velocity.z = SLIDE_STATE.velZ;
+        }
+    } else {
+        p.velocity.x = moveDir.x * currentSpeed;
+        p.velocity.z = moveDir.z * currentSpeed;
+    }
 
     // Jumping
     if (!castLocked && !menuLocked && (keys.space || CONTROLLER_STATE.jumpPressed) && p.onGround) {
@@ -13842,6 +16125,20 @@ function updatePhysics(delta) {
         if (!wasOnGround) {
             const dropHeight = Math.max(0, (p.airPeakY ?? nextPos.y) - nextPos.y);
             applyFallDamage(dropHeight);
+            // Trigger jump-queued slide on the first frame of landing.
+            // Only activates if the crouch key is still held at the moment of landing.
+            if (SLIDE_STATE.jumpQueued && SLIDE_STATE.prevCrouchHeld && !isHomeZone()) {
+                const qSpd = Math.hypot(SLIDE_STATE.queuedVelX, SLIDE_STATE.queuedVelZ);
+                if (qSpd > 0.5) {
+                    SLIDE_STATE.active = true;
+                    SLIDE_STATE.velX   = SLIDE_STATE.queuedVelX * 1.2;
+                    SLIDE_STATE.velZ   = SLIDE_STATE.queuedVelZ * 1.2;
+                    p.isCrouching      = false;
+                }
+                SLIDE_STATE.jumpQueued = false;
+            } else if (SLIDE_STATE.jumpQueued) {
+                SLIDE_STATE.jumpQueued = false; // crouch released before landing — discard
+            }
         }
         p.airPeakY = nextPos.y;
         p.lastGroundY = nextPos.y;
@@ -13859,7 +16156,7 @@ function updatePhysics(delta) {
 
     // Rotate character: follows movement only — aiming never forces body rotation
     {
-        if (inputDir.lengthSq() > 0) {
+        if (inputDir.lengthSq() > 0 || SLIDE_STATE.active) {
             const targetRotation = Math.atan2(p.velocity.x, p.velocity.z);
             let diff = targetRotation - characterModel.rotation.y;
             while (diff < -Math.PI) diff += Math.PI * 2;
@@ -13871,7 +16168,11 @@ function updatePhysics(delta) {
 
     if (inputDir.lengthSq() > 0) {
         const walkSpeed = p.isSprinting ? 20 : 12;
-        walkTime += delta * walkSpeed;
+        const walkAnimMul =
+            (!p.isSprinting && EMOTE_STATE.walkStyle === 'skip')  ? 0.5 :
+            (!p.isSprinting && EMOTE_STATE.walkStyle === 'sneak') ? 0.72 :
+            1.0;
+        walkTime += delta * walkSpeed * walkAnimMul;
     } else {
         // Decelerating — lerp walkTime smoothly toward 0
         walkTime = THREE.MathUtils.lerp(walkTime, 0, 0.18);
@@ -13880,12 +16181,15 @@ function updatePhysics(delta) {
 
     const t           = clock.getElapsedTime();
     const isMoving    = inputDir.lengthSq() > 0;
+    const isSliding   = SLIDE_STATE.active;
     const isCrouching = p.isCrouching;
 
     // ── BODY ROOT Y — single lerp moves ALL upper body at once ──
     // legs stay grounded (children of characterModel), bodyRoot carries everything else.
-    if (charParts.bodyRoot) {
-        const crouchDrop  = isCrouching ? (isMoving ? -0.18 : -0.14) : 0;
+    // Skipped during emotes so poses can control bodyRoot.position.y freely.
+    if (charParts.bodyRoot && !EMOTE_STATE.activePose) {
+        const crouchDrop  = isSliding   ? -0.28
+                          : isCrouching ? (isMoving ? -0.18 : -0.14) : 0;
         const breathe     = (!isCrouching && !isMoving)
             ? Math.sin(t * 1.35 * Math.PI * 2) * 0.010 : 0;
         const walkBob     = (isMoving && !isCrouching)
@@ -13901,10 +16205,60 @@ function updatePhysics(delta) {
         );
     }
 
-    // ── ANIMATION STATE MACHINE ──
-    if (charParts.legPivotL) {
+    // ── EMOTE POSE OVERRIDE ──
+    if (EMOTE_STATE.activePose && !p.dead) {
+        // Auto-cancel if player walked away from start position
+        if (EMOTE_STATE.poseOrigin && characterModel.position.distanceTo(EMOTE_STATE.poseOrigin) > EMOTE_STATE.poseCancel) {
+            _cancelEmote();
+        } else {
+            EMOTE_STATE.poseT += delta;
+            _runEmotePoseFrame(delta, t);
+        }
+    }
 
-        if (isCrouching && isMoving) {
+    // ── ANIMATION STATE MACHINE ──
+    if (!EMOTE_STATE.activePose && charParts.legPivotL) {
+
+        if (isSliding) {
+            // ── KNEE-SLIDE: legs swept back + deeply bent, body reclines slightly ──
+            // legPivot POSITIVE = thigh sweeps BACKWARD from hip.
+            // kneePivot HIGH POSITIVE = shin folds sharply behind the thigh (foot behind you).
+            // bodyRoot.rotation.x NEGATIVE = torso tilts BACK (face toward sky) —
+            //   the backwards-lean "sliding" silhouette the user requested.
+            const lrp = THREE.MathUtils.lerp;
+
+            charParts.legPivotL.rotation.x   = lrp(charParts.legPivotL.rotation.x,   0.44, 0.18);
+            charParts.legPivotR.rotation.x   = lrp(charParts.legPivotR.rotation.x,   0.44, 0.18);
+            charParts.kneePivotL.rotation.x  = lrp(charParts.kneePivotL.rotation.x,  1.52, 0.18);
+            charParts.kneePivotR.rotation.x  = lrp(charParts.kneePivotR.rotation.x,  1.52, 0.18);
+            charParts.anklePivotL.rotation.x = lrp(charParts.anklePivotL.rotation.x, -0.42, 0.16);
+            charParts.anklePivotR.rotation.x = lrp(charParts.anklePivotR.rotation.x, -0.42, 0.16);
+            // Slight inward knee-splay so both knees sit together under the body
+            charParts.legPivotL.rotation.z   = lrp(charParts.legPivotL.rotation.z || 0, -0.10, 0.12);
+            charParts.legPivotR.rotation.z   = lrp(charParts.legPivotR.rotation.z || 0,  0.10, 0.12);
+
+            if (charParts.hips) {
+                charParts.hips.rotation.x = lrp(charParts.hips.rotation.x, 0.10, 0.14);
+                charParts.hips.rotation.z = lrp(charParts.hips.rotation.z, 0,    0.12);
+            }
+
+            // Torso leans BACK (negative = face tilts toward sky) — rider-on-sled lean
+            if (charParts.bodyRoot) {
+                charParts.bodyRoot.rotation.x = lrp(charParts.bodyRoot.rotation.x || 0, -0.26, 0.14);
+            }
+
+            // Arms: spread wide to sides for balance, forearms raised slightly
+            if (charParts.upperArmL) {
+                charParts.upperArmL.rotation.x = lrp(charParts.upperArmL.rotation.x,  0.06, 0.12);
+                charParts.upperArmR.rotation.x = lrp(charParts.upperArmR.rotation.x,  0.06, 0.12);
+                charParts.foreArmL.rotation.x  = lrp(charParts.foreArmL.rotation.x,   0.28, 0.12);
+                charParts.foreArmR.rotation.x  = lrp(charParts.foreArmR.rotation.x,   0.28, 0.12);
+                // z raises the arm laterally outward (left arm OUT = positive, right OUT = negative)
+                charParts.upperArmL.rotation.z = lrp(charParts.upperArmL.rotation.z,  0.52, 0.12);
+                charParts.upperArmR.rotation.z = lrp(charParts.upperArmR.rotation.z, -0.52, 0.12);
+            }
+
+        } else if (isCrouching && isMoving) {
             // ── CROUCH-WALK: compact kneel-crawl, limbs stay under shoulders/hips ──
             const crawlCycle = Math.sin(walkTime * 0.72);
             const crawlOpp   = Math.sin(walkTime * 0.72 + Math.PI);
@@ -13952,6 +16306,39 @@ function updatePhysics(delta) {
                 charParts.foreArmR.rotation.x  = THREE.MathUtils.lerp(charParts.foreArmR.rotation.x,  0.34, 0.08);
                 charParts.upperArmL.rotation.z = THREE.MathUtils.lerp(charParts.upperArmL.rotation.z, 0.02, 0.08);
                 charParts.upperArmR.rotation.z = THREE.MathUtils.lerp(charParts.upperArmR.rotation.z, -0.02, 0.08);
+            }
+
+        } else if (isMoving && p.isSprinting) {
+            // ── BASE SPRINT ──
+            const sprintSwing = Math.sin(walkTime);
+            const legSwing    = sprintSwing * 1.00;
+            const armSwing    = sprintSwing * 0.88;
+            const bounce      = Math.abs(Math.sin(walkTime)) * 0.085;
+
+            charParts.legPivotL.rotation.x   = THREE.MathUtils.lerp(charParts.legPivotL.rotation.x, -legSwing, 0.24);
+            charParts.legPivotR.rotation.x   = THREE.MathUtils.lerp(charParts.legPivotR.rotation.x,  legSwing, 0.24);
+            charParts.kneePivotL.rotation.x  = THREE.MathUtils.lerp(charParts.kneePivotL.rotation.x, Math.max(0, -legSwing) * 0.95, 0.20);
+            charParts.kneePivotR.rotation.x  = THREE.MathUtils.lerp(charParts.kneePivotR.rotation.x, Math.max(0,  legSwing) * 0.95, 0.20);
+            charParts.anklePivotL.rotation.x = THREE.MathUtils.lerp(charParts.anklePivotL.rotation.x, -charParts.kneePivotL.rotation.x * 0.30 - 0.08, 0.18);
+            charParts.anklePivotR.rotation.x = THREE.MathUtils.lerp(charParts.anklePivotR.rotation.x, -charParts.kneePivotR.rotation.x * 0.30 - 0.08, 0.18);
+
+            if (charParts.hips) {
+                charParts.hips.rotation.x = THREE.MathUtils.lerp(charParts.hips.rotation.x, 0.08, 0.14);
+                charParts.hips.rotation.z = THREE.MathUtils.lerp(charParts.hips.rotation.z, 0, 0.12);
+            }
+
+            if (charParts.bodyRoot) {
+                charParts.bodyRoot.position.y = THREE.MathUtils.lerp(charParts.bodyRoot.position.y, bounce, 0.16);
+                charParts.bodyRoot.rotation.x = THREE.MathUtils.lerp(charParts.bodyRoot.rotation.x || 0, 0.22, 0.14);
+            }
+
+            if (charParts.upperArmL) {
+                charParts.upperArmL.rotation.x = THREE.MathUtils.lerp(charParts.upperArmL.rotation.x,  armSwing + 0.04, 0.26);
+                charParts.upperArmR.rotation.x = THREE.MathUtils.lerp(charParts.upperArmR.rotation.x, -armSwing + 0.04, 0.26);
+                charParts.foreArmL.rotation.x  = THREE.MathUtils.lerp(charParts.foreArmL.rotation.x,  0.12 + Math.max(0,  armSwing) * 0.18, 0.20);
+                charParts.foreArmR.rotation.x  = THREE.MathUtils.lerp(charParts.foreArmR.rotation.x,  0.12 + Math.max(0, -armSwing) * 0.18, 0.20);
+                charParts.upperArmL.rotation.z = THREE.MathUtils.lerp(charParts.upperArmL.rotation.z, 0.04, 0.16);
+                charParts.upperArmR.rotation.z = THREE.MathUtils.lerp(charParts.upperArmR.rotation.z, -0.04, 0.16);
             }
 
         } else if (isMoving) {
@@ -14006,8 +16393,277 @@ function updatePhysics(delta) {
         }
     }
 
+    // ── WALK / IDLE / RUN STYLE MODIFIERS ──
+    if (!EMOTE_STATE.activePose && !isCrouching && charParts.upperArmL) {
+        const lrp = THREE.MathUtils.lerp;
+        if (!isMoving) {
+            if (EMOTE_STATE.idleStyle === 'handsOnHips') {
+                charParts.upperArmL.rotation.order = 'YXZ';
+                charParts.upperArmR.rotation.order = 'YXZ';
+                charParts.foreArmL.rotation.order  = 'YXZ';
+                charParts.foreArmR.rotation.order  = 'YXZ';
+
+                charParts.upperArmL.rotation.x = lrp(charParts.upperArmL.rotation.x, -0.10, 0.08);
+                charParts.upperArmR.rotation.x = lrp(charParts.upperArmR.rotation.x, -0.10, 0.08);
+                charParts.upperArmL.rotation.y = lrp(charParts.upperArmL.rotation.y || 0, 0.00, 0.08);
+                charParts.upperArmR.rotation.y = lrp(charParts.upperArmR.rotation.y || 0, 0.00, 0.08);
+                charParts.upperArmL.rotation.z = lrp(charParts.upperArmL.rotation.z,  0.72, 0.08);
+                charParts.upperArmR.rotation.z = lrp(charParts.upperArmR.rotation.z, -0.72, 0.08);
+
+                charParts.foreArmL.rotation.x  = lrp(charParts.foreArmL.rotation.x,  0.55, 0.08);
+                charParts.foreArmR.rotation.x  = lrp(charParts.foreArmR.rotation.x,  0.55, 0.08);
+                charParts.foreArmL.rotation.y  = lrp(charParts.foreArmL.rotation.y || 0, 0.00, 0.08);
+                charParts.foreArmR.rotation.y  = lrp(charParts.foreArmR.rotation.y || 0, 0.00, 0.08);
+                charParts.foreArmL.rotation.z  = lrp(charParts.foreArmL.rotation.z || 0, 0.00, 0.08);
+                charParts.foreArmR.rotation.z  = lrp(charParts.foreArmR.rotation.z || 0, 0.00, 0.08);
+
+                if (charParts.hips) charParts.hips.rotation.z = lrp(charParts.hips.rotation.z, 0.00, 0.08);
+
+} else if (EMOTE_STATE.idleStyle === 'armsCrossed') {
+
+    charParts.upperArmL.rotation.order = 'YXZ';
+    charParts.upperArmR.rotation.order = 'YXZ';
+    charParts.foreArmL.rotation.order  = 'YXZ';
+    charParts.foreArmR.rotation.order  = 'YXZ';
+
+    // Lift arms slightly forward
+    charParts.upperArmL.rotation.x = lrp(charParts.upperArmL.rotation.x, -0.2, 0.12);
+    charParts.upperArmR.rotation.x = lrp(charParts.upperArmR.rotation.x, -0.2, 0.12);
+
+    // Pull arms strongly across the chest
+    charParts.upperArmL.rotation.y = lrp(charParts.upperArmL.rotation.y || 0, 1.05, 0.12);
+    charParts.upperArmR.rotation.y = lrp(charParts.upperArmR.rotation.y || 0, -1.05, 0.12);
+
+    // Angle shoulders inward
+    charParts.upperArmL.rotation.z = lrp(charParts.upperArmL.rotation.z, 0.65, 0.12);
+    charParts.upperArmR.rotation.z = lrp(charParts.upperArmR.rotation.z, -0.65, 0.12);
+
+    // Strong elbow bend
+    charParts.foreArmL.rotation.x  = lrp(charParts.foreArmL.rotation.x, -2.2, 0.12);
+    charParts.foreArmR.rotation.x  = lrp(charParts.foreArmR.rotation.x, -2.2, 0.12);
+
+    // Rotate forearms inward to cross
+    charParts.foreArmL.rotation.y  = lrp(charParts.foreArmL.rotation.y || 0, -0.8, 0.12);
+    charParts.foreArmR.rotation.y  = lrp(charParts.foreArmR.rotation.y || 0, 0.8, 0.12);
+
+    // Small wrist twist
+    charParts.foreArmL.rotation.z  = lrp(charParts.foreArmL.rotation.z || 0, -0.15, 0.12);
+    charParts.foreArmR.rotation.z  = lrp(charParts.foreArmR.rotation.z || 0, 0.15, 0.12);
+
+}
+                else if (EMOTE_STATE.idleStyle === 'relaxed') {
+                // Distinct relaxed pose: asymmetrical shoulders, slight hip shift, casual weight.
+                charParts.upperArmL.rotation.order = 'YXZ';
+                charParts.upperArmR.rotation.order = 'YXZ';
+                charParts.foreArmL.rotation.order  = 'YXZ';
+                charParts.foreArmR.rotation.order  = 'YXZ';
+
+                charParts.upperArmL.rotation.x = lrp(charParts.upperArmL.rotation.x, -0.16, 0.06);
+                charParts.upperArmR.rotation.x = lrp(charParts.upperArmR.rotation.x,  0.12, 0.06);
+                charParts.upperArmL.rotation.y = lrp(charParts.upperArmL.rotation.y || 0,  0.06, 0.06);
+                charParts.upperArmR.rotation.y = lrp(charParts.upperArmR.rotation.y || 0, -0.12, 0.06);
+                charParts.upperArmL.rotation.z = lrp(charParts.upperArmL.rotation.z,  0.34, 0.06);
+                charParts.upperArmR.rotation.z = lrp(charParts.upperArmR.rotation.z, -0.10, 0.06);
+
+                charParts.foreArmL.rotation.x  = lrp(charParts.foreArmL.rotation.x,  0.18, 0.06);
+                charParts.foreArmR.rotation.x  = lrp(charParts.foreArmR.rotation.x,  0.42, 0.06);
+                charParts.foreArmL.rotation.y  = lrp(charParts.foreArmL.rotation.y || 0,  0.04, 0.06);
+                charParts.foreArmR.rotation.y  = lrp(charParts.foreArmR.rotation.y || 0, -0.10, 0.06);
+                charParts.foreArmL.rotation.z  = lrp(charParts.foreArmL.rotation.z || 0,  0.08, 0.06);
+                charParts.foreArmR.rotation.z  = lrp(charParts.foreArmR.rotation.z || 0, -0.18, 0.06);
+
+                if (charParts.hips) charParts.hips.rotation.z = lrp(charParts.hips.rotation.z, -0.08, 0.06);
+                if (charParts.bodyRoot) charParts.bodyRoot.rotation.z = lrp(charParts.bodyRoot.rotation.z || 0, 0.03, 0.06);
+
+            } else {
+                // Reset extra front/back arm rotations for normal idle.
+                charParts.upperArmL.rotation.y = lrp(charParts.upperArmL.rotation.y || 0, 0.00, 0.08);
+                charParts.upperArmR.rotation.y = lrp(charParts.upperArmR.rotation.y || 0, 0.00, 0.08);
+                charParts.foreArmL.rotation.y  = lrp(charParts.foreArmL.rotation.y || 0, 0.00, 0.08);
+                charParts.foreArmR.rotation.y  = lrp(charParts.foreArmR.rotation.y || 0, 0.00, 0.08);
+                charParts.foreArmL.rotation.z  = lrp(charParts.foreArmL.rotation.z || 0, 0.00, 0.08);
+                charParts.foreArmR.rotation.z  = lrp(charParts.foreArmR.rotation.z || 0, 0.00, 0.08);
+                if (charParts.hips) charParts.hips.rotation.z = lrp(charParts.hips.rotation.z, 0.00, 0.08);
+                if (charParts.bodyRoot) charParts.bodyRoot.rotation.z = lrp(charParts.bodyRoot.rotation.z || 0, 0.00, 0.08);
+            }
+        } else if (isMoving && !p.isSprinting) {
+            if (EMOTE_STATE.walkStyle === 'strut') {
+                // Feminine crossover strut with hipsway.
+                const sw      = Math.sin(walkTime);
+                const hipSway = Math.sin(walkTime * 0.5) * 0.22;
+
+                charParts.upperArmL.rotation.order = 'YXZ';
+                charParts.upperArmR.rotation.order = 'YXZ';
+
+                charParts.legPivotL.rotation.z = lrp(charParts.legPivotL.rotation.z || 0,  0.12 + Math.max(0, sw) * 0.06, 0.14);
+                charParts.legPivotR.rotation.z = lrp(charParts.legPivotR.rotation.z || 0, -0.12 - Math.max(0, -sw) * 0.06, 0.14);
+
+                charParts.upperArmL.rotation.x = lrp(charParts.upperArmL.rotation.x,  0.10 + sw * 0.18, 0.16);
+                charParts.upperArmR.rotation.x = lrp(charParts.upperArmR.rotation.x,  0.10 - sw * 0.18, 0.16);
+                charParts.upperArmL.rotation.z = lrp(charParts.upperArmL.rotation.z,  0.08, 0.12);
+                charParts.upperArmR.rotation.z = lrp(charParts.upperArmR.rotation.z, -0.08, 0.12);
+                charParts.upperArmL.rotation.y = lrp(charParts.upperArmL.rotation.y || 0,  0.04, 0.12);
+                charParts.upperArmR.rotation.y = lrp(charParts.upperArmR.rotation.y || 0, -0.04, 0.12);
+
+                if (charParts.hips) charParts.hips.rotation.z = lrp(charParts.hips.rotation.z, hipSway, 0.16);
+                if (charParts.bodyRoot) charParts.bodyRoot.rotation.z = lrp(charParts.bodyRoot.rotation.z || 0, -hipSway * 0.22, 0.12);
+
+            } else if (EMOTE_STATE.walkStyle === 'sneak') {
+                // Slow tippy-toe sneak with cartoony look-around head motion.
+                const sw  = Math.sin(walkTime * 0.66);
+                const opp = Math.sin(walkTime * 0.66 + Math.PI);
+
+                charParts.legPivotL.rotation.x   = lrp(charParts.legPivotL.rotation.x, 0.28 + sw  * 0.10, 0.18);
+                charParts.legPivotR.rotation.x   = lrp(charParts.legPivotR.rotation.x, 0.28 + opp * 0.10, 0.18);
+                charParts.kneePivotL.rotation.x  = lrp(charParts.kneePivotL.rotation.x, 1.08 + Math.max(0, -sw)  * 0.16, 0.18);
+                charParts.kneePivotR.rotation.x  = lrp(charParts.kneePivotR.rotation.x, 1.08 + Math.max(0, -opp) * 0.16, 0.18);
+                charParts.anklePivotL.rotation.x = lrp(charParts.anklePivotL.rotation.x, -0.72, 0.18);
+                charParts.anklePivotR.rotation.x = lrp(charParts.anklePivotR.rotation.x, -0.72, 0.18);
+
+                charParts.upperArmL.rotation.order = 'YXZ';
+                charParts.upperArmR.rotation.order = 'YXZ';
+                charParts.upperArmL.rotation.x = lrp(charParts.upperArmL.rotation.x, 0.46, 0.12);
+                charParts.upperArmR.rotation.x = lrp(charParts.upperArmR.rotation.x, 0.46, 0.12);
+                charParts.upperArmL.rotation.z = lrp(charParts.upperArmL.rotation.z, 0.14, 0.12);
+                charParts.upperArmR.rotation.z = lrp(charParts.upperArmR.rotation.z,-0.14, 0.12);
+                charParts.foreArmL.rotation.x  = lrp(charParts.foreArmL.rotation.x, 0.72, 0.12);
+                charParts.foreArmR.rotation.x  = lrp(charParts.foreArmR.rotation.x, 0.72, 0.12);
+
+                if (charParts.bodyRoot) {
+                    charParts.bodyRoot.rotation.x = lrp(charParts.bodyRoot.rotation.x || 0, 0.26, 0.12);
+                    charParts.bodyRoot.position.y = lrp(charParts.bodyRoot.position.y, -0.18, 0.12);
+                    charParts.bodyRoot.position.z = lrp(charParts.bodyRoot.position.z || 0, -0.08, 0.12);
+                }
+                if (charParts.hips) charParts.hips.rotation.z = lrp(charParts.hips.rotation.z, 0.02, 0.10);
+                if (charParts.headGroup) charParts.headGroup.rotation.y = lrp(charParts.headGroup.rotation.y || 0, Math.sin(walkTime * 0.28) * 0.30, 0.08);
+
+            } else if (EMOTE_STATE.walkStyle === 'skip') {
+                // Playful kid-like skip. Speed now comes from walkAnimMul above.
+                const skipTime = walkTime;
+                const sk   = Math.sin(skipTime);
+                const hop  = Math.max(0, Math.sin(skipTime)) * 0.18;
+                const sway = Math.sin(skipTime * 0.5) * 0.10;
+
+                charParts.legPivotL.rotation.x   = lrp(charParts.legPivotL.rotation.x, -sk * 0.78, 0.18);
+                charParts.legPivotR.rotation.x   = lrp(charParts.legPivotR.rotation.x,  sk * 0.54, 0.18);
+                charParts.kneePivotL.rotation.x  = lrp(charParts.kneePivotL.rotation.x, Math.max(0, sk) * 0.28, 0.16);
+                charParts.kneePivotR.rotation.x  = lrp(charParts.kneePivotR.rotation.x, Math.max(0,-sk) * 1.02, 0.16);
+                charParts.anklePivotL.rotation.x = lrp(charParts.anklePivotL.rotation.x, -0.20, 0.16);
+                charParts.anklePivotR.rotation.x = lrp(charParts.anklePivotR.rotation.x, -0.34, 0.16);
+
+                charParts.upperArmL.rotation.x = lrp(charParts.upperArmL.rotation.x,  sk * 0.92 + 0.16, 0.18);
+                charParts.upperArmR.rotation.x = lrp(charParts.upperArmR.rotation.x, -sk * 0.92 + 0.16, 0.18);
+                charParts.upperArmL.rotation.z = lrp(charParts.upperArmL.rotation.z,  0.10, 0.14);
+                charParts.upperArmR.rotation.z = lrp(charParts.upperArmR.rotation.z, -0.10, 0.14);
+
+                if (charParts.bodyRoot) charParts.bodyRoot.position.y = lrp(charParts.bodyRoot.position.y, hop, 0.14);
+                if (charParts.hips) charParts.hips.rotation.z = lrp(charParts.hips.rotation.z, sway, 0.12);
+
+            } else {
+                // Reset style-only extras for normal walk.
+                charParts.legPivotL.rotation.z = lrp(charParts.legPivotL.rotation.z || 0, 0.00, 0.12);
+                charParts.legPivotR.rotation.z = lrp(charParts.legPivotR.rotation.z || 0, 0.00, 0.12);
+                charParts.upperArmL.rotation.y = lrp(charParts.upperArmL.rotation.y || 0, 0.00, 0.12);
+                charParts.upperArmR.rotation.y = lrp(charParts.upperArmR.rotation.y || 0, 0.00, 0.12);
+                if (charParts.bodyRoot) {
+                    charParts.bodyRoot.rotation.z = lrp(charParts.bodyRoot.rotation.z || 0, 0.00, 0.12);
+                    charParts.bodyRoot.position.z = lrp(charParts.bodyRoot.position.z || 0, 0.00, 0.12);
+                }
+                if (charParts.headGroup) charParts.headGroup.rotation.y = lrp(charParts.headGroup.rotation.y || 0, 0.00, 0.08);
+            }
+        } else if (p.isSprinting) {
+            const runTime   = walkTime * 1.10;
+            const runSwing  = Math.sin(runTime);
+            const runOpp    = Math.sin(runTime + Math.PI);
+            const runBounce = Math.abs(Math.sin(runTime)) * 0.06;
+
+            if (EMOTE_STATE.runStyle === 'heroLean') {
+                // Heavy forward attack sprint.
+                charParts.legPivotL.rotation.x   = lrp(charParts.legPivotL.rotation.x, -runSwing * 1.18, 0.26);
+                charParts.legPivotR.rotation.x   = lrp(charParts.legPivotR.rotation.x,  runSwing * 1.18, 0.26);
+                charParts.kneePivotL.rotation.x  = lrp(charParts.kneePivotL.rotation.x, Math.max(0, -runSwing) * 1.05, 0.24);
+                charParts.kneePivotR.rotation.x  = lrp(charParts.kneePivotR.rotation.x, Math.max(0,  runSwing) * 1.05, 0.24);
+
+                charParts.upperArmL.rotation.x = lrp(charParts.upperArmL.rotation.x,  runOpp * 1.00 - 0.08, 0.26);
+                charParts.upperArmR.rotation.x = lrp(charParts.upperArmR.rotation.x, -runOpp * 1.00 - 0.08, 0.26);
+                charParts.foreArmL.rotation.x  = lrp(charParts.foreArmL.rotation.x,  0.08, 0.18);
+                charParts.foreArmR.rotation.x  = lrp(charParts.foreArmR.rotation.x,  0.08, 0.18);
+
+                if (charParts.bodyRoot) {
+                    charParts.bodyRoot.rotation.x = lrp(charParts.bodyRoot.rotation.x || 0, 0.42, 0.18);
+                    charParts.bodyRoot.position.y = lrp(charParts.bodyRoot.position.y, runBounce, 0.16);
+                    charParts.bodyRoot.position.z = lrp(charParts.bodyRoot.position.z || 0, -0.12, 0.14);
+                }
+                if (charParts.hips) charParts.hips.rotation.z = lrp(charParts.hips.rotation.z, Math.sin(runTime * 0.5) * 0.05, 0.14);
+
+            } else if (EMOTE_STATE.runStyle === 'magicSprint') {
+                // Supernatural glide sprint, now pulled back over the hips/legs.
+                charParts.legPivotL.rotation.x   = lrp(charParts.legPivotL.rotation.x, -runSwing * 0.82, 0.22);
+                charParts.legPivotR.rotation.x   = lrp(charParts.legPivotR.rotation.x,  runSwing * 0.82, 0.22);
+                charParts.kneePivotL.rotation.x  = lrp(charParts.kneePivotL.rotation.x, Math.max(0, -runSwing) * 0.68, 0.20);
+                charParts.kneePivotR.rotation.x  = lrp(charParts.kneePivotR.rotation.x, Math.max(0,  runSwing) * 0.68, 0.20);
+
+                charParts.upperArmL.rotation.x = lrp(charParts.upperArmL.rotation.x, -1.24, 0.18);
+                charParts.upperArmR.rotation.x = lrp(charParts.upperArmR.rotation.x, -1.24, 0.18);
+                charParts.foreArmL.rotation.x  = lrp(charParts.foreArmL.rotation.x,  -0.42, 0.18);
+                charParts.foreArmR.rotation.x  = lrp(charParts.foreArmR.rotation.x,  -0.42, 0.18);
+                charParts.upperArmL.rotation.z = lrp(charParts.upperArmL.rotation.z,  0.18, 0.14);
+                charParts.upperArmR.rotation.z = lrp(charParts.upperArmR.rotation.z, -0.18, 0.14);
+
+                if (charParts.bodyRoot) {
+                    charParts.bodyRoot.rotation.x = lrp(charParts.bodyRoot.rotation.x || 0, 0.38, 0.18);
+                    charParts.bodyRoot.position.y = lrp(charParts.bodyRoot.position.y, runBounce * 0.35, 0.14);
+                    charParts.bodyRoot.position.z = lrp(charParts.bodyRoot.position.z || 0, -0.16, 0.14);
+                }
+                if (charParts.hips) charParts.hips.rotation.z = lrp(charParts.hips.rotation.z, 0.00, 0.12);
+
+            } else if (EMOTE_STATE.runStyle === 'femmeSprint') {
+                // Feminine runway-like sprint with a little more hop.
+                const cross = Math.sin(runTime * 0.5) * 0.14;
+
+                charParts.legPivotL.rotation.x   = lrp(charParts.legPivotL.rotation.x, -runSwing * 0.96, 0.22);
+                charParts.legPivotR.rotation.x   = lrp(charParts.legPivotR.rotation.x,  runSwing * 0.96, 0.22);
+                charParts.kneePivotL.rotation.x  = lrp(charParts.kneePivotL.rotation.x, Math.max(0, -runSwing) * 0.82, 0.20);
+                charParts.kneePivotR.rotation.x  = lrp(charParts.kneePivotR.rotation.x, Math.max(0,  runSwing) * 0.82, 0.20);
+                charParts.legPivotL.rotation.z   = lrp(charParts.legPivotL.rotation.z || 0,  cross, 0.18);
+                charParts.legPivotR.rotation.z   = lrp(charParts.legPivotR.rotation.z || 0, -cross, 0.18);
+
+                charParts.upperArmL.rotation.x = lrp(charParts.upperArmL.rotation.x,  runOpp * 0.62 + 0.20, 0.22);
+                charParts.upperArmR.rotation.x = lrp(charParts.upperArmR.rotation.x, -runOpp * 0.62 + 0.20, 0.22);
+                charParts.upperArmL.rotation.z = lrp(charParts.upperArmL.rotation.z,  0.14, 0.14);
+                charParts.upperArmR.rotation.z = lrp(charParts.upperArmR.rotation.z, -0.14, 0.14);
+
+                if (charParts.bodyRoot) {
+                    charParts.bodyRoot.rotation.x = lrp(charParts.bodyRoot.rotation.x || 0, 0.28, 0.16);
+                    charParts.bodyRoot.position.y = lrp(charParts.bodyRoot.position.y, runBounce * 1.08, 0.16);
+                    charParts.bodyRoot.position.z = lrp(charParts.bodyRoot.position.z || 0, -0.08, 0.14);
+                }
+                if (charParts.hips) charParts.hips.rotation.z = lrp(charParts.hips.rotation.z, Math.sin(runTime * 0.5) * 0.18, 0.16);
+
+            } else {
+                // Normal athletic sprint with LESS lean than hero.
+                charParts.legPivotL.rotation.x   = lrp(charParts.legPivotL.rotation.x, -runSwing * 1.02, 0.24);
+                charParts.legPivotR.rotation.x   = lrp(charParts.legPivotR.rotation.x,  runSwing * 1.02, 0.24);
+                charParts.kneePivotL.rotation.x  = lrp(charParts.kneePivotL.rotation.x, Math.max(0, -runSwing) * 0.90, 0.20);
+                charParts.kneePivotR.rotation.x  = lrp(charParts.kneePivotR.rotation.x, Math.max(0,  runSwing) * 0.90, 0.20);
+
+                charParts.upperArmL.rotation.x = lrp(charParts.upperArmL.rotation.x,  runOpp * 0.86 + 0.06, 0.24);
+                charParts.upperArmR.rotation.x = lrp(charParts.upperArmR.rotation.x, -runOpp * 0.86 + 0.06, 0.24);
+                charParts.upperArmL.rotation.z = lrp(charParts.upperArmL.rotation.z,  0.08, 0.12);
+                charParts.upperArmR.rotation.z = lrp(charParts.upperArmR.rotation.z, -0.08, 0.12);
+
+                if (charParts.bodyRoot) {
+                    charParts.bodyRoot.rotation.x = lrp(charParts.bodyRoot.rotation.x || 0, 0.14, 0.16);
+                    charParts.bodyRoot.position.y = lrp(charParts.bodyRoot.position.y, runBounce * 0.82, 0.14);
+                    charParts.bodyRoot.position.z = lrp(charParts.bodyRoot.position.z || 0, -0.06, 0.14);
+                }
+                if (charParts.hips) charParts.hips.rotation.z = lrp(charParts.hips.rotation.z, Math.sin(runTime * 0.5) * 0.04, 0.14);
+            }
+        }
+    }
+
     // ── HEAD NOD / TILT ──
-    if (charParts.headGroup) {
+    if (charParts.headGroup && !EMOTE_STATE.activePose) {
         let headTargetX = 0, headTargetZ = 0;
 
         if (isCrouching && isMoving) {
@@ -14025,10 +16681,12 @@ function updatePhysics(delta) {
 
         charParts.headGroup.rotation.x = THREE.MathUtils.lerp(charParts.headGroup.rotation.x, headTargetX, 0.05);
         charParts.headGroup.rotation.z = THREE.MathUtils.lerp(charParts.headGroup.rotation.z, headTargetZ, 0.05);
+    } else if (charParts.headGroup && EMOTE_STATE.activePose) {
+        charParts.headGroup.rotation.y = THREE.MathUtils.lerp(charParts.headGroup.rotation.y, 0, 0.10);
     }
 
     // ── BODY LEAN ──
-    if (charParts.bodyRoot) {
+    if (charParts.bodyRoot && !EMOTE_STATE.activePose) {
         let leanTarget = 0;
 
         if (isCrouching && isMoving) {
@@ -14142,6 +16800,13 @@ function updatePhysics(delta) {
         }
     }
 
+    // ── SHOVE ANIMATION OVERRIDE (runs last — overwrites idle/walk arm poses) ──
+    if (PUSH_STATE.phase !== 'idle' && PUSH_STATE.phase !== 'cooldown') {
+        updateShoveAnimation(delta);
+    } else {
+        updateShoveAnimation(delta); // still ticks cooldown even when arms are released
+    }
+
     // --- Camera Logic ---
     const aimBlend        = charParts._aimT ?? 0;
     const camHeightOffset = 2.5 * GAME_STATE.char.height;
@@ -14171,7 +16836,27 @@ function updatePhysics(delta) {
     const offset = forward.clone().multiplyScalar(camDist)
         .add(right.clone().multiplyScalar(camRightShift));
 
-    worldCamera.position.copy(targetLookAt).add(offset);
+    // ── Apply SCREEN_SHAKE offset ─────────────────────────────────────────────
+    if (SCREEN_SHAKE.intensity > 0 && SCREEN_SHAKE.age < SCREEN_SHAKE.duration) {
+        SCREEN_SHAKE.age += delta;
+        const shakeT     = Math.min(1, SCREEN_SHAKE.age / SCREEN_SHAKE.duration);
+        const envelope   = (1 - shakeT) * (1 - shakeT); // quadratic → punchy start, smooth settle
+        const amt        = SCREEN_SHAKE.intensity * envelope;
+        SCREEN_SHAKE.offsetX = (Math.random() * 2 - 1) * amt;
+        SCREEN_SHAKE.offsetY = (Math.random() * 2 - 1) * amt * 0.55;
+    } else {
+        SCREEN_SHAKE.intensity = 0;
+        SCREEN_SHAKE.offsetX   = 0;
+        SCREEN_SHAKE.offsetY   = 0;
+    }
+
+    // Reuse the already-computed right vector for world-aligned shake axes
+    const _shakeRight = right.clone();
+    const _shakeUp    = new THREE.Vector3(0, 1, 0);
+    worldCamera.position.copy(targetLookAt)
+        .add(offset)
+        .addScaledVector(_shakeRight, SCREEN_SHAKE.offsetX)
+        .addScaledVector(_shakeUp,    SCREEN_SHAKE.offsetY);
     worldCamera.lookAt(targetLookAt);
 }
 
@@ -14220,7 +16905,7 @@ function updateIdleFidget(delta, t) {
     const p = GAME_STATE.player;
     const isMoving    = p && p.velocity && (Math.abs(p.velocity.x) + Math.abs(p.velocity.z)) > 0.05;
     const isCrouching = p && p.isCrouching;
-    if (isMoving || isCrouching || GAME_STATE.mode !== 'world') {
+    if (isMoving || isCrouching || EMOTE_STATE.activePose || GAME_STATE.mode !== 'world') {
         if (charParts._fidget) charParts._fidget.active = false;
         return;
     }
@@ -14470,6 +17155,10 @@ function updateBreastPhysics(delta) {
         accelY = p.onGround ? 0 : p.velocity.y * 0.008;
     }
 
+    const jumpingJackBoost = EMOTE_STATE.activePose === 'jumpingjacks'
+        ? Math.abs(Math.sin(EMOTE_STATE.poseT * 3.4)) * 0.020
+        : 0;
+
     // Smoothed speed
     charParts._bustSpd = THREE.MathUtils.lerp(charParts._bustSpd ?? 0, spd, 0.10);
     const smoothSpd = charParts._bustSpd;
@@ -14499,10 +17188,10 @@ function updateBreastPhysics(delta) {
         const stiffness = 38;
         const damping   = 6.8;
 
-        // ── Y jiggle (vertical bounce from steps + landing) ──
-        const targetY = bp.basePY + accelY * amp * 60;
+        // ── Y jiggle (vertical bounce from steps + landing + jumping jacks) ──
+        const targetY = bp.basePY + (accelY + jumpingJackBoost) * amp * 60;
         bp.velY += ((targetY - mesh.position.y) * stiffness - bp.velY * damping) * delta;
-        bp.velY += stepImpulse * amp * 80;
+        bp.velY += (stepImpulse + jumpingJackBoost * 0.45) * amp * 80;
         mesh.position.y += bp.velY * delta;
 
         // ── Z jiggle (forward lean from movement speed) ──
@@ -14511,12 +17200,10 @@ function updateBreastPhysics(delta) {
         mesh.position.z += bp.velZ * delta;
 
         // ── X jiggle (horizontal sway from turning) ──
-        // When turning right (yawRate > 0), both breasts lag left (−X), and vice versa.
-        // Each breast gets the same lateral kick — they sway together like mass on a pivot.
         const turnKick = -yawRate * amp * 1.8;
         bp.velX = bp.velX ?? 0;
         bp.velX += ((bp.basePX - mesh.position.x) * stiffness - bp.velX * damping) * delta;
-        bp.velX += turnKick * delta * 60;  // impulse proportional to rate, frame-rate normalised
+        bp.velX += turnKick * delta * 60;
         mesh.position.x += bp.velX * delta;
 
         // Clamp all axes
@@ -14694,8 +17381,10 @@ function animate() {
     updatePlayerDeathState(delta);
     updateSpellRuntimeEffects(delta);
     updateFloatingChatBubbles(delta);
+    _updateEmoteExpressionFrame(delta);
     updateVoiceChatVolumes();
     updateMultiplayer(delta);
+    updateDayNight(delta);
     updateAutoSave(delta);
     updateSpellUI();
     updatePupilGaze(delta);
@@ -14808,6 +17497,9 @@ window.onload = () => {
 };
 
 </script>
+
+<!-- Screen shake flash overlay -->
+<div id="screen-flash"></div>
 
 <!-- Nametag overlay — positioned by JS each frame in world mode -->
 <div id="nametag-overlay" style="
