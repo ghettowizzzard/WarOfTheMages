@@ -7288,20 +7288,37 @@ function _ownerCloseAuth() {
 }
 
 function _ownerSubmitAuth() {
-    if (!_ownerSocketReady()) {
-        _ownerSetAuthMessage('No live multiplayer connection.');
+    const input = document.getElementById('owner-auth-password');
+    const password = input ? input.value.trim() : '';
+    if (!password) { _ownerSetAuthMessage('Enter your password.'); return; }
+
+    // If the live socket is ready, authenticate server-side (full online panel).
+    if (_ownerSocketReady()) {
+        _ownerSetAuthMessage('Checking...', true);
+        _sendNetworkMessage('owner_auth', {
+            password,
+            deviceId: OWNER_ADMIN.deviceId,
+            fingerprint: OWNER_ADMIN.fingerprint,
+        });
         return;
     }
 
-    const input = document.getElementById('owner-auth-password');
-    const password = input ? input.value : '';
-    _ownerSetAuthMessage('Checking...', true);
-
-    _sendNetworkMessage('owner_auth', {
-        password,
-        deviceId: OWNER_ADMIN.deviceId,
-        fingerprint: OWNER_ADMIN.fingerprint,
-    });
+    // Offline fallback — verify locally via SHA-256 so the panel still opens.
+    // Online-only features (player list, logs) will show as "Offline" until a
+    // connection is established.
+    _ownerSetAuthMessage('No server connection — verifying locally...', true);
+    const _OWNER_HASH = '5e99daea91977f49fac49a134507dbe569fa3671d27406200fbfcda926815fd4';
+    crypto.subtle.digest('SHA-256', new TextEncoder().encode(password)).then(buf => {
+        const hex = Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
+        if (hex === _OWNER_HASH) {
+            OWNER_ADMIN.authed = true;
+            OWNER_ADMIN.offlineMode = true;
+            _ownerCloseAuth();
+            _ownerTogglePanel(true);
+        } else {
+            _ownerSetAuthMessage('Wrong password.');
+        }
+    }).catch(() => _ownerSetAuthMessage('Local verification failed.'));
 }
 
 function _ownerTogglePanel(force = null) {
@@ -7544,6 +7561,12 @@ function _ownerRenderPanel() {
     }
 
     if (OWNER_ADMIN.tab === 'users') {
+        if (OWNER_ADMIN.offlineMode && !_ownerSocketReady()) {
+            body.innerHTML = `<div style="text-align:center; padding:40px; opacity:0.6; font-size:18px;">
+                ⚠️ No server connection.<br><span style="font-size:14px;">Player list is only available when connected to the game server.</span>
+            </div>`;
+            return;
+        }
         const rows = OWNER_ADMIN.users.map((user) => {
             const banText = user.activeBan
                 ? `BANNED · ${_ownerFormatDuration(user.activeBan.remainingMs)} left`
@@ -7596,6 +7619,13 @@ function _ownerRenderPanel() {
         }).join('');
 
         body.innerHTML = rows || `<div style="opacity:0.78;">No registered users yet.</div>`;
+        return;
+    }
+
+    if (OWNER_ADMIN.offlineMode && !_ownerSocketReady()) {
+        body.innerHTML = `<div style="text-align:center; padding:40px; opacity:0.6; font-size:18px;">
+            ⚠️ No server connection.<br><span style="font-size:14px;">Chat logs are only available when connected to the game server.</span>
+        </div>`;
         return;
     }
 
@@ -7679,6 +7709,7 @@ function _ownerHandleNetworkMessage(message) {
             }
 
             OWNER_ADMIN.authed = true;
+            OWNER_ADMIN.offlineMode = false;
             OWNER_ADMIN.users = Array.isArray(payload.state?.users) ? payload.state.users : [];
             OWNER_ADMIN.chatLogs = Array.isArray(payload.state?.chatLogs) ? payload.state.chatLogs : [];
             _ownerSetAuthMessage(payload.message || 'Unlocked.', true);
@@ -7842,6 +7873,7 @@ window.addEventListener('load', () => {
     _ownerEnsureUi();
     _ownerBootstrapCheck();
     _ownerRenderPanel();
+    initMultiplayer(); // Connect immediately so owner auth works from the main menu
 });
 
 setInterval(() => {
