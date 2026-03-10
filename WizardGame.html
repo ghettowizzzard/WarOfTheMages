@@ -152,6 +152,49 @@
         .chat-msg-system { color: rgba(192,192,192,0.55); font-style: italic; font-size: 0.74rem; }
         .chat-msg-private { color: #c084fc; }
         .chat-msg-private .chat-msg-name { color: #a855f7; }
+
+        /* ── SERVER STATUS WIDGET ── */
+        #server-status-widget {
+            position: fixed; top: 14px; left: 14px; z-index: 500;
+            display: flex; align-items: center; gap: 10px;
+            background: rgba(8,3,3,0.78); border: 1px solid rgba(255,94,0,0.3);
+            border-radius: 10px; padding: 6px 14px;
+            font-family: 'Rajdhani', sans-serif; font-weight: 700; font-size: 13px;
+            color: #fff; pointer-events: none;
+        }
+        #server-status-dot {
+            width: 10px; height: 10px; border-radius: 50%;
+            background: #ef4444; flex-shrink: 0; transition: background 0.4s;
+        }
+        #server-status-dot.online     { background: #22c55e; }
+        #server-status-dot.connecting { background: #facc15; animation: sstPulse 0.9s ease-in-out infinite; }
+        @keyframes sstPulse { 0%,100%{opacity:1;} 50%{opacity:0.3;} }
+        #server-status-label  { color: #c4b5fd; }
+        #server-players-label { color: #fb923c; border-left: 1px solid rgba(255,255,255,0.15); padding-left: 10px; }
+
+        /* ── REPORT MODAL ── */
+        #report-modal {
+            display: none; position: fixed; top:0; left:0;
+            width:100%; height:100%; z-index: 3000;
+            background: rgba(0,0,0,0.72);
+            align-items: center; justify-content: center;
+        }
+        #report-modal.open { display: flex; }
+        #report-modal-box {
+            background: #12091e; border: 1.5px solid rgba(139,92,246,0.5);
+            border-radius: 18px; padding: 24px 28px;
+            width: min(420px, 94vw); max-height: 80vh; overflow-y: auto;
+            color: #fff; font-family: 'Rajdhani', sans-serif;
+        }
+        .report-type-btn {
+            padding: 8px 12px; border-radius: 8px;
+            border: 1.5px solid rgba(139,92,246,0.4);
+            background: #1e1235; color: #e2d4ff; cursor: pointer;
+            font-family: 'Rajdhani', sans-serif; font-weight: 700; font-size: 13px;
+            transition: background 0.15s;
+        }
+        .report-type-btn:hover, .report-type-btn.selected { background: #7c3aed; border-color: #a78bfa; color: #fff; }
+
         .chat-action-btns { display: inline-flex; gap: 3px; margin-left: 6px; vertical-align: middle; opacity: 0; transition: opacity 0.15s; }
         .chat-msg:hover .chat-action-btns { opacity: 1; }
         .chat-action-btn { font-size: 0.67rem; padding: 1px 6px; border-radius: 4px; border: 1px solid rgba(255,255,255,0.18); cursor: pointer; background: rgba(255,255,255,0.08); color: #fff; line-height: 1.5; font-family: inherit; }
@@ -7861,6 +7904,119 @@ openSaveLoadOverlay = function(mode = 'load', source = 'menu') {
     }, true);
 });
 
+function _initServerStatusWidget() {
+    const el = document.createElement('div');
+    el.id = 'server-status-widget';
+    el.innerHTML = `
+        <div id="server-status-dot"></div>
+        <span id="server-status-label">Connecting...</span>
+        <span id="server-players-label">Players: —</span>
+    `;
+    document.body.appendChild(el);
+    _updateServerStatusWidget();
+}
+
+function _updateServerStatusWidget() {
+    const dot    = document.getElementById('server-status-dot');
+    const label  = document.getElementById('server-status-label');
+    const pLabel = document.getElementById('server-players-label');
+    if (!dot) return;
+
+    dot.className = '';
+    if (NETWORK_STATE.connected) {
+        dot.classList.add('online');
+        label.textContent  = 'Online';
+        const count = (NETWORK_STATE.players?.size ?? 0) + 1; // +1 for self
+        pLabel.textContent = `Players: ${count}`;
+    } else if (NETWORK_STATE.connecting) {
+        dot.classList.add('connecting');
+        label.textContent  = 'Connecting...';
+        pLabel.textContent = 'Players: —';
+    } else {
+        label.textContent  = 'Offline';
+        pLabel.textContent = 'Players: —';
+    }
+}
+
+function _showReportModal(senderId, senderName) {
+    let modal = document.getElementById('report-modal');
+    if (!modal) {
+        modal = document.createElement('div');
+        modal.id = 'report-modal';
+        modal.innerHTML = `
+            <div id="report-modal-box">
+                <div style="font-size:20px;font-weight:900;margin-bottom:4px;">⚑ Report Player</div>
+                <div id="report-modal-name" style="color:#c084fc;font-size:14px;margin-bottom:16px;"></div>
+                <div style="font-size:13px;font-weight:700;color:#a78bfa;margin-bottom:8px;">Report Type</div>
+                <div id="report-type-grid" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px;"></div>
+                <div style="font-size:13px;font-weight:700;color:#a78bfa;margin-bottom:6px;">Description <span style="opacity:0.6;">(optional)</span></div>
+                <textarea id="report-desc" placeholder="Describe what happened..." style="width:100%;min-height:72px;background:#0d0718;border:1.5px solid rgba(139,92,246,0.35);border-radius:10px;color:#e2d4ff;padding:8px;font-family:'Rajdhani',sans-serif;font-size:13px;resize:vertical;box-sizing:border-box;"></textarea>
+                <div style="display:flex;gap:10px;margin-top:16px;justify-content:flex-end;">
+                    <button id="report-cancel-btn" style="padding:10px 18px;border-radius:10px;border:1px solid rgba(255,255,255,0.18);background:rgba(255,255,255,0.06);color:#fff;font-family:'Rajdhani',sans-serif;font-weight:700;cursor:pointer;">Cancel</button>
+                    <button id="report-submit-btn" style="padding:10px 22px;border-radius:10px;border:none;background:#7c3aed;color:#fff;font-family:'Rajdhani',sans-serif;font-weight:900;cursor:pointer;">Submit Report</button>
+                </div>
+                <div id="report-status" style="display:none;margin-top:10px;text-align:center;font-size:13px;font-weight:700;"></div>
+            </div>
+        `;
+        document.body.appendChild(modal);
+        modal.addEventListener('click', (e) => { if (e.target === modal) _closeReportModal(); });
+        document.getElementById('report-cancel-btn').addEventListener('click', _closeReportModal);
+    }
+
+    const REPORT_TYPES = [
+        'Hacking / Cheating', 'Offensive Language', 'Harassment',
+        'Spam / Flooding', 'Inappropriate Name', 'Other',
+    ];
+    const grid = document.getElementById('report-type-grid');
+    grid.innerHTML = '';
+    let selectedType = null;
+    REPORT_TYPES.forEach(t => {
+        const btn = document.createElement('button');
+        btn.className = 'report-type-btn';
+        btn.textContent = t;
+        btn.addEventListener('click', () => {
+            selectedType = t;
+            grid.querySelectorAll('.report-type-btn').forEach(b => b.classList.remove('selected'));
+            btn.classList.add('selected');
+        });
+        grid.appendChild(btn);
+    });
+
+    document.getElementById('report-modal-name').textContent = `Reporting: ${senderName}`;
+    document.getElementById('report-desc').value = '';
+    const statusEl = document.getElementById('report-status');
+    statusEl.style.display = 'none';
+
+    document.getElementById('report-submit-btn').onclick = () => {
+        if (!selectedType) {
+            statusEl.style.display = 'block';
+            statusEl.style.color = '#f87171';
+            statusEl.textContent = 'Please select a report type.';
+            return;
+        }
+        const desc = (document.getElementById('report-desc').value || '').trim();
+        _sendNetworkMessage('player_report', {
+            targetId:     senderId,
+            targetName:   senderName,
+            reportType:   selectedType,
+            description:  desc,
+            reporterName: GAME_STATE?.char?.name || 'Unknown',
+            at:           Date.now(),
+        });
+        statusEl.style.display = 'block';
+        statusEl.style.color = '#86efac';
+        statusEl.textContent = '✓ Report submitted. Thank you.';
+        setTimeout(_closeReportModal, 1500);
+    };
+
+    modal.classList.add('open');
+}
+
+function _closeReportModal() {
+    const modal = document.getElementById('report-modal');
+    if (modal) modal.classList.remove('open');
+}
+
 document.addEventListener('keydown', (e) => {
     if (e.key === 'F10') {
         e.preventDefault();
@@ -7874,9 +8030,11 @@ window.addEventListener('load', () => {
     _ownerBootstrapCheck();
     _ownerRenderPanel();
     initMultiplayer(); // Connect immediately so owner auth works from the main menu
+    _initServerStatusWidget();
 });
 
 setInterval(() => {
+    _updateServerStatusWidget();
     if (OWNER_ADMIN.ban) {
         const remaining = OWNER_ADMIN.ban.until - Date.now();
         if (remaining <= 0) {
@@ -17536,7 +17694,7 @@ function _chatRenderMessages() {
                 reportBtn.textContent = '⚑ Report';
                 reportBtn.addEventListener('click', (ev) => {
                     ev.stopPropagation();
-                    _showFriendToast(`🚫 ${m.sender} has been reported. Thank you.`);
+                    _showReportModal(m.senderId, m.sender);
                 });
 
                 row.appendChild(addBtn);
