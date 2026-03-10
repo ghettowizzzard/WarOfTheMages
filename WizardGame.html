@@ -2906,6 +2906,7 @@ function _attemptWardrobeRename() {
 
     if (cleaned === (GAME_STATE.char.name || '').trim()) {
         _refreshWardrobeRenameStatus();
+        _savePlayerProfile();
         return;
     }
 
@@ -3004,6 +3005,8 @@ function _inviteFriendToHome(id, name) {
     });
 
     _showFriendToast(`🏠 Sent a home invite to ${name}.`);
+    _savePlayerProfile();
+
 }
 
 function _kickGuestFromHome(id, name) {
@@ -3016,6 +3019,7 @@ function _kickGuestFromHome(id, name) {
     });
 
     _showFriendToast(`🚪 Kicked ${name} from your home.`);
+    _savePlayerProfile();
 }
 
 function _getGuestsInHome(homeOwnerId = GAME_STATE.home.ownerId || _getLocalHomeOwnerId()) {
@@ -3386,6 +3390,8 @@ function _openWardrobeCustomization() {
     GAME_STATE.mode = 'customization';
     _syncCustomizationModeUI();
     rebuildCharacter();
+    _savePlayerProfile();
+
 
     requestAnimationFrame(() => {
         const nameInput = document.getElementById('char-name');
@@ -3407,6 +3413,7 @@ function _closeWardrobeCustomization() {
     if (uiLayer) uiLayer.style.display = 'none';
     if (mainMenu) mainMenu.style.display = 'none';
 
+    await (_mapEditorFetchPublishedState(false) || Promise.resolve());
     GAME_STATE.mode = 'world';
     document.body.classList.add('game-active');
     _syncCustomizationModeUI();
@@ -4075,6 +4082,7 @@ function _applyCharacterColor(colId, hex) {
     const btn = document.querySelector(`.color-btn[data-col="${colId}"]`);
     if (btn) btn.style.background = hex;
     rebuildCharacter();
+    _savePlayerProfile();
 }
 
 function _syncColorPopupCustomEditor(hex) {
@@ -6755,6 +6763,28 @@ function _handleNetworkMessage(message) {
             break;
         }
 
+        case 'map_force_reload': {
+            if (message.payload?.state) {
+                MAP_EDITOR_STATE.published = message.payload.state;
+                MAP_EDITOR_STATE.bootLoaded = true;
+            }
+
+            try { performAutoSave(true); } catch {}
+            try { _mapEditorClose({ accept: true }); } catch {}
+
+            _ownerShowCenterHud(
+                'New Map Update!',
+                'The world was published. Your progress was autosaved. Load your save to re-enter.',
+                '#86efac',
+                9000
+            );
+
+            try {
+                if (typeof returnToMainMenu === 'function') returnToMainMenu();
+            } catch {}
+            break;
+        }
+
         case 'player_left': {
             const playerId = message.payload?.playerId;
             if (playerId) {
@@ -6993,7 +7023,7 @@ function initMultiplayer() {
 
 function updateMultiplayer(delta) {
     if (!MULTIPLAYER_CONFIG.enabled) return;
-    if (GAME_STATE.mode !== 'world') return;
+    if (GAME_STATE.mode !== 'world' || MAP_EDITOR_STATE.open) return;
 
     _syncRemotePlayerVisuals(delta);
 
@@ -7288,12 +7318,17 @@ function _ownerEnsureUi() {
             return;
         }
 
-        if (action === 'refresh') {
-            if (_ownerSocketReady()) _sendNetworkMessage('owner_state_request', {});
-            return;
-        }
+if (action === 'refresh') {
+    if (_ownerSocketReady()) _sendNetworkMessage('owner_state_request', {});
+    return;
+}
 
-        if (action === 'teleport_to') return _ownerSendAction('teleport_to', deviceId);
+if (action === 'open_map_editor') {
+    _mapEditorOpen();
+    return;
+}
+
+if (action === 'teleport_to') return _ownerSendAction('teleport_to', deviceId);
         if (action === 'teleport_to_me') return _ownerSendAction('teleport_to_me', deviceId);
         if (action === 'freeze_toggle') return _ownerSendAction('freeze_toggle', deviceId);
         if (action === 'kill') return _ownerSendAction('kill', deviceId);
@@ -7552,10 +7587,11 @@ function _ownerRenderPanel() {
     panel.style.display = OWNER_ADMIN.open ? 'block' : 'none';
 
     const tabDefs = [
-        ['controls', 'Controls'],
-        ['users', 'Registered Users'],
-        ['chat', 'Chat Logs'],
-    ];
+    ['controls', 'Controls'],
+    ['mapEditor', 'Map Editor'],
+    ['users', 'Registered Users'],
+    ['chat', 'Chat Logs'],
+];
 
     tabs.innerHTML = tabDefs.map(([id, label]) => `
         <button data-owner-tab="${id}" style="
@@ -7602,6 +7638,43 @@ function _ownerRenderPanel() {
         `;
         return;
     }
+
+    if (OWNER_ADMIN.tab === 'mapEditor') {
+    const publishedAt = MAP_EDITOR_STATE.published?.publishedAt
+        ? _ownerFormatDate(MAP_EDITOR_STATE.published.publishedAt)
+        : 'Never';
+    const draftAt = MAP_EDITOR_STATE.draft?.savedAt
+        ? _ownerFormatDate(MAP_EDITOR_STATE.draft.savedAt)
+        : 'Not saved';
+
+    body.innerHTML = `
+        <div style="display:grid; grid-template-columns:minmax(0,1.2fr) minmax(320px,0.8fr); gap:14px;">
+            <div style="background:#1a132b; border-radius:16px; padding:16px;">
+                <div style="font-size:22px; font-weight:900;">Map Editor</div>
+                <div style="opacity:0.78; margin-top:4px;">
+                    Owner-only live scene editor with hierarchy, asset palette, snapping, undo/redo, save, publish, and forced world refresh.
+                </div>
+                <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:14px;">
+                    <button data-owner-do="open_map_editor" style="
+                        padding:12px 16px; border-radius:12px; border:none; cursor:pointer; font-weight:900;
+                        background:linear-gradient(135deg,#22c55e,#16a34a); color:#fff;
+                    ">Open Map Editor</button>
+                </div>
+            </div>
+
+            <div style="background:#1a132b; border-radius:16px; padding:16px;">
+                <div style="font-size:22px; font-weight:900;">Map State</div>
+                <div style="margin-top:12px; line-height:1.8;">
+                    <div>Published revision: <b>${Number(MAP_EDITOR_STATE.published?.revision || 0)}</b></div>
+                    <div>Draft saved: <b>${draftAt}</b></div>
+                    <div>Published: <b>${publishedAt}</b></div>
+                    <div>Snap size: <b>${Number(MAP_EDITOR_STATE.snapSize || 8)}</b></div>
+                </div>
+            </div>
+        </div>
+    `;
+    return;
+}
 
     if (OWNER_ADMIN.tab === 'users') {
         if (OWNER_ADMIN.offlineMode && !_ownerSocketReady()) {
@@ -7820,10 +7893,1508 @@ function _ownerHandleNetworkMessage(message) {
             return true;
         }
 
+        case 'owner_map_saved': {
+            if (payload.savedAt && MAP_EDITOR_STATE.draft) {
+                MAP_EDITOR_STATE.draft.savedAt = payload.savedAt;
+            }
+            if (payload.publishedAt) {
+                MAP_EDITOR_STATE.published = {
+                    ...(MAP_EDITOR_STATE.published || {}),
+                    ...(MAP_EDITOR_STATE.draft || {}),
+                    revision: Number(payload.revision || MAP_EDITOR_STATE.published?.revision || 0),
+                    publishedAt: payload.publishedAt,
+                    savedAt: payload.savedAt || Date.now(),
+                };
+            }
+            if (MAP_EDITOR_STATE.open) _mapEditorRenderUi();
+            return true;
+        }
+
+        case 'map_force_reload': {
+            if (payload.state) {
+                MAP_EDITOR_STATE.published = payload.state;
+                MAP_EDITOR_STATE.bootLoaded = true;
+            }
+
+            try { performAutoSave(true); } catch {}
+            try { _mapEditorClose({ accept: true }); } catch {}
+
+            _ownerShowCenterHud(
+                'New Map Update!',
+                'The world was published. Your progress was autosaved. Load your save to re-enter.',
+                '#86efac',
+                9000
+            );
+
+            try {
+                if (typeof returnToMainMenu === 'function') returnToMainMenu();
+            } catch {}
+            return true;
+        }
+
         default:
             return false;
     }
 }
+
+const MAP_EDITOR_STORAGE_KEY = 'wotm_map_editor_draft_v1';
+const MAP_EDITOR_AUTOSAVE_MS = 5 * 60 * 1000;
+
+const MAP_EDITOR_TEXTURE_STYLES = {
+    default:  { color: '#c9ced8', roughness: 0.88, metalness: 0.03 },
+    stone:    { color: '#8f98a7', roughness: 0.96, metalness: 0.01 },
+    obsidian: { color: '#312949', roughness: 0.52, metalness: 0.18 },
+    marble:   { color: '#e6e7eb', roughness: 0.58, metalness: 0.04 },
+    wood:     { color: '#7b5a3d', roughness: 0.92, metalness: 0.00 },
+    storm:    { color: '#86b8ff', roughness: 0.80, metalness: 0.05 },
+    fire:     { color: '#ff9d63', roughness: 0.78, metalness: 0.06 },
+    ice:      { color: '#a8f0ff', roughness: 0.34, metalness: 0.10 },
+    death:    { color: '#9e7ad8', roughness: 0.78, metalness: 0.06 },
+    life:     { color: '#8fe08f', roughness: 0.84, metalness: 0.02 },
+    earth:    { color: '#c2a574', roughness: 0.90, metalness: 0.02 }
+};
+
+const MAP_EDITOR_ASSET_CATALOG = {
+    structures: [
+        { id: 'wall_block',   label: 'Wall Block',   color: '#b4bcc8', collidable: true,  defaultScale: { x: 1, y: 1, z: 1 } },
+        { id: 'floor_tile',   label: 'Floor Tile',   color: '#d4d7dc', collidable: true,  defaultScale: { x: 1, y: 1, z: 1 } },
+        { id: 'roof_tile',    label: 'Roof / Ceiling', color: '#915d55', collidable: true, defaultScale: { x: 1, y: 1, z: 1 } }
+    ],
+    nature: [
+        { id: 'tree_oak',        label: 'Oak Tree',      color: '#6cb774', collidable: true,  defaultScale: { x: 1, y: 1, z: 1 } },
+        { id: 'tree_pine',       label: 'Pine Tree',     color: '#68a96c', collidable: true,  defaultScale: { x: 1, y: 1, z: 1 } },
+        { id: 'rock_boulder',    label: 'Boulder',       color: '#7f848e', collidable: true,  defaultScale: { x: 1, y: 1, z: 1 } },
+        { id: 'mountain_cone',   label: 'Mountain',      color: '#6f726f', collidable: true,  defaultScale: { x: 1.6, y: 1.4, z: 1.6 } },
+        { id: 'grass_patch',     label: 'Grass Patch',   color: '#63b96a', collidable: false, defaultScale: { x: 1, y: 1, z: 1 } },
+        { id: 'flower_patch',    label: 'Flower Patch',  color: '#f69cd9', collidable: false, defaultScale: { x: 1, y: 1, z: 1 } },
+        { id: 'water_plane',     label: 'River / Water', color: '#55ccff', collidable: false, defaultScale: { x: 1, y: 1, z: 1 } },
+        { id: 'waterfall_plane', label: 'Waterfall',     color: '#9ee7ff', collidable: false, defaultScale: { x: 1, y: 1, z: 1 } }
+    ],
+    decoration: [
+        { id: 'crate_stack',   label: 'Crate Stack', color: '#9f7a4c', collidable: true, defaultScale: { x: 1, y: 1, z: 1 } },
+        { id: 'lantern_post',  label: 'Lantern Post', color: '#ffd37a', collidable: true, defaultScale: { x: 1, y: 1, z: 1 } }
+    ],
+    gameplay: [
+        { id: 'loot_chest',          label: 'Loot Chest',         color: '#ddb04e', collidable: true,  defaultScale: { x: 1, y: 1, z: 1 } },
+        { id: 'enemy_spawn',         label: 'Enemy Spawn',        color: '#ff6b6b', collidable: false, defaultScale: { x: 1, y: 1, z: 1 } },
+        { id: 'boss_spawn',          label: 'Boss Spawn',         color: '#ef4444', collidable: false, defaultScale: { x: 1.2, y: 1.2, z: 1.2 } },
+        { id: 'practice_dummy',      label: 'Practice Dummy',     color: '#f5c16c', collidable: true,  defaultScale: { x: 1, y: 1, z: 1 } },
+        { id: 'quest_npc',           label: 'Quest NPC Marker',   color: '#7dd3fc', collidable: false, defaultScale: { x: 1, y: 1, z: 1 } },
+        { id: 'dialog_trigger',      label: 'Dialogue Trigger',   color: '#a78bfa', collidable: false, defaultScale: { x: 1, y: 1, z: 1 } },
+        { id: 'objective_zone',      label: 'Objective Zone',     color: '#34d399', collidable: false, defaultScale: { x: 2, y: 1, z: 2 } },
+        { id: 'collect_spawn',       label: 'Collectible Spawn',  color: '#fbbf24', collidable: false, defaultScale: { x: 1, y: 1, z: 1 } },
+        { id: 'escort_path_marker',  label: 'Escort Path Marker', color: '#60a5fa', collidable: false, defaultScale: { x: 1, y: 1, z: 1 } },
+        { id: 'script_trigger',      label: 'Script Trigger',     color: '#f472b6', collidable: false, defaultScale: { x: 1, y: 1, z: 1 } }
+    ],
+    effects: [
+        { id: 'fx_rune',       label: 'Rune FX', color: '#b58cff', collidable: false, defaultScale: { x: 1, y: 1, z: 1 } }
+    ]
+};
+
+const MAP_EDITOR_STATE = {
+    open: false,
+    tool: 'select',
+    selectedId: null,
+    pendingAssetId: '',
+    snap: true,
+    snapSize: 8,
+    dirty: false,
+    bootPromise: null,
+    bootLoaded: false,
+    published: null,
+    draft: null,
+    openSnapshot: null,
+    history: [],
+    historyIndex: -1,
+    drag: null,
+    viewport: { x: 0, z: 0, zoom: 0.42 },
+    runtimeRoots: [],
+    baseLookup: new Map()
+};
+
+function _mapEditorClone(v) {
+    return JSON.parse(JSON.stringify(v));
+}
+
+function _mapEditorRound(v, places = 3) {
+    const p = Math.pow(10, places);
+    return Math.round((Number(v) || 0) * p) / p;
+}
+
+function _mapEditorClamp(v, min, max, fallback = 0) {
+    const n = Number(v);
+    if (!Number.isFinite(n)) return fallback;
+    return Math.min(max, Math.max(min, n));
+}
+
+function _mapEditorNextId(prefix = 'placed') {
+    return `${prefix}_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+}
+
+function _mapEditorAllAssetDefs() {
+    return Object.values(MAP_EDITOR_ASSET_CATALOG).flat();
+}
+
+function _mapEditorAssetDef(id) {
+    return _mapEditorAllAssetDefs().find(a => a.id === id) || null;
+}
+
+function _mapEditorDefaultMetaForAsset(assetId) {
+    if (assetId === 'quest_npc') {
+        return {
+            school: 'any',
+            dialogue: {
+                title: 'Quest Offer',
+                lines: ['Greetings, wizard.'],
+                answers: [
+                    { text: 'Accept', action: 'acceptQuest' },
+                    { text: 'Cancel', action: 'closeDialogue' }
+                ]
+            },
+            quest: {
+                id: `quest_${Date.now()}`,
+                type: 'talk',
+                title: 'New Quest',
+                description: 'Describe this quest.',
+                recommendedLevel: 1,
+                steps: [
+                    { type: 'talk', target: 'next_npc', amount: 1 }
+                ],
+                rewards: { xp: 100, gold: 50 }
+            }
+        };
+    }
+
+    if (assetId === 'dialog_trigger') {
+        return {
+            school: 'any',
+            dialogue: {
+                title: 'Dialogue',
+                lines: ['Add dialogue lines here.'],
+                answers: [
+                    { text: 'Continue', action: 'next' }
+                ]
+            }
+        };
+    }
+
+    if (assetId === 'objective_zone') {
+        return {
+            school: 'any',
+            objective: {
+                type: 'enterZone',
+                radius: 10,
+                stepId: 'zone_step'
+            }
+        };
+    }
+
+    if (assetId === 'enemy_spawn') {
+        return {
+            school: 'any',
+            spawn: {
+                questOnly: false,
+                enemyId: 'enemy_basic',
+                count: 1,
+                respawnMs: 30000
+            }
+        };
+    }
+
+    if (assetId === 'boss_spawn') {
+        return {
+            school: 'any',
+            spawn: {
+                questOnly: true,
+                enemyId: 'boss_basic',
+                count: 1,
+                respawnMs: 120000
+            }
+        };
+    }
+
+    if (assetId === 'collect_spawn') {
+        return {
+            school: 'any',
+            collectible: {
+                itemId: 'quest_item',
+                amount: 1,
+                respawnMs: 45000
+            }
+        };
+    }
+
+    if (assetId === 'escort_path_marker') {
+        return {
+            school: 'any',
+            escort: {
+                pathId: 'escort_path_1',
+                order: 1
+            }
+        };
+    }
+
+    if (assetId === 'script_trigger') {
+        return {
+            school: 'any',
+            script: {
+                trigger: 'onEnter',
+                actions: [
+                    { type: 'dialogue', id: 'intro' }
+                ]
+            }
+        };
+    }
+
+    return { school: 'any' };
+}
+
+function _mapEditorGetUi() {
+    return {
+        overlay: document.getElementById('map-editor-overlay'),
+        canvas: document.getElementById('map-editor-canvas'),
+        status: document.getElementById('map-editor-status'),
+        left: document.getElementById('map-editor-left'),
+        right: document.getElementById('map-editor-right'),
+        hierarchy: document.getElementById('map-editor-hierarchy'),
+        inspector: document.getElementById('map-editor-inspector'),
+        assets: document.getElementById('map-editor-assets'),
+        snapToggle: document.getElementById('map-editor-snap'),
+        snapSize: document.getElementById('map-editor-snap-size'),
+        toolButtons: Array.from(document.querySelectorAll('[data-map-tool]'))
+    };
+}
+
+async function _mapEditorFetchPublishedState(force = false) {
+    if (MAP_EDITOR_STATE.bootPromise && !force) return MAP_EDITOR_STATE.bootPromise;
+    if (MAP_EDITOR_STATE.bootLoaded && !force) return MAP_EDITOR_STATE.published;
+
+    MAP_EDITOR_STATE.bootPromise = fetch('/api/map-state')
+        .then(r => r.ok ? r.json() : null)
+        .then(data => {
+            MAP_EDITOR_STATE.published = data?.published || null;
+            MAP_EDITOR_STATE.bootLoaded = true;
+            return MAP_EDITOR_STATE.published;
+        })
+        .catch(() => {
+            MAP_EDITOR_STATE.bootLoaded = true;
+            return null;
+        });
+
+    return MAP_EDITOR_STATE.bootPromise;
+}
+
+function _mapEditorScanWorldProps() {
+    MAP_EDITOR_STATE.baseLookup.clear();
+    const entries = [];
+
+    PERFORMANCE_STATE.worldProps.forEach((root, index) => {
+        if (!root || !root.parent) return;
+
+        const perfType = root.userData._perfPropType || root.name || 'prop';
+        const id = root.userData.editorKey || `base_${index}_${perfType}`;
+        root.userData.editorKey = id;
+
+        MAP_EDITOR_STATE.baseLookup.set(id, root);
+
+        entries.push({
+            id,
+            kind: 'base',
+            assetId: perfType,
+            label: root.userData.editorLabel || `${perfType.replace(/_/g, ' ')} ${index + 1}`,
+            position: {
+                x: _mapEditorRound(root.position.x),
+                y: _mapEditorRound(root.position.y),
+                z: _mapEditorRound(root.position.z),
+            },
+            rotationY: _mapEditorRound(root.rotation.y),
+            scale: {
+                x: _mapEditorRound(root.scale.x || 1),
+                y: _mapEditorRound(root.scale.y || 1),
+                z: _mapEditorRound(root.scale.z || 1),
+            },
+            hidden: root.visible === false,
+            lockedDelete: !!root.userData.editorLockedDelete,
+            textureStyle: root.userData.editorTextureStyle || 'default',
+            color: root.userData.editorColor || '#c9ced8'
+        });
+    });
+
+    return entries;
+}
+
+function _mapEditorMergePublishedIntoCurrent() {
+    const currentBase = _mapEditorScanWorldProps();
+    if (!MAP_EDITOR_STATE.published) {
+        return {
+            version: 1,
+            revision: 0,
+            savedAt: null,
+            publishedAt: null,
+            baseObjects: currentBase,
+            added: []
+        };
+    }
+
+    const savedBaseById = new Map((MAP_EDITOR_STATE.published.baseObjects || []).map(x => [x.id, x]));
+    return {
+        version: 1,
+        revision: Number(MAP_EDITOR_STATE.published.revision || 0),
+        savedAt: MAP_EDITOR_STATE.published.savedAt || null,
+        publishedAt: MAP_EDITOR_STATE.published.publishedAt || null,
+        baseObjects: currentBase.map(base => {
+            const saved = savedBaseById.get(base.id);
+            if (!saved) return base;
+            return {
+                ...base,
+                ...saved,
+                position: { ...base.position, ...(saved.position || {}) },
+                scale: { ...base.scale, ...(saved.scale || {}) }
+            };
+        }),
+        added: _mapEditorClone(MAP_EDITOR_STATE.published.added || [])
+    };
+}
+
+function _mapEditorLoadDraft() {
+    try {
+        const raw = localStorage.getItem(MAP_EDITOR_STORAGE_KEY);
+        if (raw) {
+            const parsed = JSON.parse(raw);
+            if (parsed && Array.isArray(parsed.baseObjects) && Array.isArray(parsed.added)) {
+                return parsed;
+            }
+        }
+    } catch {}
+    return _mapEditorMergePublishedIntoCurrent();
+}
+
+function _mapEditorPushHistory() {
+    if (!MAP_EDITOR_STATE.draft) return;
+    const snap = _mapEditorClone(MAP_EDITOR_STATE.draft);
+    MAP_EDITOR_STATE.history = MAP_EDITOR_STATE.history.slice(0, MAP_EDITOR_STATE.historyIndex + 1);
+    MAP_EDITOR_STATE.history.push(snap);
+    MAP_EDITOR_STATE.historyIndex = MAP_EDITOR_STATE.history.length - 1;
+    if (MAP_EDITOR_STATE.history.length > 120) {
+        MAP_EDITOR_STATE.history.shift();
+        MAP_EDITOR_STATE.historyIndex = MAP_EDITOR_STATE.history.length - 1;
+    }
+}
+
+function _mapEditorUndo() {
+    if (MAP_EDITOR_STATE.historyIndex <= 0) return;
+    MAP_EDITOR_STATE.historyIndex--;
+    MAP_EDITOR_STATE.draft = _mapEditorClone(MAP_EDITOR_STATE.history[MAP_EDITOR_STATE.historyIndex]);
+    _mapEditorApplyDraftToWorld();
+    _mapEditorRenderUi();
+}
+
+function _mapEditorRedo() {
+    if (MAP_EDITOR_STATE.historyIndex >= MAP_EDITOR_STATE.history.length - 1) return;
+    MAP_EDITOR_STATE.historyIndex++;
+    MAP_EDITOR_STATE.draft = _mapEditorClone(MAP_EDITOR_STATE.history[MAP_EDITOR_STATE.historyIndex]);
+    _mapEditorApplyDraftToWorld();
+    _mapEditorRenderUi();
+}
+
+function _mapEditorFindEntry(id = MAP_EDITOR_STATE.selectedId) {
+    if (!MAP_EDITOR_STATE.draft || !id) return null;
+    return [...MAP_EDITOR_STATE.draft.baseObjects, ...MAP_EDITOR_STATE.draft.added].find(x => x.id === id) || null;
+}
+
+function _mapEditorApplySnap(entry) {
+    if (!entry || !MAP_EDITOR_STATE.snap) return;
+    const s = Number(MAP_EDITOR_STATE.snapSize || 8);
+    if (s <= 0) return;
+    entry.position.x = Math.round(entry.position.x / s) * s;
+    entry.position.z = Math.round(entry.position.z / s) * s;
+    entry.position.y = Math.round(entry.position.y / Math.max(1, s * 0.5)) * Math.max(1, s * 0.5);
+}
+
+function _mapEditorApplyStyle(root, entry) {
+    const style = MAP_EDITOR_TEXTURE_STYLES[entry.textureStyle] || MAP_EDITOR_TEXTURE_STYLES.default;
+    const tint = new THREE.Color(entry.color || style.color || '#c9ced8');
+
+    root.userData.editorTextureStyle = entry.textureStyle || 'default';
+    root.userData.editorColor = entry.color || tint.getStyle();
+
+    root.traverse(obj => {
+        if (!obj.isMesh) return;
+        _forEachMaterial(obj.material, mat => {
+            if (!mat || !('color' in mat)) return;
+            mat.color.copy(tint);
+            if ('roughness' in mat) mat.roughness = style.roughness;
+            if ('metalness' in mat) mat.metalness = style.metalness;
+            mat.needsUpdate = true;
+        });
+    });
+}
+
+function _mapEditorClearRuntimeRoots() {
+    for (const root of MAP_EDITOR_STATE.runtimeRoots) {
+        if (!root) continue;
+
+        root.traverse(obj => {
+            if (obj.isMesh) {
+                const idx = worldColliderMeshes.indexOf(obj);
+                if (idx >= 0) worldColliderMeshes.splice(idx, 1);
+                WORLD_DYNAMIC_COLLIDERS.delete(obj);
+            }
+        });
+
+        if (root.parent) root.parent.remove(root);
+    }
+
+    MAP_EDITOR_STATE.runtimeRoots = [];
+}
+
+function _mapEditorMakeBox(w, h, d, color) {
+    return new THREE.Mesh(
+        new THREE.BoxGeometry(w, h, d),
+        new THREE.MeshStandardMaterial({ color, roughness: 0.86, metalness: 0.04 })
+    );
+}
+
+function _mapEditorCreateRuntimeAsset(entry) {
+    const root = new THREE.Group();
+    root.userData.editorKey = entry.id;
+    root.userData._perfPropType = entry.assetId;
+    root.userData.editorTextureStyle = entry.textureStyle || 'default';
+    root.userData.editorColor = entry.color || '#c9ced8';
+
+    const addColliderRecursive = (obj, enabled = true) => {
+        obj.traverse(c => {
+            if (!c.isMesh) return;
+            c.castShadow = true;
+            c.receiveShadow = true;
+            if (enabled) {
+                worldColliderMeshes.push(c);
+                _registerDynamicWorldCollider(c);
+            }
+        });
+    };
+
+    switch (entry.assetId) {
+        case 'wall_block': {
+            const mesh = _mapEditorMakeBox(8, 6, 1.2, entry.color || '#c9ced8');
+            mesh.position.y = 3;
+            root.add(mesh);
+            addColliderRecursive(root, true);
+            break;
+        }
+
+        case 'floor_tile': {
+            const mesh = _mapEditorMakeBox(8, 0.8, 8, entry.color || '#d4d7dc');
+            mesh.position.y = 0.4;
+            root.add(mesh);
+            addColliderRecursive(root, true);
+            break;
+        }
+
+        case 'roof_tile': {
+            const mesh = _mapEditorMakeBox(8, 1.2, 8, entry.color || '#915d55');
+            mesh.position.y = 0.6;
+            root.add(mesh);
+            addColliderRecursive(root, true);
+            break;
+        }
+
+        case 'tree_oak': {
+            const trunk = new THREE.Mesh(
+                new THREE.CylinderGeometry(0.4, 0.55, 4.5, 10),
+                new THREE.MeshStandardMaterial({ color: 0x6b4f31, roughness: 0.96 })
+            );
+            trunk.position.y = 2.25;
+            const crown = new THREE.Mesh(
+                new THREE.SphereGeometry(2.6, 16, 12),
+                new THREE.MeshStandardMaterial({ color: 0x5aa668, roughness: 0.92 })
+            );
+            crown.position.y = 5.8;
+            root.add(trunk, crown);
+            addColliderRecursive(root, true);
+            break;
+        }
+
+        case 'tree_pine': {
+            const trunk = new THREE.Mesh(
+                new THREE.CylinderGeometry(0.3, 0.48, 5.2, 10),
+                new THREE.MeshStandardMaterial({ color: 0x65452d, roughness: 0.96 })
+            );
+            trunk.position.y = 2.6;
+            const cone1 = new THREE.Mesh(new THREE.ConeGeometry(2.1, 3.4, 12), new THREE.MeshStandardMaterial({ color: 0x447f4b, roughness: 0.92 }));
+            const cone2 = new THREE.Mesh(new THREE.ConeGeometry(1.7, 2.8, 12), new THREE.MeshStandardMaterial({ color: 0x3e7245, roughness: 0.92 }));
+            cone1.position.y = 5.2;
+            cone2.position.y = 7.0;
+            root.add(trunk, cone1, cone2);
+            addColliderRecursive(root, true);
+            break;
+        }
+
+        case 'rock_boulder': {
+            const rock = new THREE.Mesh(
+                new THREE.DodecahedronGeometry(2.6, 0),
+                new THREE.MeshStandardMaterial({ color: 0x7e848d, roughness: 0.98 })
+            );
+            rock.position.y = 2.2;
+            rock.scale.set(1.4, 1.0, 1.2);
+            root.add(rock);
+            addColliderRecursive(root, true);
+            break;
+        }
+
+        case 'mountain_cone': {
+            const mountain = new THREE.Mesh(
+                new THREE.ConeGeometry(12, 26, 9),
+                new THREE.MeshStandardMaterial({ color: 0x6c6e6c, roughness: 0.98 })
+            );
+            mountain.position.y = 13;
+            root.add(mountain);
+            addColliderRecursive(root, true);
+            break;
+        }
+
+        case 'grass_patch': {
+            for (let i = 0; i < 24; i++) {
+                const blade = new THREE.Mesh(
+                    new THREE.BoxGeometry(0.06, 0.9 + Math.random() * 0.6, 0.06),
+                    new THREE.MeshStandardMaterial({ color: 0x66b96a, roughness: 1.0 })
+                );
+                blade.position.set((Math.random() - 0.5) * 5.2, blade.geometry.parameters.height * 0.5, (Math.random() - 0.5) * 5.2);
+                blade.rotation.y = Math.random() * Math.PI;
+                root.add(blade);
+            }
+            addColliderRecursive(root, false);
+            break;
+        }
+
+        case 'flower_patch': {
+            for (let i = 0; i < 18; i++) {
+                const stem = new THREE.Mesh(
+                    new THREE.CylinderGeometry(0.03, 0.03, 0.8, 6),
+                    new THREE.MeshStandardMaterial({ color: 0x4db457, roughness: 1.0 })
+                );
+                const bloom = new THREE.Mesh(
+                    new THREE.SphereGeometry(0.16, 8, 8),
+                    new THREE.MeshStandardMaterial({ color: new THREE.Color(entry.color || '#f69cd9'), roughness: 0.85 })
+                );
+                stem.position.set((Math.random() - 0.5) * 4.6, 0.4, (Math.random() - 0.5) * 4.6);
+                bloom.position.copy(stem.position).add(new THREE.Vector3(0, 0.46, 0));
+                root.add(stem, bloom);
+            }
+            addColliderRecursive(root, false);
+            break;
+        }
+
+        case 'water_plane': {
+            const mesh = new THREE.Mesh(
+                new THREE.PlaneGeometry(14, 8),
+                new THREE.MeshStandardMaterial({
+                    color: 0x58cfff,
+                    transparent: true,
+                    opacity: 0.72,
+                    roughness: 0.08,
+                    metalness: 0.1
+                })
+            );
+            mesh.rotation.x = -Math.PI / 2;
+            root.add(mesh);
+            addColliderRecursive(root, false);
+            break;
+        }
+
+        case 'waterfall_plane': {
+            const mesh = new THREE.Mesh(
+                new THREE.PlaneGeometry(6, 10),
+                new THREE.MeshStandardMaterial({
+                    color: 0x8fe8ff,
+                    transparent: true,
+                    opacity: 0.62,
+                    roughness: 0.08,
+                    metalness: 0.12,
+                    side: THREE.DoubleSide
+                })
+            );
+            mesh.position.y = 5;
+            root.add(mesh);
+            addColliderRecursive(root, false);
+            break;
+        }
+
+        case 'crate_stack': {
+            const a = _mapEditorMakeBox(2.2, 2.2, 2.2, entry.color || '#9f7a4c');
+            const b = _mapEditorMakeBox(2.0, 2.0, 2.0, entry.color || '#8f6d44');
+            a.position.set(0, 1.1, 0);
+            b.position.set(1.2, 1.0, -0.9);
+            root.add(a, b);
+            addColliderRecursive(root, true);
+            break;
+        }
+
+        case 'lantern_post': {
+            const post = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.18, 5.8, 8), new THREE.MeshStandardMaterial({ color: 0x7a6750, roughness: 0.95 }));
+            const lamp = new THREE.Mesh(new THREE.SphereGeometry(0.55, 10, 10), new THREE.MeshStandardMaterial({ color: 0xffdb87, emissive: 0xffc95e, emissiveIntensity: 0.45 }));
+            post.position.y = 2.9;
+            lamp.position.y = 5.8;
+            root.add(post, lamp);
+            addColliderRecursive(root, true);
+            break;
+        }
+
+        case 'loot_chest': {
+            const base = _mapEditorMakeBox(2.4, 1.4, 1.7, entry.color || '#ddb04e');
+            const lid = _mapEditorMakeBox(2.4, 0.7, 1.7, '#8a5a2c');
+            base.position.y = 0.7;
+            lid.position.y = 1.7;
+            root.add(base, lid);
+            addColliderRecursive(root, true);
+            break;
+        }
+
+        case 'enemy_spawn': {
+            const ring = new THREE.Mesh(new THREE.TorusGeometry(2.1, 0.18, 10, 24), new THREE.MeshStandardMaterial({ color: 0xff6b6b, emissive: 0xff4b4b, emissiveIntensity: 0.35 }));
+            ring.rotation.x = Math.PI / 2;
+            const pillar = new THREE.Mesh(new THREE.CylinderGeometry(0.24, 0.24, 3.5, 8), new THREE.MeshStandardMaterial({ color: 0x5a2230, roughness: 0.9 }));
+            pillar.position.y = 1.75;
+            root.add(ring, pillar);
+            addColliderRecursive(root, false);
+            break;
+        }
+
+        case 'practice_dummy': {
+            const post = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.22, 5.0, 8), new THREE.MeshStandardMaterial({ color: 0x6e4e30, roughness: 0.95 }));
+            const body = new THREE.Mesh(new THREE.CylinderGeometry(0.8, 0.95, 2.8, 10), new THREE.MeshStandardMaterial({ color: 0xd2aa67, roughness: 0.88 }));
+            post.position.y = 2.5;
+            body.position.y = 3.0;
+            root.add(post, body);
+            addColliderRecursive(root, true);
+            break;
+        }
+
+        case 'quest_npc': {
+            const marker = new THREE.Mesh(new THREE.CylinderGeometry(0.8, 0.8, 3.2, 10), new THREE.MeshStandardMaterial({ color: 0x7dd3fc, emissive: 0x3aa5d8, emissiveIntensity: 0.28 }));
+            marker.position.y = 1.6;
+            root.add(marker);
+            addColliderRecursive(root, false);
+            break;
+        }
+
+        case 'fx_rune': {
+            const ring = new THREE.Mesh(new THREE.TorusGeometry(2.2, 0.14, 10, 36), new THREE.MeshStandardMaterial({ color: 0xb58cff, emissive: 0x7c3aed, emissiveIntensity: 0.52 }));
+            ring.rotation.x = Math.PI / 2;
+            const orb = new THREE.Mesh(new THREE.SphereGeometry(0.42, 12, 12), new THREE.MeshStandardMaterial({ color: 0xe6d5ff, emissive: 0xa855f7, emissiveIntensity: 0.4 }));
+            orb.position.y = 1.2;
+            root.add(ring, orb);
+            addColliderRecursive(root, false);
+            break;
+        }
+
+        default: {
+            const mesh = _mapEditorMakeBox(4, 4, 4, entry.color || '#c9ced8');
+            mesh.position.y = 2;
+            root.add(mesh);
+            addColliderRecursive(root, true);
+            break;
+        }
+    }
+
+    root.position.set(entry.position.x, entry.position.y, entry.position.z);
+    root.rotation.y = Number(entry.rotationY || 0);
+    root.scale.set(entry.scale.x || 1, entry.scale.y || 1, entry.scale.z || 1);
+    root.visible = !entry.hidden;
+
+    _mapEditorApplyStyle(root, entry);
+    worldScene.add(root);
+    _markPerfWorldProp(root, {
+        type: entry.assetId || 'editor',
+        radius: Math.max(8, (root.scale.x + root.scale.y + root.scale.z) * 4),
+        lodNear: 140,
+        lodFar: 280
+    });
+
+    return root;
+}
+
+function _mapEditorApplyDraftToWorld() {
+    if (!MAP_EDITOR_STATE.draft) return;
+
+    _mapEditorScanWorldProps();
+
+    for (const entry of MAP_EDITOR_STATE.draft.baseObjects) {
+        const root = MAP_EDITOR_STATE.baseLookup.get(entry.id);
+        if (!root) continue;
+
+        root.position.set(entry.position.x, entry.position.y, entry.position.z);
+        root.rotation.y = Number(entry.rotationY || 0);
+        root.scale.set(entry.scale.x || 1, entry.scale.y || 1, entry.scale.z || 1);
+        root.visible = !entry.hidden;
+        _mapEditorApplyStyle(root, entry);
+    }
+
+    _mapEditorClearRuntimeRoots();
+
+    for (const entry of MAP_EDITOR_STATE.draft.added) {
+        const root = _mapEditorCreateRuntimeAsset(entry);
+        MAP_EDITOR_STATE.runtimeRoots.push(root);
+    }
+
+    worldScene.updateMatrixWorld(true);
+    _rebuildWorldColliderChunks();
+    _updateWorldVisibilityCulling(true);
+}
+
+function _mapEditorEnsureUi() {
+    if (document.getElementById('map-editor-overlay')) return;
+
+    const wrap = document.createElement('div');
+    wrap.innerHTML = `
+        <div id="map-editor-overlay" style="
+            display:none; position:fixed; inset:0; z-index:2700; background:rgba(7,8,14,0.97);
+            color:#fff; font-family:Rajdhani, sans-serif;
+        ">
+            <div style="
+                position:absolute; left:0; right:0; top:0; height:64px; display:flex; align-items:center; gap:8px;
+                padding:10px 16px; background:linear-gradient(90deg,rgba(20,20,32,0.98),rgba(24,26,40,0.96));
+                border-bottom:1px solid rgba(255,255,255,0.08);
+            ">
+                <div style="font-size:26px; font-weight:900; margin-right:12px;">Map Editor</div>
+
+                <button data-map-tool="grab" style="padding:9px 12px; border-radius:10px; border:none; cursor:pointer;">Grab (M)</button>
+                <button data-map-tool="select" style="padding:9px 12px; border-radius:10px; border:none; cursor:pointer;">Select (Q)</button>
+                <button data-map-tool="rotate" style="padding:9px 12px; border-radius:10px; border:none; cursor:pointer;">Rotate (R)</button>
+                <button data-map-tool="size" style="padding:9px 12px; border-radius:10px; border:none; cursor:pointer;">Size (S)</button>
+                <button data-map-tool="delete" style="padding:9px 12px; border-radius:10px; border:none; cursor:pointer;">Delete (Del)</button>
+
+                <button id="map-editor-undo" style="margin-left:10px; padding:9px 12px; border-radius:10px; border:none; cursor:pointer;">Undo</button>
+                <button id="map-editor-redo" style="padding:9px 12px; border-radius:10px; border:none; cursor:pointer;">Redo</button>
+
+                <label style="display:flex; align-items:center; gap:6px; margin-left:10px;">
+                    <input id="map-editor-snap" type="checkbox" checked>
+                    <span>Snap</span>
+                </label>
+
+                <label style="display:flex; align-items:center; gap:6px;">
+                    <span>Grid</span>
+                    <input id="map-editor-snap-size" type="number" min="1" max="64" value="8" style="
+                        width:70px; padding:6px 8px; border-radius:8px; border:1px solid rgba(255,255,255,0.16);
+                        background:#171a27; color:#fff;
+                    ">
+                </label>
+
+                <div style="margin-left:auto; display:flex; align-items:center; gap:10px;">
+                    <button id="map-editor-save" style="
+                        padding:10px 16px; border-radius:12px; border:none; cursor:pointer;
+                        background:#16a34a; color:#fff; font-weight:900;
+                    ">Save</button>
+                    <button id="map-editor-publish" style="
+                        padding:10px 16px; border-radius:12px; border:none; cursor:pointer;
+                        background:#22c55e; color:#fff; font-weight:900;
+                    ">Publish</button>
+                </div>
+            </div>
+
+            <div id="map-editor-left" style="
+                position:absolute; left:0; top:64px; bottom:56px; width:320px; overflow:auto;
+                background:rgba(17,19,31,0.96); border-right:1px solid rgba(255,255,255,0.08);
+                transform:translateX(-85%); transition:transform 0.18s ease; padding:14px;
+            ">
+                <div style="font-size:22px; font-weight:900;">Assets</div>
+                <div id="map-editor-assets" style="margin-top:12px;"></div>
+            </div>
+
+            <div style="position:absolute; inset:64px 0 56px 0;">
+                <canvas id="map-editor-canvas" style="width:100%; height:100%; display:block; cursor:crosshair;"></canvas>
+            </div>
+
+            <div id="map-editor-right" style="
+                position:absolute; right:0; top:64px; bottom:56px; width:360px; overflow:auto;
+                background:rgba(17,19,31,0.96); border-left:1px solid rgba(255,255,255,0.08);
+                transform:translateX(85%); transition:transform 0.18s ease; padding:14px;
+            ">
+                <div style="font-size:22px; font-weight:900;">Hierarchy</div>
+                <div id="map-editor-hierarchy" style="margin-top:12px;"></div>
+                <div style="font-size:22px; font-weight:900; margin-top:18px;">Inspector</div>
+                <div id="map-editor-inspector" style="margin-top:12px;"></div>
+            </div>
+
+            <div style="
+                position:absolute; left:0; right:0; bottom:0; height:56px; display:flex; align-items:center; gap:10px;
+                padding:8px 16px; background:rgba(12,14,22,0.98); border-top:1px solid rgba(255,255,255,0.08);
+            ">
+                <div id="map-editor-status" style="opacity:0.84;">Ready.</div>
+                <div style="margin-left:auto; display:flex; gap:10px;">
+                    <button id="map-editor-cancel" style="padding:10px 16px; border-radius:12px; border:none; cursor:pointer;">Cancel</button>
+                    <button id="map-editor-accept" style="
+                        padding:10px 16px; border-radius:12px; border:none; cursor:pointer;
+                        background:#4f46e5; color:#fff; font-weight:900;
+                    ">Accept</button>
+                </div>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(wrap);
+
+    const ui = _mapEditorGetUi();
+
+    ui.left.addEventListener('mouseenter', () => ui.left.style.transform = 'translateX(0)');
+    ui.left.addEventListener('mouseleave', () => ui.left.style.transform = 'translateX(-85%)');
+    ui.right.addEventListener('mouseenter', () => ui.right.style.transform = 'translateX(0)');
+    ui.right.addEventListener('mouseleave', () => ui.right.style.transform = 'translateX(85%)');
+
+    ui.toolButtons.forEach(btn => {
+        btn.addEventListener('click', () => {
+            MAP_EDITOR_STATE.tool = btn.dataset.mapTool;
+            MAP_EDITOR_STATE.pendingAssetId = '';
+            _mapEditorRenderUi();
+        });
+    });
+
+    document.getElementById('map-editor-undo').addEventListener('click', _mapEditorUndo);
+    document.getElementById('map-editor-redo').addEventListener('click', _mapEditorRedo);
+    document.getElementById('map-editor-save').addEventListener('click', () => _mapEditorSaveDraft(false));
+    document.getElementById('map-editor-publish').addEventListener('click', () => _mapEditorPublish());
+    document.getElementById('map-editor-cancel').addEventListener('click', () => _mapEditorClose({ accept: false }));
+    document.getElementById('map-editor-accept').addEventListener('click', () => _mapEditorClose({ accept: true }));
+
+    ui.snapToggle.addEventListener('change', () => {
+        MAP_EDITOR_STATE.snap = !!ui.snapToggle.checked;
+    });
+
+    ui.snapSize.addEventListener('change', () => {
+        MAP_EDITOR_STATE.snapSize = Math.max(1, Number(ui.snapSize.value || 8));
+    });
+
+    ui.assets.addEventListener('click', (e) => {
+        const btn = e.target.closest('[data-map-asset]');
+        if (!btn) return;
+        MAP_EDITOR_STATE.pendingAssetId = btn.dataset.mapAsset;
+        MAP_EDITOR_STATE.tool = 'place';
+        _mapEditorSetStatus(`Placing ${btn.dataset.mapLabel}. Click on the map to place it.`);
+        _mapEditorRenderUi();
+    });
+
+    ui.hierarchy.addEventListener('click', (e) => {
+        const row = e.target.closest('[data-map-id]');
+        if (row) {
+            _mapEditorSelect(row.dataset.mapId, true);
+            return;
+        }
+
+        const hideBtn = e.target.closest('[data-map-hide]');
+        if (hideBtn) {
+            const entry = _mapEditorFindEntry(hideBtn.dataset.mapHide);
+            if (!entry) return;
+            _mapEditorPushHistory();
+            entry.hidden = !entry.hidden;
+            MAP_EDITOR_STATE.dirty = true;
+            _mapEditorApplyDraftToWorld();
+            _mapEditorRenderUi();
+            return;
+        }
+
+        const delBtn = e.target.closest('[data-map-delete]');
+        if (delBtn) {
+            MAP_EDITOR_STATE.selectedId = delBtn.dataset.mapDelete;
+            _mapEditorDeleteSelected();
+        }
+    });
+
+    const _handleMapInspectorField = (e) => {
+        const input = e.target.closest('[data-map-prop]');
+        if (!input) return;
+        const entry = _mapEditorFindEntry();
+        if (!entry) return;
+
+        const prop = input.dataset.mapProp;
+
+        if (prop === 'metaJson') {
+            if (e.type !== 'change') return;
+            try {
+                const parsed = JSON.parse(input.value || '{}');
+                _mapEditorPushHistory();
+                entry.meta = parsed && typeof parsed === 'object' ? parsed : {};
+                MAP_EDITOR_STATE.dirty = true;
+                _mapEditorApplyDraftToWorld();
+                _mapEditorRenderUi();
+                _mapEditorSetStatus('Mission / script JSON saved.');
+            } catch {
+                _mapEditorSetStatus('Invalid JSON. Mission / script data was not saved.');
+            }
+            return;
+        }
+
+        _mapEditorPushHistory();
+
+        if (prop === 'x') entry.position.x = _mapEditorClamp(input.value, -OPEN_WORLD_CONFIG.size, OPEN_WORLD_CONFIG.size, entry.position.x);
+        if (prop === 'y') entry.position.y = _mapEditorClamp(input.value, -200, 500, entry.position.y);
+        if (prop === 'z') entry.position.z = _mapEditorClamp(input.value, -OPEN_WORLD_CONFIG.size, OPEN_WORLD_CONFIG.size, entry.position.z);
+        if (prop === 'rot') entry.rotationY = _mapEditorClamp(input.value, -1000, 1000, entry.rotationY);
+        if (prop === 'sx') entry.scale.x = _mapEditorClamp(input.value, 0.1, 100, entry.scale.x);
+        if (prop === 'sy') entry.scale.y = _mapEditorClamp(input.value, 0.1, 100, entry.scale.y);
+        if (prop === 'sz') entry.scale.z = _mapEditorClamp(input.value, 0.1, 100, entry.scale.z);
+        if (prop === 'hidden') entry.hidden = !!input.checked;
+        if (prop === 'textureStyle') entry.textureStyle = input.value || 'default';
+        if (prop === 'color') entry.color = input.value || '#c9ced8';
+
+        _mapEditorApplySnap(entry);
+        MAP_EDITOR_STATE.dirty = true;
+        _mapEditorApplyDraftToWorld();
+        _mapEditorRenderUi();
+    };
+
+    ui.inspector.addEventListener('input', _handleMapInspectorField);
+    ui.inspector.addEventListener('change', _handleMapInspectorField);
+
+    const canvas = ui.canvas;
+
+    const getCanvasPoint = (evt) => {
+        const rect = canvas.getBoundingClientRect();
+        return { x: evt.clientX - rect.left, y: evt.clientY - rect.top, rect };
+    };
+
+    canvas.addEventListener('mousedown', (evt) => {
+        const pt = getCanvasPoint(evt);
+        const hit = _mapEditorHitTest(pt.x, pt.y, pt.rect.width, pt.rect.height);
+
+        if (MAP_EDITOR_STATE.tool === 'place' && MAP_EDITOR_STATE.pendingAssetId) {
+            _mapEditorPushHistory();
+            _mapEditorPlaceAsset(MAP_EDITOR_STATE.pendingAssetId, pt.x, pt.y, pt.rect.width, pt.rect.height);
+            MAP_EDITOR_STATE.pendingAssetId = '';
+            MAP_EDITOR_STATE.tool = 'select';
+            MAP_EDITOR_STATE.dirty = true;
+            _mapEditorApplyDraftToWorld();
+            _mapEditorRenderUi();
+            return;
+        }
+
+        if (MAP_EDITOR_STATE.tool === 'delete') {
+            if (hit) {
+                MAP_EDITOR_STATE.selectedId = hit.id;
+                _mapEditorDeleteSelected();
+            }
+            return;
+        }
+
+        if (hit) _mapEditorSelect(hit.id, false);
+
+        if (!hit) return;
+        if (!['grab', 'rotate', 'size'].includes(MAP_EDITOR_STATE.tool)) return;
+
+        MAP_EDITOR_STATE.drag = {
+            id: hit.id,
+            startMouseX: evt.clientX,
+            startMouseY: evt.clientY,
+            original: _mapEditorClone(_mapEditorFindEntry(hit.id))
+        };
+    });
+
+    window.addEventListener('mousemove', (evt) => {
+        if (!MAP_EDITOR_STATE.open || !MAP_EDITOR_STATE.drag) return;
+        const entry = _mapEditorFindEntry(MAP_EDITOR_STATE.drag.id);
+        if (!entry) return;
+
+        const dx = evt.clientX - MAP_EDITOR_STATE.drag.startMouseX;
+        const dy = evt.clientY - MAP_EDITOR_STATE.drag.startMouseY;
+
+        if (!MAP_EDITOR_STATE.drag._began) {
+            MAP_EDITOR_STATE.drag._began = true;
+            _mapEditorPushHistory();
+        }
+
+        if (MAP_EDITOR_STATE.tool === 'grab') {
+            entry.position.x = MAP_EDITOR_STATE.drag.original.position.x + dx / 6;
+            entry.position.z = MAP_EDITOR_STATE.drag.original.position.z + dy / 6;
+            if (evt.shiftKey) {
+                entry.position.y = MAP_EDITOR_STATE.drag.original.position.y - dy / 14;
+            }
+            _mapEditorApplySnap(entry);
+        } else if (MAP_EDITOR_STATE.tool === 'rotate') {
+            entry.rotationY = MAP_EDITOR_STATE.drag.original.rotationY + dx * 0.01;
+        } else if (MAP_EDITOR_STATE.tool === 'size') {
+            const scalar = Math.max(0.1, 1 + dx * 0.01);
+            entry.scale.x = Math.max(0.1, MAP_EDITOR_STATE.drag.original.scale.x * scalar);
+            entry.scale.y = Math.max(0.1, MAP_EDITOR_STATE.drag.original.scale.y * scalar);
+            entry.scale.z = Math.max(0.1, MAP_EDITOR_STATE.drag.original.scale.z * scalar);
+        }
+
+        MAP_EDITOR_STATE.dirty = true;
+        _mapEditorApplyDraftToWorld();
+        _mapEditorRenderUi();
+    });
+
+    window.addEventListener('mouseup', () => {
+        MAP_EDITOR_STATE.drag = null;
+    });
+
+    canvas.addEventListener('wheel', (evt) => {
+        if (!MAP_EDITOR_STATE.open) return;
+        evt.preventDefault();
+
+        if (evt.shiftKey && MAP_EDITOR_STATE.selectedId) {
+            const entry = _mapEditorFindEntry();
+            if (!entry) return;
+            _mapEditorPushHistory();
+            entry.position.y += evt.deltaY > 0 ? -1 : 1;
+            MAP_EDITOR_STATE.dirty = true;
+            _mapEditorApplyDraftToWorld();
+            _mapEditorRenderUi();
+            return;
+        }
+
+        MAP_EDITOR_STATE.viewport.zoom = _mapEditorClamp(
+            MAP_EDITOR_STATE.viewport.zoom + (evt.deltaY > 0 ? -0.03 : 0.03),
+            0.18,
+            1.35,
+            0.42
+        );
+        _mapEditorRenderCanvas();
+    }, { passive: false });
+}
+
+function _mapEditorSetStatus(text) {
+    const ui = _mapEditorGetUi();
+    if (ui.status) ui.status.textContent = text;
+}
+
+function _mapEditorWorldToCanvas(x, z, width, height) {
+    const worldHalf = OPEN_WORLD_CONFIG.size * 0.5;
+    const zoom = MAP_EDITOR_STATE.viewport.zoom;
+    const scale = (Math.min(width, height) / OPEN_WORLD_CONFIG.size) * 1.75 * zoom;
+    const cx = width * 0.5 + (x - MAP_EDITOR_STATE.viewport.x) * scale;
+    const cy = height * 0.5 + (z - MAP_EDITOR_STATE.viewport.z) * scale;
+    return { x: cx, y: cy, scale };
+}
+
+function _mapEditorCanvasToWorld(x, y, width, height) {
+    const zoom = MAP_EDITOR_STATE.viewport.zoom;
+    const scale = (Math.min(width, height) / OPEN_WORLD_CONFIG.size) * 1.75 * zoom;
+    return {
+        x: MAP_EDITOR_STATE.viewport.x + (x - width * 0.5) / scale,
+        z: MAP_EDITOR_STATE.viewport.z + (y - height * 0.5) / scale
+    };
+}
+
+function _mapEditorHitTest(x, y, width, height) {
+    if (!MAP_EDITOR_STATE.draft) return null;
+    const all = [...MAP_EDITOR_STATE.draft.baseObjects, ...MAP_EDITOR_STATE.draft.added];
+    let best = null;
+
+    for (const entry of all) {
+        if (entry.hidden) continue;
+        const p = _mapEditorWorldToCanvas(entry.position.x, entry.position.z, width, height);
+        const sx = Math.max(8, (entry.scale?.x || 1) * 6);
+        const sz = Math.max(8, (entry.scale?.z || 1) * 6);
+        const dx = Math.abs(x - p.x);
+        const dy = Math.abs(y - p.y);
+        if (dx <= sx && dy <= sz) {
+            const dist = dx * dx + dy * dy;
+            if (!best || dist < best.dist) {
+                best = { id: entry.id, dist };
+            }
+        }
+    }
+
+    return best;
+}
+
+function _mapEditorPlaceAsset(assetId, canvasX, canvasY, width, height) {
+    const def = _mapEditorAssetDef(assetId);
+    if (!def || !MAP_EDITOR_STATE.draft) return;
+
+    const worldPt = _mapEditorCanvasToWorld(canvasX, canvasY, width, height);
+    const y = getExactGroundHeightAt(worldPt.x, worldPt.z);
+
+    const entry = {
+        id: _mapEditorNextId(assetId),
+        kind: 'added',
+        assetId: def.id,
+        label: def.label,
+        position: { x: _mapEditorRound(worldPt.x), y: _mapEditorRound(y), z: _mapEditorRound(worldPt.z) },
+        rotationY: 0,
+        scale: _mapEditorClone(def.defaultScale || { x: 1, y: 1, z: 1 }),
+        hidden: false,
+        lockedDelete: false,
+        textureStyle: 'default',
+        color: def.color || '#c9ced8',
+        meta: _mapEditorDefaultMetaForAsset(def.id)
+    };
+
+    _mapEditorApplySnap(entry);
+    MAP_EDITOR_STATE.draft.added.push(entry);
+    MAP_EDITOR_STATE.selectedId = entry.id;
+}
+
+function _mapEditorSelect(id, focus = false) {
+    MAP_EDITOR_STATE.selectedId = id;
+    if (focus) {
+        const entry = _mapEditorFindEntry(id);
+        if (entry) {
+            MAP_EDITOR_STATE.viewport.x = entry.position.x;
+            MAP_EDITOR_STATE.viewport.z = entry.position.z;
+        }
+    }
+    _mapEditorRenderUi();
+}
+
+function _mapEditorDeleteSelected() {
+    const entry = _mapEditorFindEntry();
+    if (!entry) return;
+    if (entry.kind === 'base' && entry.lockedDelete) {
+        _mapEditorSetStatus('That object is protected and cannot be deleted.');
+        return;
+    }
+
+    _mapEditorPushHistory();
+
+    if (entry.kind === 'base') {
+        entry.hidden = true;
+    } else {
+        MAP_EDITOR_STATE.draft.added = MAP_EDITOR_STATE.draft.added.filter(x => x.id !== entry.id);
+        MAP_EDITOR_STATE.selectedId = null;
+    }
+
+    MAP_EDITOR_STATE.dirty = true;
+    _mapEditorApplyDraftToWorld();
+    _mapEditorRenderUi();
+}
+
+function _mapEditorRenderCanvas() {
+    const ui = _mapEditorGetUi();
+    const canvas = ui.canvas;
+    if (!canvas) return;
+
+    const rect = canvas.getBoundingClientRect();
+    if (canvas.width !== Math.floor(rect.width) || canvas.height !== Math.floor(rect.height)) {
+        canvas.width = Math.floor(rect.width);
+        canvas.height = Math.floor(rect.height);
+    }
+
+    const ctx = canvas.getContext('2d');
+    const w = canvas.width;
+    const h = canvas.height;
+
+    ctx.clearRect(0, 0, w, h);
+    ctx.fillStyle = '#93c5fd';
+    ctx.fillRect(0, 0, w, h);
+
+    ctx.fillStyle = '#7cbf7c';
+    ctx.fillRect(0, 0, w, h);
+
+    const gridSize = Math.max(1, Number(MAP_EDITOR_STATE.snapSize || 8));
+    const topLeft = _mapEditorCanvasToWorld(0, 0, w, h);
+    const bottomRight = _mapEditorCanvasToWorld(w, h, w, h);
+
+    ctx.strokeStyle = 'rgba(255,255,255,0.09)';
+    ctx.lineWidth = 1;
+
+    for (let x = Math.floor(topLeft.x / gridSize) * gridSize; x <= bottomRight.x; x += gridSize) {
+        const p = _mapEditorWorldToCanvas(x, 0, w, h);
+        ctx.beginPath();
+        ctx.moveTo(p.x, 0);
+        ctx.lineTo(p.x, h);
+        ctx.stroke();
+    }
+
+    for (let z = Math.floor(topLeft.z / gridSize) * gridSize; z <= bottomRight.z; z += gridSize) {
+        const p = _mapEditorWorldToCanvas(0, z, w, h);
+        ctx.beginPath();
+        ctx.moveTo(0, p.y);
+        ctx.lineTo(w, p.y);
+        ctx.stroke();
+    }
+
+    ctx.strokeStyle = 'rgba(10,15,24,0.85)';
+    ctx.lineWidth = 4;
+    ctx.strokeRect(24, 24, w - 48, h - 48);
+
+    if (!MAP_EDITOR_STATE.draft) return;
+
+    const all = [...MAP_EDITOR_STATE.draft.baseObjects, ...MAP_EDITOR_STATE.draft.added];
+
+    all.forEach(entry => {
+        if (entry.hidden) return;
+
+        const p = _mapEditorWorldToCanvas(entry.position.x, entry.position.z, w, h);
+        const sx = Math.max(10, (entry.scale?.x || 1) * 8);
+        const sz = Math.max(10, (entry.scale?.z || 1) * 8);
+
+        ctx.save();
+        ctx.translate(p.x, p.y);
+        ctx.rotate(entry.rotationY || 0);
+        ctx.fillStyle = entry.color || (entry.kind === 'base' ? '#d7d9df' : '#7dd3fc');
+        ctx.globalAlpha = entry.kind === 'base' ? 0.88 : 0.95;
+        ctx.fillRect(-sx * 0.5, -sz * 0.5, sx, sz);
+        ctx.strokeStyle = MAP_EDITOR_STATE.selectedId === entry.id ? '#facc15' : 'rgba(0,0,0,0.7)';
+        ctx.lineWidth = MAP_EDITOR_STATE.selectedId === entry.id ? 3 : 1.5;
+        ctx.strokeRect(-sx * 0.5, -sz * 0.5, sx, sz);
+        ctx.restore();
+
+        if (MAP_EDITOR_STATE.selectedId === entry.id) {
+            ctx.fillStyle = '#facc15';
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, 4.5, 0, Math.PI * 2);
+            ctx.fill();
+        }
+    });
+}
+
+function _mapEditorRenderUi() {
+    const ui = _mapEditorGetUi();
+    if (!ui.overlay || !MAP_EDITOR_STATE.open) return;
+
+    ui.toolButtons.forEach(btn => {
+        const active = btn.dataset.mapTool === MAP_EDITOR_STATE.tool;
+        btn.style.background = active ? '#7c3aed' : '#2a3248';
+        btn.style.color = '#fff';
+        btn.style.fontWeight = '900';
+    });
+
+    ui.snapToggle.checked = !!MAP_EDITOR_STATE.snap;
+    ui.snapSize.value = String(MAP_EDITOR_STATE.snapSize || 8);
+
+    const selected = _mapEditorFindEntry();
+    const allEntries = MAP_EDITOR_STATE.draft
+        ? [...MAP_EDITOR_STATE.draft.baseObjects, ...MAP_EDITOR_STATE.draft.added]
+        : [];
+
+    ui.assets.innerHTML = Object.entries(MAP_EDITOR_ASSET_CATALOG).map(([key, list]) => `
+        <div style="margin-bottom:14px;">
+            <div style="font-size:18px; font-weight:900; text-transform:capitalize; margin-bottom:8px;">${key}</div>
+            <div style="display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px;">
+                ${list.map(asset => `
+                    <button data-map-asset="${asset.id}" data-map-label="${asset.label}" style="
+                        text-align:left; padding:10px 12px; border-radius:10px; border:none; cursor:pointer;
+                        background:${MAP_EDITOR_STATE.pendingAssetId === asset.id ? '#7c3aed' : '#283046'}; color:#fff;
+                    ">${asset.label}</button>
+                `).join('')}
+            </div>
+        </div>
+    `).join('');
+
+    ui.hierarchy.innerHTML = allEntries.map(entry => `
+        <div data-map-id="${entry.id}" style="
+            padding:10px 12px; border-radius:12px; margin-bottom:8px; cursor:pointer;
+            background:${MAP_EDITOR_STATE.selectedId === entry.id ? 'rgba(124,58,237,0.32)' : 'rgba(255,255,255,0.04)'};
+            border:1px solid rgba(255,255,255,0.06);
+        ">
+            <div style="display:flex; justify-content:space-between; gap:10px; align-items:center;">
+                <div>
+                    <div style="font-weight:900;">${entry.label}</div>
+                    <div style="opacity:0.7; font-size:12px;">${entry.kind === 'base' ? 'Scene Object' : 'Added Asset'} · ${entry.assetId}</div>
+                </div>
+                <div style="display:flex; gap:6px;">
+                    <button data-map-hide="${entry.id}" style="padding:6px 8px; border-radius:8px; border:none; cursor:pointer;">
+                        ${entry.hidden ? 'Show' : 'Hide'}
+                    </button>
+                    ${entry.kind === 'base' && entry.lockedDelete ? '' : `
+                        <button data-map-delete="${entry.id}" style="padding:6px 8px; border-radius:8px; border:none; cursor:pointer; background:#ef4444; color:#fff;">
+                            Delete
+                        </button>
+                    `}
+                </div>
+            </div>
+        </div>
+    `).join('') || `<div style="opacity:0.72;">No editable objects indexed.</div>`;
+
+    if (!selected) {
+        ui.inspector.innerHTML = `<div style="opacity:0.72;">Select an object to edit transforms, visibility, texture style, and tint.</div>`;
+    } else {
+        const canStyle = /wall|floor|roof|block|tile/i.test(selected.assetId) || selected.kind === 'added';
+        const supportsMissionMeta = /quest|dialog|objective|spawn|escort|script|collect|boss/i.test(selected.assetId);
+        const metaJson = (() => {
+            try {
+                return JSON.stringify(selected.meta || {}, null, 2);
+            } catch {
+                return '{}';
+            }
+        })();
+
+        ui.inspector.innerHTML = `
+            <div style="display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px;">
+                <label>X <input data-map-prop="x" type="number" step="0.25" value="${selected.position.x}" style="width:100%; padding:8px; border-radius:8px; border:none; background:#0f172a; color:#fff;"></label>
+                <label>Y <input data-map-prop="y" type="number" step="0.25" value="${selected.position.y}" style="width:100%; padding:8px; border-radius:8px; border:none; background:#0f172a; color:#fff;"></label>
+                <label>Z <input data-map-prop="z" type="number" step="0.25" value="${selected.position.z}" style="width:100%; padding:8px; border-radius:8px; border:none; background:#0f172a; color:#fff;"></label>
+                <label>Rot Y <input data-map-prop="rot" type="number" step="0.05" value="${selected.rotationY || 0}" style="width:100%; padding:8px; border-radius:8px; border:none; background:#0f172a; color:#fff;"></label>
+                <label>Scale X <input data-map-prop="sx" type="number" step="0.1" value="${selected.scale.x}" style="width:100%; padding:8px; border-radius:8px; border:none; background:#0f172a; color:#fff;"></label>
+                <label>Scale Y <input data-map-prop="sy" type="number" step="0.1" value="${selected.scale.y}" style="width:100%; padding:8px; border-radius:8px; border:none; background:#0f172a; color:#fff;"></label>
+                <label>Scale Z <input data-map-prop="sz" type="number" step="0.1" value="${selected.scale.z}" style="width:100%; padding:8px; border-radius:8px; border:none; background:#0f172a; color:#fff;"></label>
+                <label style="display:flex; align-items:center; gap:8px; margin-top:24px;">
+                    <input data-map-prop="hidden" type="checkbox" ${selected.hidden ? 'checked' : ''}> Hidden
+                </label>
+                ${canStyle ? `
+                    <label>Style
+                        <select data-map-prop="textureStyle" style="width:100%; padding:8px; border-radius:8px; border:none; background:#0f172a; color:#fff;">
+                            ${Object.keys(MAP_EDITOR_TEXTURE_STYLES).map(k => `
+                                <option value="${k}" ${selected.textureStyle === k ? 'selected' : ''}>${k}</option>
+                            `).join('')}
+                        </select>
+                    </label>
+                    <label>Tint
+                        <input data-map-prop="color" type="color" value="${selected.color || '#c9ced8'}" style="width:100%; height:40px; border:none; background:transparent;">
+                    </label>
+                ` : ''}
+            </div>
+
+            ${supportsMissionMeta ? `
+                <div style="margin-top:14px; padding-top:14px; border-top:1px solid rgba(255,255,255,0.08);">
+                    <div style="font-size:18px; font-weight:900; margin-bottom:8px;">Mission / Dialogue / Script Data</div>
+                    <div style="opacity:0.72; font-size:13px; margin-bottom:8px;">
+                        Edit JSON here for school-specific quests, dialogue answers, boss fights, objective steps, spawn rules, and scripted events.
+                    </div>
+                    <textarea data-map-prop="metaJson" style="
+                        width:100%; min-height:260px; resize:vertical; padding:10px; border-radius:10px; border:none;
+                        background:#0f172a; color:#fff; font-family:Consolas, monospace; font-size:13px; line-height:1.4;
+                    ">${metaJson}</textarea>
+                    <div style="opacity:0.65; font-size:12px; margin-top:6px;">
+                        Commit JSON by clicking outside the box or changing focus.
+                    </div>
+                </div>
+            ` : ''}
+        `;
+    }
+
+    const dirtyText = MAP_EDITOR_STATE.dirty ? 'Draft has unsaved changes.' : 'Draft is saved.';
+    _mapEditorSetStatus(
+        MAP_EDITOR_STATE.pendingAssetId
+            ? `Placement mode: ${_mapEditorAssetDef(MAP_EDITOR_STATE.pendingAssetId)?.label || MAP_EDITOR_STATE.pendingAssetId}`
+            : `${dirtyText} Tool: ${MAP_EDITOR_STATE.tool.toUpperCase()} · Scroll to zoom · Shift+scroll or Shift+drag to move vertically.`
+    );
+
+    _mapEditorRenderCanvas();
+}
+
+function _mapEditorOpen() {
+    if (!OWNER_ADMIN.authed) return;
+    if (GAME_STATE.mode !== 'world') {
+        _ownerShowCenterHud('Map Editor', 'Start the game world first.', '#7dd3fc', 2800);
+        return;
+    }
+
+    _mapEditorEnsureUi();
+
+    if (document.pointerLockElement === canvas) {
+        try { document.exitPointerLock(); } catch {}
+    }
+
+    const ui = _mapEditorGetUi();
+    ui.overlay.style.display = 'block';
+    OWNER_ADMIN.open = false;
+    _ownerRenderPanel();
+
+    MAP_EDITOR_STATE.open = true;
+    MAP_EDITOR_STATE.draft = _mapEditorLoadDraft();
+    MAP_EDITOR_STATE.openSnapshot = _mapEditorClone(MAP_EDITOR_STATE.draft);
+    MAP_EDITOR_STATE.history = [];
+    MAP_EDITOR_STATE.historyIndex = -1;
+    MAP_EDITOR_STATE.selectedId = null;
+    MAP_EDITOR_STATE.pendingAssetId = '';
+    MAP_EDITOR_STATE.tool = 'select';
+    MAP_EDITOR_STATE.dirty = false;
+    MAP_EDITOR_STATE.snap = true;
+    MAP_EDITOR_STATE.snapSize = 8;
+    keys.w = keys.a = keys.s = keys.d = keys.space = keys.shift = keys.ctrl = false;
+    isAiming = false;
+
+    _mapEditorPushHistory();
+    _mapEditorApplyDraftToWorld();
+    _mapEditorRenderUi();
+}
+
+function _mapEditorClose({ accept = true } = {}) {
+    const ui = _mapEditorGetUi();
+    if (!ui.overlay) return;
+
+    if (!accept && MAP_EDITOR_STATE.openSnapshot) {
+        MAP_EDITOR_STATE.draft = _mapEditorClone(MAP_EDITOR_STATE.openSnapshot);
+        _mapEditorApplyDraftToWorld();
+    } else if (accept) {
+        _mapEditorSaveDraft(true);
+    }
+
+    MAP_EDITOR_STATE.open = false;
+    MAP_EDITOR_STATE.drag = null;
+    MAP_EDITOR_STATE.pendingAssetId = '';
+    ui.overlay.style.display = 'none';
+}
+
+function _mapEditorSaveDraft(quiet = true) {
+    if (!MAP_EDITOR_STATE.draft) return;
+    MAP_EDITOR_STATE.draft.savedAt = Date.now();
+    localStorage.setItem(MAP_EDITOR_STORAGE_KEY, JSON.stringify(MAP_EDITOR_STATE.draft));
+    MAP_EDITOR_STATE.dirty = false;
+    _sendNetworkMessage('owner_map_save', { state: MAP_EDITOR_STATE.draft });
+    if (!quiet) _ownerShowCenterHud('Map Draft Saved', 'Draft saved locally and sent to the server.', '#86efac', 2400);
+    _mapEditorRenderUi();
+}
+
+function _mapEditorPublish() {
+    if (!MAP_EDITOR_STATE.draft) return;
+    performAutoSave(true);
+    _mapEditorSaveDraft(true);
+    _sendNetworkMessage('owner_map_publish', { state: MAP_EDITOR_STATE.draft });
+    _ownerShowCenterHud('Publishing...', 'Players will be autosaved and returned to the main menu.', '#86efac', 3500);
+}
+
+function _mapEditorOnWorldGenerated() {
+    _mapEditorScanWorldProps();
+    if (!MAP_EDITOR_STATE.published) return;
+    MAP_EDITOR_STATE.draft = _mapEditorMergePublishedIntoCurrent();
+    _mapEditorApplyDraftToWorld();
+}
+
+function _mapEditorHandleShortcut(e) {
+    if (!MAP_EDITOR_STATE.open) return false;
+
+    if (e.key === 'Escape') {
+        _mapEditorClose({ accept: true });
+        return true;
+    }
+
+    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z' && !e.shiftKey) {
+        _mapEditorUndo();
+        return true;
+    }
+
+    if ((e.ctrlKey || e.metaKey) && (e.key.toLowerCase() === 'y' || (e.shiftKey && e.key.toLowerCase() === 'z'))) {
+        _mapEditorRedo();
+        return true;
+    }
+
+    const key = e.key.toLowerCase();
+
+    if (key === 'm') { MAP_EDITOR_STATE.tool = 'grab'; _mapEditorRenderUi(); return true; }
+    if (key === 'q') { MAP_EDITOR_STATE.tool = 'select'; _mapEditorRenderUi(); return true; }
+    if (key === 'r') { MAP_EDITOR_STATE.tool = 'rotate'; _mapEditorRenderUi(); return true; }
+    if (key === 's' && !e.ctrlKey && !e.metaKey) { MAP_EDITOR_STATE.tool = 'size'; _mapEditorRenderUi(); return true; }
+    if (key === 'h' && MAP_EDITOR_STATE.selectedId) {
+        const entry = _mapEditorFindEntry();
+        if (!entry) return true;
+        _mapEditorPushHistory();
+        entry.hidden = !entry.hidden;
+        MAP_EDITOR_STATE.dirty = true;
+        _mapEditorApplyDraftToWorld();
+        _mapEditorRenderUi();
+        return true;
+    }
+
+    if (e.key === 'Delete' || e.key === 'Backspace') {
+        _mapEditorDeleteSelected();
+        return true;
+    }
+
+    return true;
+}
+
+document.addEventListener('keydown', (e) => {
+    if (_mapEditorHandleShortcut(e)) {
+        e.preventDefault();
+        e.stopPropagation();
+    }
+}, true);
+
+setInterval(() => {
+    if (!MAP_EDITOR_STATE.open || !MAP_EDITOR_STATE.dirty) return;
+    _mapEditorSaveDraft(true);
+}, MAP_EDITOR_AUTOSAVE_MS);
 
 const __ownerOrigHandleNetworkMessage = _handleNetworkMessage;
 _handleNetworkMessage = function(message) {
@@ -8027,7 +9598,9 @@ document.addEventListener('keydown', (e) => {
 
 window.addEventListener('load', () => {
     _ownerEnsureUi();
+    _mapEditorEnsureUi();
     _ownerBootstrapCheck();
+    _mapEditorFetchPublishedState(true);
     _ownerRenderPanel();
     initMultiplayer(); // Connect immediately so owner auth works from the main menu
     _initServerStatusWidget();
@@ -10962,7 +12535,7 @@ function _buildSkySystem() {
 
 // ── Update Day/Night (called every frame from animate) ───────────────────────
 function updateDayNight(delta) {
-    if (GAME_STATE.mode !== 'world') return;
+    if (GAME_STATE.mode !== 'world' || MAP_EDITOR_STATE.open) return;
     const DN = DAY_NIGHT;
     if (!DN.objects.skydome) return;
 
@@ -13249,7 +14822,7 @@ function _hitDummy(dummy, damage, fromWorldPos, isShove) {
 }
 
 function updateDummies(delta) {
-    if (GAME_STATE.mode !== 'world') return;
+    if (GAME_STATE.mode !== 'world' || MAP_EDITOR_STATE.open) return;
 
     for (const d of WORLD_DUMMIES) {
         // ── Respawn after death ──
@@ -22627,7 +24200,7 @@ function _attemptSpellTraceCast() {
 
 // Show / hide the bar and clean up overlay when aim state changes
 function updateSpellUI() {
-    if (GAME_STATE.mode !== 'world') return;
+    if (GAME_STATE.mode !== 'world' || MAP_EDITOR_STATE.open) return;
     const bar = document.getElementById('spell-bar');
     if (!bar) return;
 
@@ -23347,6 +24920,8 @@ function setupUI() {
     _applyAudioSettings();
     renderSettingsUI();
     syncGameMenuButtons();
+    _persistSettings();
+    _savePlayerProfile();
 }
 
 // ── ATTRIBUTE SYSTEM ──
@@ -25175,7 +26750,7 @@ function _applyLoadedSavePayload(payload) {
 }
 
 function performAutoSave(quiet = true) {
-    if (GAME_STATE.mode !== 'world') return;
+    if (GAME_STATE.mode !== 'world' || MAP_EDITOR_STATE.open) return;
     const payload = _buildSavePayload('Auto Save');
     _writeSaveSlot(0, payload);
     if (!quiet) _showSpellCastStatus('Autosaved', true, 700);
@@ -25378,7 +26953,7 @@ function startNewCharacterPath() {
 }
 
 function updateAutoSave(delta) {
-    if (GAME_STATE.mode !== 'world') return;
+    if (GAME_STATE.mode !== 'world' || MAP_EDITOR_STATE.open) return;
     _autoSaveTimer += delta;
     if (_autoSaveTimer >= 45) {
         _autoSaveTimer = 0;
@@ -27253,7 +28828,39 @@ renderInventoryUI();
 renderFriendsUI();
 syncGameMenuButtons();
 
-function startGame() {
+function _findSafeWorldSpawn(targetPos) {
+    const desired = targetPos ? targetPos.clone() : new THREE.Vector3(0, 8, 0);
+    const candidate = new THREE.Vector3();
+
+    for (let ring = 0; ring <= 16; ring++) {
+        const radius = ring * 5;
+        const steps = ring === 0 ? 1 : 16;
+
+        for (let i = 0; i < steps; i++) {
+            const ang = (i / steps) * Math.PI * 2;
+            candidate.set(
+                desired.x + Math.cos(ang) * radius,
+                desired.y,
+                desired.z + Math.sin(ang) * radius
+            );
+
+            candidate.y = getExactGroundHeightAt(candidate.x, candidate.z);
+            const before = candidate.clone();
+            applyHorizontalCollision(candidate);
+            candidate.y = getPlayerGroundedY(candidate.x, candidate.z, candidate.y);
+
+            if (candidate.distanceTo(before) < 0.9) {
+                return candidate.clone();
+            }
+        }
+    }
+
+    desired.y = getPlayerGroundedY(desired.x, desired.z, desired.y);
+    return desired;
+}
+
+async function startGame() {
+    await (_mapEditorFetchPublishedState(false) || Promise.resolve());
     GAME_STATE.mode = 'world';
 
     const mainMenu = document.getElementById('main-menu');
@@ -27284,8 +28891,9 @@ function startGame() {
 
     // ── 3. Compute stats and build world ──
     computeStats();
-    generateWorld();
-    // Critical: bake all mesh world-matrices so raycasting works correctly
+generateWorld();
+_mapEditorOnWorldGenerated();
+// Critical: bake all mesh world-matrices so raycasting works correctly
     // before _spawnWorldEnemies calls getExactGroundHeightAt.
     worldScene.updateMatrixWorld(true);
     _buildWorldShop();
@@ -27316,20 +28924,20 @@ function startGame() {
     GAME_STATE.player.deathFade = 0;
     const defaultSpawn = getSpawnPointForCharacter(GAME_STATE.char);
 
-    GAME_STATE.player.spawnPoint = loadedWorld?.spawnPoint
-        ? _vec3FromNet(loadedWorld.spawnPoint)
-        : defaultSpawn.clone();
+GAME_STATE.player.spawnPoint = loadedWorld?.spawnPoint
+    ? _findSafeWorldSpawn(_vec3FromNet(loadedWorld.spawnPoint))
+    : _findSafeWorldSpawn(defaultSpawn.clone());
 
-    GAME_STATE.player.spawnPoint.y = getExactGroundHeightAt(
-        GAME_STATE.player.spawnPoint.x,
-        GAME_STATE.player.spawnPoint.z
-    );
+GAME_STATE.player.spawnPoint.y = getExactGroundHeightAt(
+    GAME_STATE.player.spawnPoint.x,
+    GAME_STATE.player.spawnPoint.z
+);
 
     if (loadedWorld) {
-        const savedPos = _vec3FromNet(loadedWorld.position || loadedWorld.spawnPoint || defaultSpawn);
-        savedPos.y = getExactGroundHeightAt(savedPos.x, savedPos.z);
+const savedPos = _findSafeWorldSpawn(_vec3FromNet(loadedWorld.position || loadedWorld.spawnPoint || defaultSpawn));
+savedPos.y = getExactGroundHeightAt(savedPos.x, savedPos.z);
 
-        characterModel.position.copy(savedPos);
+characterModel.position.copy(savedPos);
         characterModel.rotation.y = loadedWorld.rotationY ?? 0;
         yaw = loadedWorld.yaw ?? yaw;
         pitch = loadedWorld.pitch ?? pitch;
@@ -27385,7 +28993,7 @@ const downVector = new THREE.Vector3(0, -1, 0);
 let walkTime = 0;
 
 function updatePhysics(delta) {
-    if (GAME_STATE.mode !== 'world') return;
+    if (GAME_STATE.mode !== 'world' || MAP_EDITOR_STATE.open) return;
 
     // Wind reacts to player movement speed and direction
     if (charParts.robeUniforms) {
