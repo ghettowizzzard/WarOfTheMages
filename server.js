@@ -24,12 +24,27 @@ const MAX_BAN_MS = 999 * 24 * 60 * 60 * 1000;
 const OWNER_PASSWORD_HASH = '5e99daea91977f49fac49a134507dbe569fa3671d27406200fbfcda926815fd4';
 
 const MOD_DATA_FILE = path.join(ROOT, 'moderation-data.json');
+const MAP_STATE_FILE = path.join(ROOT, 'map-state.json');
+
 const MOD_DATA = readJson(MOD_DATA_FILE, {
   meta: {
     ownerDeviceId: null,
   },
   users: {},
   chatLogs: [],
+});
+
+const MAP_STATE = readJson(MAP_STATE_FILE, {
+  version: 1,
+  draft: null,
+  published: {
+    version: 1,
+    revision: 0,
+    savedAt: null,
+    publishedAt: null,
+    baseObjects: [],
+    added: [],
+  },
 });
 
 app.use(express.static(ROOT));
@@ -57,6 +72,13 @@ app.get('/api/bootstrap', (req, res) => {
   });
 });
 
+app.get('/api/map-state', (_req, res) => {
+  res.json({
+    ok: true,
+    published: MAP_STATE.published || null,
+  });
+});
+
 app.get('/', (_req, res) => {
   res.sendFile(path.join(ROOT, 'WizardGame.html'));
 });
@@ -71,6 +93,74 @@ function readJson(filePath, fallback) {
 
 function saveModData() {
   fs.writeFileSync(MOD_DATA_FILE, JSON.stringify(MOD_DATA, null, 2), 'utf8');
+}
+
+function saveMapState() {
+  fs.writeFileSync(MAP_STATE_FILE, JSON.stringify(MAP_STATE, null, 2), 'utf8');
+}
+
+function clampNumber(value, min, max, fallback = 0) {
+  const n = Number(value);
+  if (!Number.isFinite(n)) return fallback;
+  return Math.min(max, Math.max(min, n));
+}
+
+function safeHexColor(value, fallback = '#c9ced8') {
+  const out = String(value || '').trim();
+  return /^#[0-9a-f]{6}$/i.test(out) ? out : fallback;
+}
+
+function sanitizeMapEntry(entry = {}, kind = 'base') {
+  let safeMeta = {};
+  try {
+    safeMeta = entry && typeof entry.meta === 'object' && entry.meta
+      ? JSON.parse(JSON.stringify(entry.meta))
+      : {};
+  } catch {
+    safeMeta = {};
+  }
+
+  return {
+    id: safeId(entry.id, 96) || crypto.randomUUID(),
+    kind: kind === 'added' ? 'added' : 'base',
+    assetId: clampText(entry.assetId, 64) || 'prop',
+    label: clampText(entry.label, 96) || 'Map Object',
+    position: {
+      x: clampNumber(entry.position?.x, -5000, 5000, 0),
+      y: clampNumber(entry.position?.y, -500, 2000, 0),
+      z: clampNumber(entry.position?.z, -5000, 5000, 0),
+    },
+    rotationY: clampNumber(entry.rotationY, -1000, 1000, 0),
+    scale: {
+      x: clampNumber(entry.scale?.x, 0.1, 100, 1),
+      y: clampNumber(entry.scale?.y, 0.1, 100, 1),
+      z: clampNumber(entry.scale?.z, 0.1, 100, 1),
+    },
+    hidden: !!entry.hidden,
+    lockedDelete: !!entry.lockedDelete,
+    textureStyle: clampText(entry.textureStyle, 48) || 'default',
+    color: safeHexColor(entry.color, '#c9ced8'),
+    meta: safeMeta,
+  };
+}
+
+function sanitizeMapState(input = {}) {
+  const baseObjects = Array.isArray(input.baseObjects)
+    ? input.baseObjects.slice(0, 5000).map(entry => sanitizeMapEntry(entry, 'base'))
+    : [];
+
+  const added = Array.isArray(input.added)
+    ? input.added.slice(0, 2500).map(entry => sanitizeMapEntry(entry, 'added'))
+    : [];
+
+  return {
+    version: 1,
+    revision: clampNumber(input.revision, 0, 999999, 0),
+    savedAt: Date.now(),
+    publishedAt: input.publishedAt ? clampNumber(input.publishedAt, 0, 9999999999999, Date.now()) : null,
+    baseObjects,
+    added,
+  };
 }
 
 function hashText(value) {
@@ -621,6 +711,41 @@ wss.on('connection', (ws) => {
       case 'owner_action': {
         if (!ws.isOwner) break;
         handleOwnerAction(ws, payload);
+        break;
+      }
+
+            case 'owner_map_save': {
+        if (!ws.isOwner) break;
+        MAP_STATE.draft = sanitizeMapState(payload.state || {});
+        saveMapState();
+        sendJson(ws, 'owner_map_saved', {
+          savedAt: MAP_STATE.draft.savedAt,
+        });
+        break;
+      }
+
+      case 'owner_map_publish': {
+        if (!ws.isOwner) break;
+
+        const next = sanitizeMapState(payload.state || {});
+        next.revision = Number(MAP_STATE.published?.revision || 0) + 1;
+        next.publishedAt = Date.now();
+        MAP_STATE.published = next;
+        MAP_STATE.draft = next;
+        saveMapState();
+
+        broadcast('map_force_reload', {
+          state: MAP_STATE.published,
+          revision: MAP_STATE.published.revision,
+          publishedAt: MAP_STATE.published.publishedAt,
+          message: 'New Map Update!',
+        });
+
+        sendJson(ws, 'owner_map_saved', {
+          savedAt: MAP_STATE.published.savedAt,
+          publishedAt: MAP_STATE.published.publishedAt,
+          revision: MAP_STATE.published.revision,
+        });
         break;
       }
 
