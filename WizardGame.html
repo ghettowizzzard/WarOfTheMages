@@ -2906,7 +2906,6 @@ function _attemptWardrobeRename() {
 
     if (cleaned === (GAME_STATE.char.name || '').trim()) {
         _refreshWardrobeRenameStatus();
-        _savePlayerProfile();
         return;
     }
 
@@ -3005,8 +3004,6 @@ function _inviteFriendToHome(id, name) {
     });
 
     _showFriendToast(`🏠 Sent a home invite to ${name}.`);
-    _savePlayerProfile();
-
 }
 
 function _kickGuestFromHome(id, name) {
@@ -3019,7 +3016,6 @@ function _kickGuestFromHome(id, name) {
     });
 
     _showFriendToast(`🚪 Kicked ${name} from your home.`);
-    _savePlayerProfile();
 }
 
 function _getGuestsInHome(homeOwnerId = GAME_STATE.home.ownerId || _getLocalHomeOwnerId()) {
@@ -3390,8 +3386,6 @@ function _openWardrobeCustomization() {
     GAME_STATE.mode = 'customization';
     _syncCustomizationModeUI();
     rebuildCharacter();
-    _savePlayerProfile();
-
 
     requestAnimationFrame(() => {
         const nameInput = document.getElementById('char-name');
@@ -4082,7 +4076,6 @@ function _applyCharacterColor(colId, hex) {
     const btn = document.querySelector(`.color-btn[data-col="${colId}"]`);
     if (btn) btn.style.background = hex;
     rebuildCharacter();
-    _savePlayerProfile();
 }
 
 function _syncColorPopupCustomEditor(hex) {
@@ -12535,7 +12528,7 @@ function _buildSkySystem() {
 
 // ── Update Day/Night (called every frame from animate) ───────────────────────
 function updateDayNight(delta) {
-    if (GAME_STATE.mode !== 'world' || MAP_EDITOR_STATE.open) return;
+    if (GAME_STATE.mode !== 'world') return;
     const DN = DAY_NIGHT;
     if (!DN.objects.skydome) return;
 
@@ -14822,7 +14815,7 @@ function _hitDummy(dummy, damage, fromWorldPos, isShove) {
 }
 
 function updateDummies(delta) {
-    if (GAME_STATE.mode !== 'world' || MAP_EDITOR_STATE.open) return;
+    if (GAME_STATE.mode !== 'world') return;
 
     for (const d of WORLD_DUMMIES) {
         // ── Respawn after death ──
@@ -24200,7 +24193,7 @@ function _attemptSpellTraceCast() {
 
 // Show / hide the bar and clean up overlay when aim state changes
 function updateSpellUI() {
-    if (GAME_STATE.mode !== 'world' || MAP_EDITOR_STATE.open) return;
+    if (GAME_STATE.mode !== 'world') return;
     const bar = document.getElementById('spell-bar');
     if (!bar) return;
 
@@ -24920,8 +24913,6 @@ function setupUI() {
     _applyAudioSettings();
     renderSettingsUI();
     syncGameMenuButtons();
-    _persistSettings();
-    _savePlayerProfile();
 }
 
 // ── ATTRIBUTE SYSTEM ──
@@ -26750,7 +26741,7 @@ function _applyLoadedSavePayload(payload) {
 }
 
 function performAutoSave(quiet = true) {
-    if (GAME_STATE.mode !== 'world' || MAP_EDITOR_STATE.open) return;
+    if (GAME_STATE.mode !== 'world') return;
     const payload = _buildSavePayload('Auto Save');
     _writeSaveSlot(0, payload);
     if (!quiet) _showSpellCastStatus('Autosaved', true, 700);
@@ -26953,7 +26944,7 @@ function startNewCharacterPath() {
 }
 
 function updateAutoSave(delta) {
-    if (GAME_STATE.mode !== 'world' || MAP_EDITOR_STATE.open) return;
+    if (GAME_STATE.mode !== 'world') return;
     _autoSaveTimer += delta;
     if (_autoSaveTimer >= 45) {
         _autoSaveTimer = 0;
