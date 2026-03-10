@@ -826,6 +826,27 @@ wss.on('connection', (ws) => {
         }, ws);
         break;
       }
+
+      case 'player_report': {
+        const reporter = players.get(playerId);
+        const report = {
+          kind:         'report',
+          from:         playerId,
+          reporterName: clampText(payload.reporterName, 80) || reporter?.name || 'Unknown',
+          targetId:     safeId(payload.targetId) || '',
+          targetName:   clampText(payload.targetName, 80),
+          reportType:   clampText(payload.reportType, 80),
+          description:  clampText(payload.description, 500),
+          at:           Date.now(),
+        };
+
+        // Log it alongside chat so it appears in owner panel logs
+        MOD_DATA.chatLogs.push(report);
+        MOD_DATA.chatLogs = MOD_DATA.chatLogs.slice(-CHAT_LOG_LIMIT);
+        saveModData();
+        notifyOwners();
+        break;
+      }
     }
   });
 
