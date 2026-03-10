@@ -20,8 +20,8 @@ const CHAT_LOG_LIMIT = 250;
 const MAX_WARNINGS_SAVED = 50;
 const MAX_BAN_MS = 999 * 24 * 60 * 60 * 1000;
 
-// Set this to the SHA-256 hash of your owner password.
-const OWNER_PASSWORD_HASH = 'A1076Wizard47';
+// SHA-256 hash. 
+const OWNER_PASSWORD_HASH = '5e99daea91977f49fac49a134507dbe569fa3671d27406200fbfcda926815fd4';
 
 const MOD_DATA_FILE = path.join(ROOT, 'moderation-data.json');
 const MOD_DATA = readJson(MOD_DATA_FILE, {
