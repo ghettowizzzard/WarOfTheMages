@@ -6711,14 +6711,18 @@ function _handleNetworkMessage(message) {
         }
 
         case 'chat_public': {
-            const { sender, senderId, text } = message.payload || {};
-            if (sender && text) _chatReceivePublic(sender, text, null, senderId);
+            const p = message.payload || {};
+            const senderName = p.sender || p.name;
+            const senderId   = p.senderId || p.from;
+            if (senderName && p.text) _chatReceivePublic(senderName, p.text, null, senderId);
             break;
         }
 
         case 'chat_private': {
-            const { sender, senderId, text } = message.payload || {};
-            if (senderId && sender && text) _chatReceivePrivate(senderId, sender, text);
+            const p = message.payload || {};
+            const senderName = p.sender || p.name;
+            const senderId   = p.senderId || p.from;
+            if (senderId && senderName && p.text) _chatReceivePrivate(senderId, senderName, p.text);
             break;
         }
 
@@ -6732,22 +6736,22 @@ function _handleNetworkMessage(message) {
             break;
         }
         case 'voice_offer': {
-            const { to, sdp, from } = message.payload || {};
-            if (to === NETWORK_STATE.playerId && from && sdp) {
+            const { sdp, from } = message.payload || {};
+            if (from && sdp) {
                 _vcHandleOffer(from, sdp).catch(err => _vcLog('Handle offer error:', err));
             }
             break;
         }
         case 'voice_answer': {
-            const { to, sdp, from } = message.payload || {};
-            if (to === NETWORK_STATE.playerId && from && sdp) {
+            const { sdp, from } = message.payload || {};
+            if (from && sdp) {
                 _vcHandleAnswer(from, sdp).catch(err => _vcLog('Handle answer error:', err));
             }
             break;
         }
         case 'voice_ice': {
-            const { to, candidate, from } = message.payload || {};
-            if (to === NETWORK_STATE.playerId && from && candidate) {
+            const { candidate, from } = message.payload || {};
+            if (from && candidate) {
                 _vcHandleIce(from, candidate).catch(() => {});
             }
             break;
@@ -7858,13 +7862,18 @@ function _ownerHandleNetworkMessage(message) {
         }
 
         case 'admin_freeze_state': {
+            const _wasFrozen = OWNER_ADMIN.frozen;
             OWNER_ADMIN.frozen = !!payload.frozen;
-            _ownerShowCenterHud(
-                'Moderator Notice',
-                OWNER_ADMIN.frozen ? 'You have been frozen.' : 'You have been unfrozen.',
-                OWNER_ADMIN.frozen ? '#7dd3fc' : '#86efac',
-                3500
-            );
+            // Only show the HUD when a moderator actively changes the state,
+            // not on the silent initial join sync the server sends to everyone.
+            if (_wasFrozen !== OWNER_ADMIN.frozen) {
+                _ownerShowCenterHud(
+                    'Moderator Notice',
+                    OWNER_ADMIN.frozen ? 'You have been frozen.' : 'You have been unfrozen.',
+                    OWNER_ADMIN.frozen ? '#7dd3fc' : '#86efac',
+                    3500
+                );
+            }
             return true;
         }
 
