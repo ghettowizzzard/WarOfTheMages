@@ -3393,7 +3393,7 @@ function _openWardrobeCustomization() {
     });
 }
 
-function _closeWardrobeCustomization() {
+async function _closeWardrobeCustomization() {
     if (!isWardrobeCustomizationMode()) return;
 
     _customizationContext = 'start';
@@ -5755,6 +5755,13 @@ function _playPlayerVoice(kind = 'hurt', position = null) {
 
 const MULTIPLAYER_CONFIG = {
     enabled: true,
+    // ── LOCAL TESTING OVERRIDE ─────────────────────────────────────────
+    // If you're opening this file locally (file:// protocol) and want to
+    // connect to your live Render server, set serverUrl to your WSS URL.
+    // Example: serverUrl: 'wss://your-app-name.onrender.com',
+    // Leave null when deployed on Render — it auto-detects from location.host.
+    serverUrl: 'wss://warofthemages.onrender.com',    
+// ──────────────────────────────────────────────────────────────────
     snapshotInterval: 0.08,
     reconnectDelayMs: 2500,
     remoteLerp: 10,
@@ -5822,6 +5829,9 @@ function _getSharedRemoteMaterial(type, options = {}) {
 }
 
 function _getMultiplayerSocketUrl() {
+    // Manual override — for local (file://) testing against your deployed server.
+    if (MULTIPLAYER_CONFIG.serverUrl) return MULTIPLAYER_CONFIG.serverUrl;
+
     const protocol = String(location.protocol || '').toLowerCase();
     const host = String(location.host || '').trim();
 
@@ -9496,6 +9506,9 @@ function _updateServerStatusWidget() {
         dot.classList.add('connecting');
         label.textContent  = 'Connecting...';
         pLabel.textContent = 'Players: —';
+    } else if (location.protocol === 'file:' && !MULTIPLAYER_CONFIG.serverUrl) {
+        label.textContent  = 'Offline (local file)';
+        pLabel.textContent = 'Set serverUrl to test';
     } else {
         label.textContent  = 'Offline';
         pLabel.textContent = 'Players: —';
