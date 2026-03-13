@@ -172,6 +172,66 @@
         #server-status-label  { color: #c4b5fd; }
         #server-players-label { color: #fb923c; border-left: 1px solid rgba(255,255,255,0.15); padding-left: 10px; }
 
+        /* ── BOSS HUD (top-center health bar during boss fights) ── */
+        #boss-hud {
+            display: none; position: fixed; top: 0; left: 50%; transform: translateX(-50%);
+            width: min(660px, 92vw); padding: 10px 22px 16px; z-index: 800;
+            flex-direction: column; align-items: center; gap: 3px;
+            background: linear-gradient(180deg,rgba(8,2,16,0.97),rgba(18,4,32,0.90));
+            border: 1.5px solid rgba(220,38,38,0.55); border-top: none;
+            border-radius: 0 0 16px 16px;
+            box-shadow: 0 8px 40px rgba(0,0,0,0.85), 0 0 60px rgba(200,20,20,0.15);
+            font-family: 'Rajdhani', sans-serif; pointer-events: none;
+        }
+        #boss-hud-phase-label {
+            font-size: 11px; font-weight: 900; letter-spacing: 0.2em;
+            color: #fca5a5; text-transform: uppercase;
+        }
+        #boss-hud-name {
+            font-size: 22px; font-weight: 900; color: #fff; letter-spacing: 0.07em;
+            text-shadow: 0 0 28px rgba(220,38,38,0.85);
+        }
+        .boss-hud-bar-track {
+            width: 100%; height: 15px; border-radius: 8px;
+            background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.12);
+            overflow: hidden; margin-top: 5px;
+        }
+        #boss-hud-bar {
+            height: 100%; width: 100%; border-radius: 8px;
+            background: linear-gradient(90deg,#dc2626,#ef4444);
+            transition: width 0.28s ease, background 0.6s ease;
+            box-shadow: 0 0 14px rgba(239,68,68,0.55);
+        }
+        #boss-hud.boss-hud-hide { animation: bossHudFade 0.7s forwards; }
+        @keyframes bossHudFade { to { opacity:0; transform:translateX(-50%) translateY(-18px); } }
+
+        /* ── BOSS INTRO OVERLAY ── */
+        #boss-intro-overlay {
+            display: none; position: fixed; inset: 0; z-index: 4000;
+            background: rgba(0,0,0,0.90); align-items: center; justify-content: center;
+            font-family: 'Rajdhani', sans-serif; transition: opacity 0.38s ease;
+        }
+        #boss-intro-inner {
+            text-align: center; display: flex; flex-direction: column;
+            align-items: center; gap: 12px; user-select: none;
+        }
+        #boss-intro-eyecatch {
+            font-size: 12px; font-weight: 900; letter-spacing: 0.30em;
+            color: #dc2626; text-transform: uppercase;
+            animation: bossEyePulse 0.55s ease-in-out infinite alternate;
+        }
+        @keyframes bossEyePulse { from{opacity:0.45;} to{opacity:1;} }
+        #boss-intro-name {
+            font-size: clamp(38px, 9vw, 72px); font-weight: 900; color: #fff;
+            letter-spacing: 0.05em;
+            text-shadow: 0 0 70px rgba(220,38,38,0.95), 0 4px 10px rgba(0,0,0,1);
+            animation: bossNameAppear 0.55s cubic-bezier(0.16,1,0.3,1) forwards;
+        }
+        @keyframes bossNameAppear { from{opacity:0;transform:scale(0.8);} to{opacity:1;transform:scale(1);} }
+        #boss-intro-school {
+            font-size: 16px; font-weight: 700; color: #c4b5fd; letter-spacing: 0.14em;
+        }
+
         /* ── REPORT MODAL ── */
         #report-modal {
             display: none; position: fixed; top:0; left:0;
@@ -15057,7 +15117,11 @@ const ENEMY_ARCHETYPES = {
         hitRadius: 2.7,
         respawnDelay: 40,
         hover: 0.65,
-        isBoss: true
+        isBoss: true,
+        introSound:  'RiftDrakeIntro.mp3',
+        hurtSounds:  _makeSoundRange('RiftDrakeHurt', 1, 3),
+        attackSounds: _makeSoundRange('RiftDrakeAttack', 1, 3),
+        deathSound:  'RiftDrakeDeath.mp3',
     },
     bone_dragon: {
         id: 'bone_dragon',
@@ -15081,7 +15145,42 @@ const ENEMY_ARCHETYPES = {
         hitRadius: 3.0,
         respawnDelay: 48,
         hover: 0.85,
-        isBoss: true
+        isBoss: true,
+        introSound:  'BoneDragonIntro.mp3',
+        hurtSounds:  _makeSoundRange('BoneDragonHurt', 1, 3),
+        attackSounds: _makeSoundRange('BoneDragonAttack', 1, 3),
+        deathSound:  'BoneDragonDeath.mp3',
+    },
+    // ── The Hollow Sovereign ────────────────────────────────────────────────
+    // A colossal crystalline void construct — ancient, alien, geometric.
+    // Hardest boss in the realm. Floats high, hits the hardest, has the most HP.
+    hollow_sovereign: {
+        id: 'hollow_sovereign',
+        name: 'The Hollow Sovereign',
+        school: 'storm',
+        style: 'sovereign',
+        tier: 'boss',
+        ai: 'boss',
+        hp: 750,
+        speed: 3.8,
+        aggroRange: 42,
+        preferredRange: 22,
+        attackRange: 30,
+        projectileSpeed: 22,
+        attackCadence: 3.2,
+        windup: 1.4,
+        damage: 38,
+        xp: 420,
+        gold: 280,
+        scale: 2.1,
+        hitRadius: 3.5,
+        respawnDelay: 60,
+        hover: 1.2,
+        isBoss: true,
+        introSound:  'HollowSovereignIntro.mp3',
+        hurtSounds:  _makeSoundRange('HollowSovereignHurt', 1, 4),
+        attackSounds: _makeSoundRange('HollowSovereignAttack', 1, 3),
+        deathSound:  'HollowSovereignDeath.mp3',
     }
 };
 
@@ -15100,8 +15199,9 @@ const ENEMY_SPAWN_TABLES = {
         { id: 'iron_revenant', weight: 8 }
     ],
     boss: [
-        { id: 'rift_drake', weight: 1 },
-        { id: 'bone_dragon', weight: 1 }
+        { id: 'rift_drake',        weight: 1 },
+        { id: 'bone_dragon',       weight: 1 },
+        { id: 'hollow_sovereign',  weight: 1 }
     ]
 };
 
@@ -15529,6 +15629,82 @@ function _buildEnemyVisual(def) {
         anim.head = head;
         anim.hitCenterY = 1.95;
         anim.nameplateY = 3.55;
+    } else if (def.style === 'sovereign') {
+        // ── The Hollow Sovereign — colossal crystalline void construct ──────────
+        // Towering, angular, alien. 8 orbiting mirror shards drift around it.
+
+        // Central torso: stacked geometric crystal plates
+        const torsoCore = addMesh(animRoot, new THREE.Mesh(new THREE.OctahedronGeometry(1.05, 0), bodyMat));
+        torsoCore.position.y = 2.8;
+        torsoCore.scale.set(0.95, 1.3, 0.75);
+
+        const torsoShell = addMesh(animRoot, new THREE.Mesh(new THREE.OctahedronGeometry(1.35, 0), accentMat), false);
+        torsoShell.position.y = 2.8;
+        torsoShell.scale.set(0.9, 1.15, 0.7);
+        torsoShell.material = torsoShell.material.clone();
+        torsoShell.material.transparent = true;
+        torsoShell.material.opacity = 0.22;
+
+        // Pulsing void core inside the torso
+        const voidCore = addMesh(animRoot, new THREE.Mesh(new THREE.SphereGeometry(0.42, 8, 8), coreMat));
+        voidCore.position.y = 2.8;
+        anim.lightNodes.push(voidCore);
+
+        // Crown of crystal spires
+        const crownBase = addMesh(animRoot, new THREE.Mesh(new THREE.OctahedronGeometry(0.62, 0), bodyMat));
+        crownBase.position.set(0, 4.25, 0);
+        crownBase.scale.set(0.9, 0.55, 0.85);
+        anim.head = crownBase;
+
+        for (let i = 0; i < 5; i++) {
+            const ang = (i / 5) * Math.PI * 2;
+            const h = 0.88 + (i % 2) * 0.35;
+            const spire = addMesh(animRoot, new THREE.Mesh(new THREE.ConeGeometry(0.12, h, 4), coreMat));
+            spire.position.set(Math.cos(ang) * 0.52, 4.62 + (i % 2) * 0.26, Math.sin(ang) * 0.52);
+            anim.lightNodes.push(spire);
+        }
+
+        // Two massive crystal shard arms
+        for (const sx of [-1.55, 1.55]) {
+            addMesh(animRoot, new THREE.Mesh(new THREE.OctahedronGeometry(0.42, 0), accentMat)).position.set(sx, 3.25, 0);
+            const arm = addMesh(animRoot, new THREE.Mesh(new THREE.BoxGeometry(0.30, 1.4, 0.30), bodyMat));
+            arm.position.set(sx, 2.15, 0);
+            anim.legs.push(arm);
+            const hand = addMesh(animRoot, new THREE.Mesh(new THREE.OctahedronGeometry(0.36, 0), coreMat));
+            hand.position.set(sx, 1.2, 0.12);
+            anim.lightNodes.push(hand);
+        }
+
+        // Lower body: robes of shattered glass pointing downward
+        for (let i = 0; i < 4; i++) {
+            const shard = addMesh(animRoot, new THREE.Mesh(
+                new THREE.OctahedronGeometry(0.36 - i * 0.07, 0),
+                i % 2 === 0 ? accentMat : bodyMat
+            ));
+            shard.position.set((i % 2 === 0 ? 1 : -1) * 0.28, 1.42 - i * 0.52, 0);
+            shard.scale.set(0.55, 1.5, 0.5);
+            anim.tail.push(shard);
+        }
+
+        // 8 orbiting mirror fragments — the Sovereign's signature visual
+        for (let i = 0; i < 8; i++) {
+            const shard = addMesh(animRoot, new THREE.Mesh(
+                new THREE.OctahedronGeometry(0.18 + (i % 3) * 0.08, 0),
+                i % 2 === 0 ? coreMat : accentMat
+            ), false);
+            const a = (i / 8) * Math.PI * 2;
+            shard.position.set(Math.cos(a) * 1.9, 2.8 + Math.sin(i * 0.9) * 0.55, Math.sin(a) * 1.9);
+            anim.shards.push(shard);
+        }
+
+        // Powerful central void light
+        const sovereignGlow = new THREE.PointLight(palette.glow, 1.5, 20);
+        sovereignGlow.position.set(0, 2.9, 0);
+        animRoot.add(sovereignGlow);
+        anim.lightNodes.push(sovereignGlow);
+
+        anim.hitCenterY = 2.8;
+        anim.nameplateY = 5.5;
     } else {
         const body = addMesh(animRoot, new THREE.Mesh(new THREE.CylinderGeometry(0.7, 0.7, 3.6, 12), darkBoneMat));
         body.rotation.z = Math.PI * 0.5;
@@ -15794,6 +15970,16 @@ function _spawnEnemy(defId, x, z, overrides = {}) {
         aggroLocked: false,
         knockback: new THREE.Vector3(),
         _hitFxIds: new Set(),
+        bossState: def.isBoss ? {
+            introPlayed:     false,
+            attackIndex:     0,
+            breathActive:    false,
+            breathTimer:     0,
+            breath1Used:     false,
+            breath2Used:     false,
+            baseSpeed:       def.speed,
+            lastHurtSoundMs: 0,
+        } : null,
         ...overrides
     };
 
@@ -15819,8 +16005,34 @@ function _despawnEnemyProjectilesOwnedBy(enemyId) {
     }
 }
 
+/**
+ * Plays a one-shot positional boss voice sound.
+ * type: 'intro' | 'hurt' | 'attack' | 'death'
+ */
+function _playBossVoice(enemy, type) {
+    const def = ENEMY_ARCHETYPES[enemy.defId];
+    if (!def) return;
+    let files;
+    if      (type === 'hurt')   files = def.hurtSounds;
+    else if (type === 'attack') files = def.attackSounds;
+    else if (type === 'death')  files = def.deathSound  ? [def.deathSound]  : null;
+    else if (type === 'intro')  files = def.introSound  ? [def.introSound]  : null;
+    if (!files || files.length === 0) return;
+    const file = files[Math.floor(Math.random() * files.length)];
+    const pos = enemy.mesh?.position || null;
+    // Intro sound plays at full volume regardless of distance (cinematic moment).
+    const isIntro = type === 'intro';
+    _playOneShotSoundAt(pos, [file], {
+        refDistance: isIntro ? 60 : 6,
+        maxDistance: isIntro ? 9999 : 80,
+        volume: type === 'death' ? 0.82 : type === 'attack' ? 0.70 : type === 'intro' ? 0.84 : 0.65,
+        category: 'sfx',
+    });
+}
+
 function _killEnemy(enemy, sourcePos = null) {
     enemy.dead = true;
+    if (enemy.isBoss) _playBossVoice(enemy, 'death');
     enemy.deadTime = 0;
     enemy.attackCooldown = 0;
     enemy.attackWindup = 0;
@@ -15838,7 +16050,13 @@ function _killEnemy(enemy, sourcePos = null) {
     );
 
     if (typeof triggerScreenShake === 'function' && enemy.isBoss) {
-        triggerScreenShake(0.22, 0.35);
+        triggerScreenShake(0.58, 0.95);
+        if (typeof triggerImpactFlash === 'function') triggerImpactFlash(255, 200, 50, 0.5);
+    }
+
+    // Dismiss the boss HUD if this boss was the active one
+    if (enemy.isBoss && _ACTIVE_BOSS_HUD_ID === enemy.id) {
+        _hideBossHud();
     }
 
     if (sourcePos) {
@@ -15856,6 +16074,13 @@ function _hitEnemy(enemy, damage, fromWorldPos, options = {}) {
     enemy.hurtTime = 0.18;
     enemy.state = 'aggro';
     enemy.aggroLocked = true;
+    if (enemy.isBoss && enemy.bossState) {
+        const _nowMs = performance.now();
+        if (_nowMs - enemy.bossState.lastHurtSoundMs > 400) {
+            enemy.bossState.lastHurtSoundMs = _nowMs;
+            _playBossVoice(enemy, 'hurt');
+        }
+    }
 
     const dx = enemy.mesh.position.x - (fromWorldPos ? fromWorldPos.x : enemy.mesh.position.x - 1);
     const dz = enemy.mesh.position.z - (fromWorldPos ? fromWorldPos.z : enemy.mesh.position.z);
@@ -15941,9 +16166,15 @@ function _spawnWorldEnemies() {
         { id: 'iron_revenant',x: -260, z: -270},
         { id: 'iron_revenant',x:  280, z: -300},
         { id: 'iron_revenant',x: -300, z:  290},
-        // Bosses (far corners)
-        { id: 'rift_drake',   x:  360, z: -340},
-        { id: 'bone_dragon',  x: -370, z:  350},
+        // Bosses — moved from extreme corners to be more reachable.
+        // Rift Drake guards the eastern badlands.
+        { id: 'rift_drake',       x:  255, z: -205 },
+        // Bone Dragon haunts the northwestern ruins.
+        { id: 'bone_dragon',      x: -265, z:  225 },
+        // The Hollow Sovereign — the hardest boss. Spawns in the deep south void
+        // rift and the eastern wastelands. Two encounters on the map.
+        { id: 'hollow_sovereign', x:   15, z: -295 },
+        { id: 'hollow_sovereign', x:  308, z:   75 },
     ];
 
     LANDMARKS.forEach(entry => {
@@ -16078,11 +16309,7 @@ function _enemyPerformAttack(enemy) {
         if (dist <= enemy.attackRange + 0.5) _enemyMeleeAttack(enemy);
         else _spawnEnemyProjectile(enemy, playerCenter, 1, 0.04);
     } else if (enemy.ai === 'boss') {
-        if (dist <= 4.8 && Math.random() < 0.4) {
-            _enemyMeleeAttack(enemy);
-        } else {
-            _spawnEnemyProjectile(enemy, playerCenter, 3, 0.16);
-        }
+        _bossPerformPhaseAttack(enemy);
     } else {
         _spawnEnemyProjectile(enemy, playerCenter, enemy.tier === 'elite' ? 2 : 1, enemy.tier === 'elite' ? 0.08 : 0.03);
     }
@@ -16247,6 +16474,254 @@ function _getEnemyAiTickInterval(distSq) {
     return ENEMY_AI_FAR_INTERVAL;
 }
 
+// ═══════════════════════════════════════════════════════════════════════════════
+// ── BOSS SYSTEM ─────────────────────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════════════════════════
+
+let _ACTIVE_BOSS_HUD_ID = null;
+
+/** Returns the THREE.Vector3 of the nearest player (local + all online remote players). */
+function _bossFindNearestTarget(enemy) {
+    if (!characterModel) return null;
+    const bp = enemy.mesh.position;
+    let nearest = null;
+    let nearestDist = Infinity;
+
+    if (!isPlayerDead()) {
+        const d = Math.hypot(characterModel.position.x - bp.x, characterModel.position.z - bp.z);
+        if (d < nearestDist) {
+            nearestDist = d;
+            nearest = characterModel.position.clone().add(new THREE.Vector3(0, 1.0, 0));
+        }
+    }
+
+    for (const [, snap] of NETWORK_STATE.players) {
+        if (!snap?.position || snap.dead) continue;
+        const d = Math.hypot(snap.position.x - bp.x, snap.position.z - bp.z);
+        if (d < nearestDist) {
+            nearestDist = d;
+            nearest = new THREE.Vector3(snap.position.x, (snap.position.y ?? 0) + 1.0, snap.position.z);
+        }
+    }
+
+    return nearest;
+}
+
+function _showBossHud(enemy) {
+    let hud = document.getElementById('boss-hud');
+    if (!hud) {
+        hud = document.createElement('div');
+        hud.id = 'boss-hud';
+        hud.innerHTML = `
+            <div id="boss-hud-phase-label">BOSS</div>
+            <div id="boss-hud-name"></div>
+            <div class="boss-hud-bar-track"><div id="boss-hud-bar"></div></div>
+        `;
+        document.body.appendChild(hud);
+    }
+
+    const phaseEl = document.getElementById('boss-hud-phase-label');
+    if (phaseEl) { phaseEl.textContent = 'BOSS'; phaseEl.style.color = '#fca5a5'; }
+    const nameEl = document.getElementById('boss-hud-name');
+    if (nameEl) nameEl.textContent = enemy.name.toUpperCase();
+
+    hud.style.display = 'flex';
+    hud.classList.remove('boss-hud-hide');
+
+    const bar = document.getElementById('boss-hud-bar');
+    if (bar) { bar.style.transition = 'width 0.3s ease'; bar.style.width = '100%'; }
+
+    _ACTIVE_BOSS_HUD_ID = enemy.id;
+}
+
+function _hideBossHud() {
+    _ACTIVE_BOSS_HUD_ID = null;
+    const hud = document.getElementById('boss-hud');
+    if (!hud) return;
+    hud.classList.add('boss-hud-hide');
+    setTimeout(() => { hud.style.display = 'none'; hud.classList.remove('boss-hud-hide'); }, 700);
+}
+
+function _updateBossHud(enemy) {
+    const bar = document.getElementById('boss-hud-bar');
+    if (!bar) return;
+    const frac = Math.max(0, enemy.hp / enemy.maxHp);
+    bar.style.transition = 'width 0.28s ease';
+    bar.style.width = (frac * 100) + '%';
+
+    const isBreath = !!enemy.bossState?.breathActive;
+    bar.style.background = isBreath
+        ? 'linear-gradient(90deg,#166534,#4ade80)'
+        : frac > 0.5
+            ? 'linear-gradient(90deg,#dc2626,#ef4444)'
+            : frac > 0.25
+                ? 'linear-gradient(90deg,#92400e,#f97316)'
+                : 'linear-gradient(90deg,#7f1d1d,#ff2020)';
+
+    const phaseEl = document.getElementById('boss-hud-phase-label');
+    if (phaseEl) {
+        phaseEl.textContent = isBreath ? '— VULNERABLE —' : 'BOSS';
+        phaseEl.style.color  = isBreath ? '#86efac' : '#fca5a5';
+    }
+}
+
+function _triggerBossIntro(enemy) {
+    let overlay = document.getElementById('boss-intro-overlay');
+    if (!overlay) {
+        overlay = document.createElement('div');
+        overlay.id = 'boss-intro-overlay';
+        overlay.innerHTML = `
+            <div id="boss-intro-inner">
+                <div id="boss-intro-eyecatch">BOSS ENCOUNTER</div>
+                <div id="boss-intro-name"></div>
+                <div id="boss-intro-school"></div>
+            </div>
+        `;
+        document.body.appendChild(overlay);
+    }
+
+    const schoolLabels = {
+        fire: '⚔ Fire Arcanum',   death: '☠ Death Arcanum',
+        storm: '⚡ Void Arcanum',  ice: '❄ Ice Arcanum',
+        life: '✦ Life Arcanum',    balance: '⚖ Balance Arcanum',
+    };
+
+    document.getElementById('boss-intro-name').textContent = enemy.name.toUpperCase();
+    document.getElementById('boss-intro-school').textContent =
+        schoolLabels[enemy.school] || enemy.school.toUpperCase();
+
+    overlay.style.opacity = '0';
+    overlay.style.display = 'flex';
+    requestAnimationFrame(() => { overlay.style.transition = 'opacity 0.38s ease'; overlay.style.opacity = '1'; });
+
+    if (typeof triggerScreenShake === 'function') triggerScreenShake(0.44, 0.9);
+    if (typeof triggerImpactFlash === 'function') triggerImpactFlash(60, 10, 130, 0.38);
+
+    // After 2.4s: fade out intro, then show boss HUD
+    setTimeout(() => {
+        overlay.style.opacity = '0';
+        setTimeout(() => { overlay.style.display = 'none'; _showBossHud(enemy); }, 380);
+    }, 2400);
+
+    _playBossVoice(enemy, 'intro');
+}
+
+/**
+ * Phase-based boss attack dispatcher.
+ * Rotates through 3 unique attacks per archetype:
+ *   Phase 0 — primary ranged attack
+ *   Phase 1 — bullet-hell area denial burst
+ *   Phase 2 — close-range devastation (melee + eruption)
+ */
+function _bossPerformPhaseAttack(enemy) {
+    if (!characterModel || enemy.dead) return;
+    if (enemy.bossState?.breathActive) return; // no attacks during vulnerability window
+
+    _playBossVoice(enemy, 'attack');
+    const target = _bossFindNearestTarget(enemy);
+    if (!target) return;
+
+    const bs = enemy.bossState;
+    const phase = bs ? (bs.attackIndex % 3) : 0;
+    if (bs) bs.attackIndex = (bs.attackIndex + 1) % 3;
+
+    // ── Rift Drake ──────────────────────────────────────────────────────────
+    if (enemy.defId === 'rift_drake') {
+        switch (phase) {
+            case 0: // Fire Fan — 5 projectiles in a wide arc at nearest player
+                _spawnEnemyProjectile(enemy, target, 5, 0.22);
+                break;
+            case 1: { // Inferno Ring — 8 radial projectiles. Dodge outward fast!
+                for (let i = 0; i < 8; i++) {
+                    const a = (i / 8) * Math.PI * 2;
+                    const t = enemy.mesh.position.clone();
+                    t.x += Math.sin(a) * 40; t.z += Math.cos(a) * 40; t.y = target.y;
+                    _spawnEnemyProjectile(enemy, t, 1, 0);
+                }
+                if (typeof triggerScreenShake === 'function') triggerScreenShake(0.22, 0.38);
+                break;
+            }
+            case 2: // Dive Slam — rush + heavy melee + shockwave burst
+                _enemyMeleeAttack(enemy);
+                _spawnEnemyProjectile(enemy, target, 4, 0.30);
+                if (typeof triggerImpactFlash === 'function') triggerImpactFlash(255, 80, 10, 0.22);
+                if (typeof triggerScreenShake === 'function') triggerScreenShake(0.30, 0.45);
+                break;
+        }
+
+    // ── Bone Dragon ─────────────────────────────────────────────────────────
+    } else if (enemy.defId === 'bone_dragon') {
+        switch (phase) {
+            case 0: // Bone Volley — 7-shot wide spread
+                _spawnEnemyProjectile(enemy, target, 7, 0.26);
+                break;
+            case 1: { // Death Nova — full 360° ring of 12. Run AWAY from the boss!
+                for (let i = 0; i < 12; i++) {
+                    const a = (i / 12) * Math.PI * 2;
+                    const t = enemy.mesh.position.clone();
+                    t.x += Math.sin(a) * 48; t.z += Math.cos(a) * 48; t.y = target.y;
+                    _spawnEnemyProjectile(enemy, t, 1, 0);
+                }
+                if (typeof triggerScreenShake === 'function') triggerScreenShake(0.32, 0.5);
+                if (typeof triggerImpactFlash === 'function') triggerImpactFlash(50, 10, 80, 0.2);
+                break;
+            }
+            case 2: // Necrotic Pulse — 3 waves of 5, spread tightens each wave
+                _spawnEnemyProjectile(enemy, target, 5, 0.16);
+                setTimeout(() => { if (!enemy.dead) _spawnEnemyProjectile(enemy, target, 5, 0.22); }, 420);
+                setTimeout(() => { if (!enemy.dead) _spawnEnemyProjectile(enemy, target, 5, 0.30); }, 880);
+                break;
+        }
+
+    // ── The Hollow Sovereign ────────────────────────────────────────────────
+    } else if (enemy.defId === 'hollow_sovereign') {
+        switch (phase) {
+            case 0: // Void Cascade — 3 waves of 6, spread tightens each wave (converging pressure)
+                _spawnEnemyProjectile(enemy, target, 6, 0.30);
+                setTimeout(() => { if (!enemy.dead) _spawnEnemyProjectile(enemy, target, 6, 0.20); }, 380);
+                setTimeout(() => { if (!enemy.dead) _spawnEnemyProjectile(enemy, target, 6, 0.12); }, 760);
+                if (typeof triggerScreenShake === 'function') triggerScreenShake(0.18, 0.32);
+                break;
+            case 1: { // Crystal Storm — near-full ring with intentional escape gaps. Find the lanes!
+                for (let i = 0; i < 18; i++) {
+                    if (i % 6 === 3) continue; // intentional gap every 6th — your escape lane!
+                    const a = (i / 18) * Math.PI * 2 + (Math.random() * 0.18 - 0.09);
+                    const t = enemy.mesh.position.clone();
+                    t.x += Math.sin(a) * 50; t.z += Math.cos(a) * 50; t.y = target.y;
+                    _spawnEnemyProjectile(enemy, t, 1, 0);
+                }
+                if (typeof triggerScreenShake === 'function') triggerScreenShake(0.40, 0.65);
+                if (typeof triggerImpactFlash === 'function') triggerImpactFlash(100, 20, 200, 0.30);
+                break;
+            }
+            case 2: // Gravitational Collapse — pulls you inward, then erupts outward
+                if (!isPlayerDead() && characterModel) {
+                    const pullDir = enemy.mesh.position.clone().sub(characterModel.position).normalize();
+                    _applyDamageToPlayer(Math.round(enemy.damage * 0.35), {
+                        reason: 'Hollow Sovereign void pull', impulse: pullDir.multiplyScalar(22)
+                    });
+                }
+                setTimeout(() => {
+                    if (enemy.dead) return;
+                    _enemyMeleeAttack(enemy);
+                    for (let i = 0; i < 10; i++) {
+                        const a = (i / 10) * Math.PI * 2;
+                        const t = enemy.mesh.position.clone();
+                        t.x += Math.sin(a) * 36; t.z += Math.cos(a) * 36; t.y = target.y;
+                        _spawnEnemyProjectile(enemy, t, 1, 0);
+                    }
+                }, 520);
+                if (typeof triggerScreenShake === 'function') triggerScreenShake(0.48, 0.75);
+                if (typeof triggerImpactFlash === 'function') triggerImpactFlash(80, 0, 160, 0.38);
+                break;
+
+    // ── Generic boss fallback ────────────────────────────────────────────────
+        }
+    } else {
+        _spawnEnemyProjectile(enemy, target, 3, 0.18);
+    }
+}
+
 function updateEnemies(delta) {
     updateEnemyProjectiles(delta);
 
@@ -16361,6 +16836,52 @@ function updateEnemies(delta) {
         enemy.attackWindup = Math.max(0, enemy.attackWindup - delta);
         enemy.hurtTime = Math.max(0, enemy.hurtTime - delta);
 
+        // ── BOSS: intro cinematic + breath/vulnerability phase ────────────────
+        if (enemy.isBoss && enemy.bossState) {
+            const bs = enemy.bossState;
+
+            // Trigger intro the first time this boss enters aggro range
+            if (!bs.introPlayed && !inSpawnGrace && !isPlayerDead()) {
+                if (Math.sqrt(distSq) <= enemy.aggroRange) {
+                    bs.introPlayed = true;
+                    _triggerBossIntro(enemy);
+                }
+            }
+
+            // Countdown the breath/vulnerability window
+            if (bs.breathActive) {
+                bs.breathTimer = Math.max(0, bs.breathTimer - delta);
+                if (bs.breathTimer <= 0) {
+                    bs.breathActive = false;
+                    // Enrage: boss is faster after each vulnerability phase
+                    enemy.speed = Math.min(bs.baseSpeed * 1.45, enemy.speed * 1.18);
+                    enemy.attackCooldown = Math.max(enemy.attackCooldown, 1.6);
+                }
+            } else {
+                // Check HP thresholds that trigger vulnerability windows
+                const hpFrac = enemy.hp / enemy.maxHp;
+                if (!bs.breath1Used && hpFrac <= 0.55) {
+                    bs.breath1Used = true;
+                    bs.breathActive = true;
+                    bs.breathTimer = 10 + Math.random() * 3; // 10–13 sec window
+                    enemy.attackWindup = 0;
+                    enemy.attackCooldown = bs.breathTimer + 2;
+                    if (typeof triggerScreenShake === 'function') triggerScreenShake(0.18, 0.5);
+                } else if (!bs.breath2Used && hpFrac <= 0.25) {
+                    bs.breath2Used = true;
+                    bs.breathActive = true;
+                    bs.breathTimer = 8 + Math.random() * 2;  // 8–10 sec window
+                    enemy.attackWindup = 0;
+                    enemy.attackCooldown = bs.breathTimer + 2;
+                    if (typeof triggerScreenShake === 'function') triggerScreenShake(0.28, 0.65);
+                    if (typeof triggerImpactFlash === 'function') triggerImpactFlash(60, 0, 130, 0.3);
+                }
+            }
+
+            // Live-update the top-screen HUD for the active boss
+            if (_ACTIVE_BOSS_HUD_ID === enemy.id) _updateBossHud(enemy);
+        }
+
         if (!inAnimRange) {
             enemy.animTime += delta;
         }
@@ -16421,13 +16942,14 @@ function updateEnemies(delta) {
                     else if (dist < enemy.attackRange + 1.25) perf.desired.addScaledVector(perf.dir, -0.85);
                     perf.desired.addScaledVector(perf.side, 0.34);
                 } else if (enemy.ai === 'boss') {
-                    if (dist > enemy.preferredRange + 1.5) perf.desired.add(perf.dir);
-                    else if (dist < 7) perf.desired.addScaledVector(perf.dir, -0.55);
-                    perf.desired.addScaledVector(perf.side, 0.18);
-                } else {
-                    if (dist > enemy.preferredRange + 1.25) perf.desired.add(perf.dir);
-                    else if (dist < enemy.preferredRange - 2.0) perf.desired.addScaledVector(perf.dir, -0.8);
-                    perf.desired.addScaledVector(perf.side, 0.42);
+                    // During vulnerability window — stands completely still (players hit for free)
+                    if (enemy.bossState?.breathActive) {
+                        perf.desired.set(0, 0, 0);
+                    } else {
+                        if (dist > enemy.preferredRange + 1.5) perf.desired.add(perf.dir);
+                        else if (dist < 7) perf.desired.addScaledVector(perf.dir, -0.55);
+                        perf.desired.addScaledVector(perf.side, 0.18);
+                    }
                 }
 
                 const canAttack =
