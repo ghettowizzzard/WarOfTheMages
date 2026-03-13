@@ -880,6 +880,8 @@ wss.on('connection', (ws) => {
           kind: 'public',
           from: playerId,
           name: sender?.name ?? 'Wizard',
+          senderId: playerId,
+          sender: sender?.name ?? 'Wizard',
           text: clampText(payload.text, 300),
           at: Date.now(),
         };
@@ -908,6 +910,8 @@ wss.on('connection', (ws) => {
           sendToPlayer(targetId, 'chat_private', {
             from: playerId,
             name: sender?.name ?? 'Wizard',
+            senderId: playerId,
+            sender: sender?.name ?? 'Wizard',
             text: entry.text,
             at: entry.at,
           });
@@ -916,7 +920,7 @@ wss.on('connection', (ws) => {
       }
 
       case 'voice_ready': {
-        broadcast('voice_ready', { from: playerId }, ws);
+        broadcast('voice_ready', { playerId }, ws);
         break;
       }
 
@@ -946,7 +950,7 @@ wss.on('connection', (ws) => {
 
       case 'voice_speaking': {
         broadcast('voice_speaking', {
-          from: playerId,
+          playerId,
           speaking: !!payload.speaking,
         }, ws);
         break;
