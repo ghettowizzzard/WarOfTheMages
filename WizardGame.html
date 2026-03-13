@@ -5884,9 +5884,11 @@ function _cloneAppearanceForNet(source) {
     }));
 }
 
+const _ZERO_VEC3 = new THREE.Vector3(0, 0, 0); // shared zero vector — never mutate this
+
 function _buildLocalPlayerSnapshot() {
     const p = GAME_STATE.player;
-    const pos = characterModel ? characterModel.position : new THREE.Vector3();
+    const pos = characterModel ? characterModel.position : _ZERO_VEC3;
 
     return {
         id: NETWORK_STATE.playerId,
@@ -24214,9 +24216,12 @@ function _attemptSpellTraceCast() {
 }
 
 // Show / hide the bar and clean up overlay when aim state changes
+// Cache spell bar element once — it never changes.
+let _spellBarEl = null;
 function updateSpellUI() {
     if (GAME_STATE.mode !== 'world') return;
-    const bar = document.getElementById('spell-bar');
+    if (!_spellBarEl) _spellBarEl = document.getElementById('spell-bar');
+    const bar = _spellBarEl;
     if (!bar) return;
 
     // Lazy build — ensures slots are populated even if IIFE ran too early
@@ -27045,27 +27050,37 @@ function syncGameMenuButtons() {
     }
 }
 
+// Cached HUD element references — populated once on first call, never re-queried.
+const _HUD_ELS = {};
+function _cacheHudEls() {
+    if (_HUD_ELS.cached) return;
+    _HUD_ELS.hpBar   = document.getElementById('hud-hp-bar');
+    _HUD_ELS.mpBar   = document.getElementById('hud-mp-bar');
+    _HUD_ELS.xpBar   = document.getElementById('hud-xp-bar');
+    _HUD_ELS.xpText  = document.getElementById('hud-xp-text');
+    _HUD_ELS.lvBadge = document.getElementById('hud-level-badge');
+    _HUD_ELS.hudCls  = document.getElementById('hud-class');
+    _HUD_ELS.cash    = document.getElementById('hud-cash');
+    _HUD_ELS.cached  = true;
+}
+
 function updateHudMeters() {
+    _cacheHudEls();
     const p = GAME_STATE.player;
-    const hpBar = document.getElementById('hud-hp-bar');
-    const mpBar = document.getElementById('hud-mp-bar');
+    const { hpBar, mpBar, xpBar, xpText, lvBadge, hudCls, cash } = _HUD_ELS;
+
     if (hpBar && p.maxHP) hpBar.style.width = `${Math.max(0, Math.min(100, (p.hp / p.maxHP) * 100))}%`;
     if (mpBar && p.maxEnergy) mpBar.style.width = `${Math.max(0, Math.min(100, (p.energy / p.maxEnergy) * 100))}%`;
 
     // XP & Level
-    const lv      = GAME_STATE.level  || 1;
-    const curXP   = GAME_STATE.xp     || 0;
-    const needed  = _xpForLevel(lv);
-    const xpPct   = Math.min(100, (curXP / needed) * 100);
-    const xpBar   = document.getElementById('hud-xp-bar');
-    const xpText  = document.getElementById('hud-xp-text');
-    const lvBadge = document.getElementById('hud-level-badge');
-    const hudCls  = document.getElementById('hud-class');
+    const lv    = GAME_STATE.level || 1;
+    const curXP = GAME_STATE.xp    || 0;
+    const needed = _xpForLevel(lv);
+    const xpPct  = Math.min(100, (curXP / needed) * 100);
     if (xpBar)   xpBar.style.width  = xpPct + '%';
     if (xpText)  xpText.textContent = `XP ${curXP} / ${needed}`;
     if (lvBadge) lvBadge.textContent = `Lvl ${lv}`;
 
-    // Update class line (top of HUD card)
     if (hudCls) {
         const alignLabel = GAME_STATE.char?.alignment === 'light' ? 'Light' : 'Dark';
         const magicLabel = (GAME_STATE.char?.magic || 'Novice');
@@ -27073,11 +27088,11 @@ function updateHudMeters() {
         hudCls.textContent = `Lvl ${lv}  ${alignLabel} ${classStr} Wizard`;
     }
 
-    // Cash
-    const cashEl = document.getElementById('hud-cash');
-    if (cashEl) cashEl.textContent = `💰 ${(GAME_STATE.cash || 0).toLocaleString()} Gold`;
+    if (cash) cash.textContent = `💰 ${(GAME_STATE.cash || 0).toLocaleString()} Gold`;
 
-    _renderHomeGuestPanel();
+    // NOTE: _renderHomeGuestPanel is NOT called here — it is event-driven
+    // (fires on player_joined / player_left / home enter/leave). Calling it
+    // every frame was pure wasted work (60 JSON.stringify calls per second).
 }
 
 function isPlayerDead() {
@@ -30531,6 +30546,9 @@ function updateHairPhysics(t) {
 function animate(now = performance.now()) {
     requestAnimationFrame(animate);
 
+    // When the tab is hidden, skip all work — saves CPU, battery, and network.
+    if (document.hidden) return;
+
     const profile = PERFORMANCE_STATE.qualityProfile || _getGraphicsProfile();
     const maxFps = Number(profile.maxFps || 0);
     const frameMs = PERFORMANCE_STATE.lastFrameMs
@@ -30784,6 +30802,16 @@ function animate(now = performance.now()) {
     updateHudMeters();
     renderInventoryPreview(delta);
 }
+
+// When returning from a hidden tab, reset the physics clock so the game
+// doesn't see a huge accumulated delta and launch the player into space.
+document.addEventListener('visibilitychange', () => {
+    if (!document.hidden) {
+        _physicsLastMs = 0;
+        PERFORMANCE_STATE.lastFrameMs = 0;
+        clock.getDelta(); // drain the Three.js clock accumulator
+    }
+});
 
 // Handle resize
 window.addEventListener('resize', () => {
