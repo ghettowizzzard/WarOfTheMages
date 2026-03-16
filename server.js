@@ -408,6 +408,13 @@ function sanitizePlayer(playerId, payload = {}, existing = {}) {
       invisible: !!adminFlags.invisible,
       godMode: !!adminFlags.godMode,
     },
+    emote: {
+      activePose:    clampText(payload.emote?.activePose    || existing.emote?.activePose    || '', 32) || null,
+      idleStyle:     clampText(payload.emote?.idleStyle     || existing.emote?.idleStyle     || '', 32) || 'normal',
+      walkStyle:     clampText(payload.emote?.walkStyle     || existing.emote?.walkStyle     || '', 32) || 'normal',
+      runStyle:      clampText(payload.emote?.runStyle      || existing.emote?.runStyle      || '', 32) || 'normal',
+      triggeredExpr: clampText(payload.emote?.triggeredExpr || existing.emote?.triggeredExpr || '', 32) || null,
+    },
     updatedAt: Date.now(),
   };
 }
@@ -953,6 +960,16 @@ wss.on('connection', (ws) => {
           playerId,
           speaking: !!payload.speaking,
         }, ws);
+        break;
+      }
+
+      case 'time_sync': {
+        // Relay one player's current game clock to all others for shared day/night.
+        // The client already sends this every 10 seconds; server just forwards it.
+        const gameTime = Number(payload.gameTime);
+        if (Number.isFinite(gameTime) && gameTime >= 0 && gameTime < 24) {
+          broadcast('time_sync', { gameTime }, ws);
+        }
         break;
       }
 
